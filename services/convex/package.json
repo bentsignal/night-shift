@@ -13,8 +13,8 @@
     "build": "tsc --noEmit",
     "dev": "convex dev",
     "deploy": "convex deploy",
-    "format": "prettier --check . --ignore-path ../../.gitignore",
-    "format:fix": "prettier --write . --ignore-path ../../.gitignore",
+    "format": "prettier --check . --ignore-path ../../.gitignore --ignore-path .prettierignore",
+    "format:fix": "prettier --write . --ignore-path ../../.gitignore --ignore-path .prettierignore",
     "lint": "eslint",
     "test": "vitest run --passWithNoTests",
     "typecheck": "tsc --noEmit"
