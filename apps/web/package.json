@@ -5,8 +5,8 @@
   "scripts": {
     "build": "vite build",
     "dev": "vite dev --host 0.0.0.0",
-    "format": "prettier --check . --ignore-path ../../.gitignore",
-    "format:fix": "prettier --write . --ignore-path ../../.gitignore",
+    "format": "prettier --check . --ignore-path ../../.gitignore --ignore-path .prettierignore",
+    "format:fix": "prettier --write . --ignore-path ../../.gitignore --ignore-path .prettierignore",
     "lint": "eslint",
     "start": "vite preview",
     "test": "vitest run --passWithNoTests",

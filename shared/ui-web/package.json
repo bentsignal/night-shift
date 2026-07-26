@@ -15,6 +15,7 @@
     "@code/eslint-config": "workspace:*",
     "@code/prettier-config": "workspace:*",
     "@code/tsconfig": "workspace:*",
+    "@types/node": "catalog:",
     "@types/react": "catalog:",
     "eslint": "catalog:",
     "prettier": "catalog:",
