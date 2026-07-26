@@ -477,7 +477,7 @@ async function recoverExpiredForOwner(
     await ctx.db.patch("runs", run._id, {
       status: patch.run.status,
       activeAttemptId: undefined,
-      validationStatus: patch.run.validationStatus,
+      validationStatus: patch.run.validationStatus ?? run.validationStatus,
       startedAt: patch.run.startedAt,
       finishedAt: patch.run.status === "canceled" ? now : undefined,
       updatedAt: now,
