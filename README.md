@@ -16,24 +16,33 @@ Use Node 22.19+ (below Node 23) and pnpm 9.15.4.
 
 ```sh
 pnpm install
-pnpm --dir services/convex dev
+pnpm dev
 ```
 
-The Convex command prints the local deployment URL. In separate terminals:
+This starts the web control plane at `http://localhost:3000` and its local
+Convex deployment together. The first run may ask you to finish the local
+Convex setup.
+
+Start a local execution host in another terminal:
 
 ```sh
-VITE_CONVEX_URL=http://127.0.0.1:3210 \
-VITE_CODE_OWNER_ID=personal \
-pnpm --filter @code/web dev
+CODE_RUNTIME_MODE=faux pnpm dev:worker
 ```
+
+`CODE_RUNTIME_MODE=faux` provides deterministic local execution without a
+provider call. Real execution reads Pi-compatible provider credentials from
+the host, including the OpenAI Codex subscription stored under
+`PI_CODING_AGENT_DIR` or `~/.pi/agent/auth.json`. Credentials never enter
+Convex.
+
+The other clients remain opt-in so they cannot break the default web workflow:
 
 ```sh
-CONVEX_URL=http://127.0.0.1:3210 \
-CODE_OWNER_ID=personal \
-pnpm --filter @code/worker start
+pnpm dev:desktop
+pnpm dev:mobile
 ```
 
-Set `CODE_RUNTIME_MODE=faux` on the worker for deterministic local execution without a provider call. Real execution reads Pi-compatible provider credentials from the host, including the OpenAI Codex subscription stored under `PI_CODING_AGENT_DIR` or `~/.pi/agent/auth.json`. Credentials never enter Convex.
+Use `pnpm dev:web-only` when Convex is already running separately.
 
 ## Validate
 

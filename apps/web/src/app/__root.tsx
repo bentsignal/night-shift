@@ -24,11 +24,11 @@ export const Route = createRootRoute({
 
 function RootComponent() {
   return (
-    <html lang="en">
+    <html className="dark" lang="en" suppressHydrationWarning>
       <head>
         <HeadContent />
       </head>
-      <body>
+      <body className="min-h-svh overflow-hidden">
         <Outlet />
         <Scripts />
       </body>

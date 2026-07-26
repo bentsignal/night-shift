@@ -35,6 +35,8 @@ export class ConvexControlPlaneClient implements ControlPlaneClient {
   readonly #subscriptions: (() => void)[] = [];
   #runs: RawRun[] = [];
   #hosts: RawHost[] = [];
+  #runsLoaded = false;
+  #hostsLoaded = false;
   #authority: ControlPlaneSnapshot["authority"] = "recovering";
   #snapshot: ControlPlaneSnapshot = {
     authority: "recovering",
@@ -50,8 +52,9 @@ export class ConvexControlPlaneClient implements ControlPlaneClient {
         queries.runs,
         { ownerId, limit: 100 },
         (runs) => {
-          this.#authority = "connected";
+          this.#runsLoaded = true;
           this.#runs = runs as RawRun[];
+          this.#updateAuthority();
           this.#syncDetails();
           this.#publish();
         },
@@ -61,8 +64,9 @@ export class ConvexControlPlaneClient implements ControlPlaneClient {
         queries.hosts,
         { ownerId },
         (hosts) => {
-          this.#authority = "connected";
+          this.#hostsLoaded = true;
           this.#hosts = hosts as RawHost[];
+          this.#updateAuthority();
           this.#publish();
         },
         () => this.#setOffline(),
@@ -136,6 +140,11 @@ export class ConvexControlPlaneClient implements ControlPlaneClient {
   #setOffline(): void {
     this.#authority = "offline";
     this.#publish();
+  }
+
+  #updateAuthority(): void {
+    this.#authority =
+      this.#runsLoaded && this.#hostsLoaded ? "connected" : "recovering";
   }
 
   #publish(): void {
@@ -212,7 +221,7 @@ function toRun(run: RawRun, detail: RawRunDetail | undefined): Run {
   );
   return {
     id: run._id,
-    title: run.prompt.split("\n")[0]?.slice(0, 72) || "Untitled assignment",
+    title: runTitle(run.prompt),
     prompt: run.prompt,
     project: run.projectId ?? "Unspecified project",
     provider: run.runtime?.provider ?? "openai-codex",
@@ -239,6 +248,16 @@ function toRun(run: RawRun, detail: RawRunDetail | undefined): Run {
       : undefined,
     milestones: (detail?.milestones ?? []).map(toMilestone),
   };
+}
+
+export function runTitle(prompt: string): string {
+  const firstLine = prompt.trim().split("\n")[0]?.replace(/\s+/g, " ") ?? "";
+  if (!firstLine) return "Untitled assignment";
+  if (firstLine.length <= 72) return firstLine;
+
+  const preview = firstLine.slice(0, 69);
+  const boundary = preview.lastIndexOf(" ");
+  return `${preview.slice(0, boundary > 48 ? boundary : 69).trimEnd()}…`;
 }
 
 function toMilestone(milestone: RawMilestone): Milestone {
