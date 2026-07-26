@@ -17,6 +17,7 @@ import {
   AuthorityError,
   claimState,
   commandState,
+  HOST_SESSION_DURATION_MS,
   LEASE_DURATION_MS,
   milestoneState,
   recoverExpiredState,
@@ -28,11 +29,7 @@ import {
   validationOutcomeValidator,
 } from "./validators";
 
-const activeAttemptStatuses = new Set<AttemptStatus>([
-  "claimed",
-  "running",
-  "paused",
-]);
+const activeAttemptStatuses = new Set<AttemptStatus>(["claimed", "running"]);
 
 const proofArgs = {
   ownerId: v.string(),
@@ -233,6 +230,12 @@ export const renewLease = mutation({
     await ctx.db.patch("attempts", attempt._id, {
       leaseExpiresAt,
       lastHeartbeatAt: now,
+      updatedAt: now,
+    });
+    await ctx.db.patch("hosts", args.hostId, {
+      status: "online",
+      lastSeenAt: now,
+      sessionExpiresAt: now + HOST_SESSION_DURATION_MS,
       updatedAt: now,
     });
     return { leaseExpiresAt };
@@ -578,7 +581,7 @@ async function applyMilestonePatch(
   if (Object.hasOwn(patch.run, "activeAttemptId")) {
     runPatch.activeAttemptId = undefined;
   }
-  if (patch.run.startedAt !== undefined) {
+  if (Object.hasOwn(patch.run, "startedAt")) {
     runPatch.startedAt = patch.run.startedAt;
   }
   if (
@@ -601,6 +604,7 @@ async function applyMilestonePatch(
   if (patch.attempt?.status) attemptPatch.status = patch.attempt.status;
   if (args.kind === "started") attemptPatch.startedAt = now;
   if (
+    args.kind === "paused" ||
     args.kind === "completed" ||
     args.kind === "failed" ||
     args.kind === "canceled"

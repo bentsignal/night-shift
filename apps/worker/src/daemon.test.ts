@@ -10,8 +10,8 @@ import type {
   Validator,
   WorkerAssignment,
   WorkerAuthority,
-} from "./types";
-import { WorkerDaemon } from "./daemon";
+} from "./types.ts";
+import { WorkerDaemon } from "./daemon.ts";
 
 const registration: HostRegistration = {
   hostId: "host-1",
@@ -96,6 +96,34 @@ describe("WorkerDaemon", () => {
     await daemon.runOneCycle();
     expect(authority.pausedAtGeneration).toBe(4);
     expect(authority.completed).toBe(false);
+  });
+
+  it("serializes lease renewals so control generations cannot race", async () => {
+    const authority = new FakeAuthority(assignment);
+    let inFlight = 0;
+    let maximumInFlight = 0;
+    authority.renew = async () => {
+      inFlight += 1;
+      maximumInFlight = Math.max(maximumInFlight, inFlight);
+      await new Promise((resolve) => setTimeout(resolve, 10));
+      inFlight -= 1;
+      return {
+        accepted: true,
+        leaseExpiresAt: Date.now() + 60_000,
+        desiredState: "running",
+        controlGeneration: 0,
+      };
+    };
+    const runtime: RuntimeAdapter = {
+      execute: async () => {
+        await new Promise((resolve) => setTimeout(resolve, 35));
+        return { summary: "done" };
+      },
+    };
+
+    await createDaemon(authority, runtime, 1).runOneCycle();
+    expect(maximumInFlight).toBe(1);
+    expect(authority.completed).toBe(true);
   });
 });
 

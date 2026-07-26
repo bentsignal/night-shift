@@ -51,6 +51,7 @@ export interface AttemptIdentity {
   generation: number;
   hostId: string;
   hostSessionId: string;
+  controlGeneration: number;
 }
 
 export interface RuntimeInput {

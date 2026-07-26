@@ -85,7 +85,7 @@ describe("host capacity", () => {
 describe("runtime selection", () => {
   it("keeps provider and model choice separate from workflow state", () => {
     expect(providerOptions.map((provider) => provider.id)).toEqual([
-      "openai",
+      "openai-codex",
       "anthropic",
     ]);
     expect(providerOptions[0]?.models.length).toBeGreaterThan(1);

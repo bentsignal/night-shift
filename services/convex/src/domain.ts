@@ -229,7 +229,12 @@ export function milestoneState(
     case "paused":
       requireRunStatus(run, ["pause_requested"], input.kind);
       return {
-        run: { status: "paused" },
+        run: {
+          status: "paused",
+          activeAttemptId: undefined,
+          validationStatus: "pending",
+          startedAt: undefined,
+        },
         attempt: { status: "paused" },
       };
     case "validation": {
@@ -308,6 +313,20 @@ export function commandState(run: RunState, kind: CommandKind): CommandPatch {
     case "resume":
       if (run.status !== "pause_requested" && run.status !== "paused") {
         return unchangedCommand(run);
+      }
+      if (run.status === "paused") {
+        return {
+          accepted: true,
+          status: "acknowledged",
+          controlGeneration: generation,
+          run: {
+            controlGeneration: generation,
+            status: "queued",
+            activeAttemptId: undefined,
+            validationStatus: "pending",
+            startedAt: undefined,
+          },
+        };
       }
       return {
         accepted: true,

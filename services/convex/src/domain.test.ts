@@ -202,6 +202,42 @@ describe("state transitions and validation gate", () => {
 });
 
 describe("pause/resume command races", () => {
+  it("releases a paused attempt and requeues resume behind a new fence", () => {
+    const pauseRequested = activeRun({
+      status: "pause_requested",
+      controlGeneration: 1,
+    });
+    const paused = milestoneState(
+      pauseRequested,
+      activeAttempt(),
+      proof({ controlGeneration: 1 }),
+      { kind: "paused" },
+      now,
+    );
+    expect(paused).toMatchObject({
+      run: {
+        status: "paused",
+        activeAttemptId: undefined,
+        validationStatus: "pending",
+        startedAt: undefined,
+      },
+      attempt: { status: "paused" },
+    });
+
+    const resume = commandState({ ...pauseRequested, ...paused.run }, "resume");
+    expect(resume).toMatchObject({
+      accepted: true,
+      status: "acknowledged",
+      controlGeneration: 2,
+      run: {
+        status: "queued",
+        activeAttemptId: undefined,
+        validationStatus: "pending",
+        startedAt: undefined,
+      },
+    });
+  });
+
   it("uses control generations to reject a late pause acknowledgement", () => {
     const original = activeRun();
     const pause = commandState(original, "pause");

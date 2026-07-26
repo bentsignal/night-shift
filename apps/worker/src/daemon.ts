@@ -9,8 +9,8 @@ import type {
   Validator,
   WorkerAssignment,
   WorkerAuthority,
-} from "./types";
-import { AuthorityLeaseGuard } from "./authority-guard";
+} from "./types.ts";
+import { AuthorityLeaseGuard } from "./authority-guard.ts";
 
 export type DaemonState =
   | "offline"
@@ -131,6 +131,7 @@ export class WorkerDaemon {
     let desiredState: RunDesiredState = "running";
     let controlGeneration = assignment.controlGeneration;
     let authorityLost = false;
+    let renewing = false;
 
     const started = await this.#authority.startAttempt({
       ...identity,
@@ -139,6 +140,8 @@ export class WorkerDaemon {
     if (!started.accepted) return;
 
     const renewal = setInterval(() => {
+      if (renewing) return;
+      renewing = true;
       void this.#authority
         .renewLease(identity)
         .then((reply) => {
@@ -151,12 +154,16 @@ export class WorkerDaemon {
           guard.refresh(reply.leaseExpiresAt);
           desiredState = reply.desiredState ?? desiredState;
           controlGeneration = reply.controlGeneration ?? controlGeneration;
+          identity.controlGeneration = controlGeneration;
           if (desiredState !== "running") controller.abort(desiredState);
         })
         .catch(() => {
           authorityLost = true;
           guard.revoke();
           controller.abort(new Error("Convex authority is unavailable"));
+        })
+        .finally(() => {
+          renewing = false;
         });
     }, this.#renewEveryMs);
 
@@ -277,5 +284,6 @@ function identityOf(assignment: WorkerAssignment): AttemptIdentity {
     generation: assignment.generation,
     hostId: assignment.hostId,
     hostSessionId: assignment.hostSessionId,
+    controlGeneration: assignment.controlGeneration,
   };
 }

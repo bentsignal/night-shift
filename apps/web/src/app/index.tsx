@@ -1,13 +1,15 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { createFileRoute } from "@tanstack/react-router";
 
 import type {
+  ControlPlaneClient,
   ReasoningLevel,
   Run,
   RunCommand,
   SubmitWorkInput,
 } from "../control-plane/types";
 import { ControlPlaneProvider, useControlPlane } from "../control-plane/client";
+import { ConvexControlPlaneClient } from "../control-plane/convex-client";
 import { demoControlPlaneClient } from "../control-plane/demo-client";
 import {
   formatMoment,
@@ -22,8 +24,24 @@ export const Route = createFileRoute("/")({
 });
 
 function ControlPlaneRoute() {
+  const [client, setClient] = useState<ControlPlaneClient>(
+    demoControlPlaneClient,
+  );
+  useEffect(() => {
+    const url = import.meta.env.VITE_CONVEX_URL;
+    if (!url) return;
+    const convexClient = new ConvexControlPlaneClient(
+      url,
+      import.meta.env.VITE_CODE_OWNER_ID ?? "personal",
+    );
+    setClient(convexClient);
+    return () => {
+      void convexClient.close();
+    };
+  }, []);
+
   return (
-    <ControlPlaneProvider client={demoControlPlaneClient}>
+    <ControlPlaneProvider client={client}>
       <ControlRoom />
     </ControlPlaneProvider>
   );
@@ -69,8 +87,17 @@ function ControlRoom() {
         <div className="authority">
           <span className="authorityPulse" aria-hidden="true" />
           <span>
-            <strong>Authority connected</strong>
-            <small>Convex state is live</small>
+            <strong>
+              Authority{" "}
+              {snapshot.authority === "connected"
+                ? "connected"
+                : snapshot.authority}
+            </strong>
+            <small>
+              {snapshot.authority === "connected"
+                ? "Convex state is live"
+                : "Durable mutations are unavailable"}
+            </small>
           </span>
         </div>
         <div className="capacity" aria-label="Execution host capacity">

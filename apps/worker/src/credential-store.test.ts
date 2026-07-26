@@ -3,7 +3,7 @@ import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { afterEach, describe, expect, it } from "vitest";
 
-import { PiCredentialStore } from "./credential-store";
+import { PiCredentialStore } from "./credential-store.ts";
 
 const temporaryDirectories: string[] = [];
 

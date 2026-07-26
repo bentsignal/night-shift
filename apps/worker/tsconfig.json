@@ -1,6 +1,7 @@
 {
   "extends": "@code/tsconfig/base.json",
   "compilerOptions": {
+    "allowImportingTsExtensions": true,
     "lib": ["ES2022"],
     "rootDir": "."
   },

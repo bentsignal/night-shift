@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 
-import { AuthorityLeaseGuard } from "./authority-guard";
+import { AuthorityLeaseGuard } from "./authority-guard.ts";
 
 describe("AuthorityLeaseGuard", () => {
   it("stops new operations before the local lease deadline", () => {

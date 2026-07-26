@@ -14,8 +14,8 @@ import type {
   RuntimeMilestone,
   RuntimeResult,
   RuntimeSelection,
-} from "./types";
-import { createCodingTools } from "./tools";
+} from "./types.ts";
+import { createCodingTools } from "./tools.ts";
 
 export class PiRuntimeAdapter implements RuntimeAdapter {
   readonly #credentials: CredentialStore;

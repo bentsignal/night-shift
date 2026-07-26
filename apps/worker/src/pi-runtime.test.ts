@@ -5,7 +5,7 @@ import {
 } from "@earendil-works/pi-ai";
 import { describe, expect, it, vi } from "vitest";
 
-import { PiRuntimeAdapter } from "./pi-runtime";
+import { PiRuntimeAdapter } from "./pi-runtime.ts";
 
 describe("PiRuntimeAdapter", () => {
   it("executes through pi-agent-core with a deterministic faux provider", async () => {

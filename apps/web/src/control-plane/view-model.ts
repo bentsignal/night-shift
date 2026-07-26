@@ -8,11 +8,11 @@ export interface ProviderOption {
 
 export const providerOptions: ProviderOption[] = [
   {
-    id: "openai",
+    id: "openai-codex",
     label: "OpenAI subscription",
     models: [
-      { id: "gpt-5.2-codex", label: "GPT-5.2 Codex" },
-      { id: "gpt-5.1-codex-mini", label: "GPT-5.1 Codex mini" },
+      { id: "gpt-5.6-sol", label: "GPT-5.6 Sol" },
+      { id: "gpt-5.6-terra", label: "GPT-5.6 Terra" },
     ],
   },
   {

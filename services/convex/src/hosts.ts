@@ -4,11 +4,7 @@ import type { AttemptStatus } from "./domain";
 import { mutation, query } from "./_generated/server";
 import { HOST_SESSION_DURATION_MS } from "./domain";
 
-const activeAttemptStatuses = new Set<AttemptStatus>([
-  "claimed",
-  "running",
-  "paused",
-]);
+const activeAttemptStatuses = new Set<AttemptStatus>(["claimed", "running"]);
 
 export const register = mutation({
   args: {

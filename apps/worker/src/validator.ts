@@ -1,6 +1,6 @@
 import { spawn } from "node:child_process";
 
-import type { ValidationResult, Validator } from "./types";
+import type { ValidationResult, Validator } from "./types.ts";
 
 export class CommandValidator implements Validator {
   readonly #command: string;

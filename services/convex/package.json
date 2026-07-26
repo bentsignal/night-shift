@@ -3,7 +3,10 @@
   "private": true,
   "type": "module",
   "exports": {
-    "./api": "./src/_generated/api.ts",
+    "./api": {
+      "types": "./src/_generated/api.d.ts",
+      "default": "./src/_generated/api.js"
+    },
     "./domain": "./src/domain.ts"
   },
   "scripts": {
