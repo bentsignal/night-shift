@@ -1,0 +1,84 @@
+import type { Host, RunStatus } from "./types";
+
+export interface ProviderOption {
+  id: string;
+  label: string;
+  models: { id: string; label: string }[];
+}
+
+export const providerOptions: ProviderOption[] = [
+  {
+    id: "openai",
+    label: "OpenAI subscription",
+    models: [
+      { id: "gpt-5.2-codex", label: "GPT-5.2 Codex" },
+      { id: "gpt-5.1-codex-mini", label: "GPT-5.1 Codex mini" },
+    ],
+  },
+  {
+    id: "anthropic",
+    label: "Anthropic",
+    models: [
+      { id: "claude-sonnet-4-5", label: "Claude Sonnet 4.5" },
+      { id: "claude-opus-4-5", label: "Claude Opus 4.5" },
+    ],
+  },
+];
+
+const statusLabels: Record<RunStatus, string> = {
+  queued: "Queued",
+  claimed: "Claimed",
+  running: "Running",
+  paused: "Paused",
+  canceling: "Canceling",
+  canceled: "Canceled",
+  failed: "Failed",
+  completed: "Completed",
+};
+
+export function getRunStatusLabel(status: RunStatus): string {
+  return statusLabels[status];
+}
+
+export interface RunActionState {
+  canPause: boolean;
+  showResume: boolean;
+  canCancel: boolean;
+}
+
+export function getRunActionState(status: RunStatus): RunActionState {
+  const terminal = ["completed", "failed", "canceled"].includes(status);
+  return {
+    canPause: status === "running",
+    showResume: status === "paused",
+    canCancel: !terminal && status !== "canceling",
+  };
+}
+
+export interface HostCapacity {
+  total: number;
+  available: number;
+  message: string;
+}
+
+export function getHostCapacity(hosts: Host[]): HostCapacity {
+  const available = hosts.filter((host) => host.health === "ready").length;
+  return {
+    total: hosts.length,
+    available,
+    message:
+      available === 0
+        ? "Submissions remain available"
+        : `${available} ${available === 1 ? "machine" : "machines"} can claim work`,
+  };
+}
+
+export function formatMoment(isoTimestamp: string): string {
+  const time = new Date(isoTimestamp);
+  return new Intl.DateTimeFormat("en-US", {
+    hour: "numeric",
+    minute: "2-digit",
+    hour12: false,
+    timeZone: "America/New_York",
+  }).format(time);
+}
