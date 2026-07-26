@@ -2,6 +2,10 @@
   "name": "@code/convex",
   "private": true,
   "type": "module",
+  "exports": {
+    "./api": "./src/_generated/api.ts",
+    "./domain": "./src/domain.ts"
+  },
   "scripts": {
     "build": "tsc --noEmit",
     "dev": "convex dev",
