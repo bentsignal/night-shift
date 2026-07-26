@@ -34,8 +34,9 @@ function ControlPlaneRoute() {
       url,
       import.meta.env.VITE_CODE_OWNER_ID ?? "personal",
     );
-    setClient(convexClient);
+    const activation = window.setTimeout(() => setClient(convexClient), 0);
     return () => {
+      window.clearTimeout(activation);
       void convexClient.close();
     };
   }, []);
@@ -61,9 +62,7 @@ function ControlRoom() {
     const runId = await submitWork(input);
     setSelectedRunId(runId);
     setSubmitNote(
-      capacity.available === 0
-        ? "Accepted into the durable queue. It will stay there until a trusted host is ready."
-        : "Accepted. The scheduler can now match it to a trusted host.",
+      capacity.available === 0 ? "Queued — waiting for a host" : "Queued",
     );
   }
 
@@ -74,123 +73,71 @@ function ControlRoom() {
 
   return (
     <main className="controlRoom">
-      <header className="masthead">
-        <a className="wordmark" href="/" aria-label="Code control plane home">
-          <span className="wordmarkMark" aria-hidden="true">
-            C/
-          </span>
-          <span>
-            Code
-            <small>Control plane</small>
-          </span>
+      <header className="topbar">
+        <a className="productName" href="/" aria-label="Code control plane">
+          Code
         </a>
-        <div className="authority">
-          <span className="authorityPulse" aria-hidden="true" />
-          <span>
-            <strong>
-              Authority{" "}
-              {snapshot.authority === "connected"
-                ? "connected"
-                : snapshot.authority}
-            </strong>
-            <small>
-              {snapshot.authority === "connected"
-                ? "Convex state is live"
-                : "Durable mutations are unavailable"}
-            </small>
+        <div className="systemStatus">
+          <span
+            className={`authorityState authority-${snapshot.authority}`}
+            role="status"
+          >
+            <i aria-hidden="true" />
+            {snapshot.authority === "connected"
+              ? "Connected"
+              : snapshot.authority === "recovering"
+                ? "Reconnecting"
+                : "Offline"}
           </span>
-        </div>
-        <div className="capacity" aria-label="Execution host capacity">
-          <span className="capacityNumber">
-            {capacity.available}/{capacity.total}
-          </span>
-          <span>
-            hosts ready
-            <small>{capacity.message}</small>
+          <span className="hostCount" aria-label="Execution host capacity">
+            Hosts {capacity.available}/{capacity.total}
           </span>
         </div>
       </header>
 
-      <section className="intro">
-        <div>
-          <p className="kicker">Dispatch / Observe / Intervene</p>
-          <h1>Work keeps its place.</h1>
+      <section className="composer" aria-labelledby="composer-title">
+        <div className="composerHeading">
+          <h1 id="composer-title">New run</h1>
+          {submitNote && (
+            <span className="submitNotice" role="status">
+              {submitNote}
+            </span>
+          )}
         </div>
-        <p className="introCopy">
-          Submit coding work now. Cloud authority preserves intent while local
-          machines come and go.
-        </p>
-        <p className="edition">
-          Personal system
-          <span>Slice 001</span>
-        </p>
+        <DispatchForm onSubmit={handleSubmit} />
       </section>
 
       <div className="workspace">
-        <aside className="dispatchPanel" aria-labelledby="dispatch-title">
-          <div className="sectionHeading">
-            <span>01</span>
-            <div>
-              <p>New assignment</p>
-              <h2 id="dispatch-title">Dispatch work</h2>
-            </div>
-          </div>
-          <DispatchForm onSubmit={handleSubmit} />
-          {submitNote ? (
-            <p className="submitNotice" role="status">
-              <span aria-hidden="true">✓</span>
-              {submitNote}
-            </p>
-          ) : (
-            <p className="queuePromise">
-              <span aria-hidden="true">↳</span>
-              No host required to submit. Your work is written to the durable
-              queue first.
-            </p>
-          )}
-        </aside>
-
-        <section className="runLedger" aria-labelledby="runs-title">
-          <div className="sectionHeading ledgerHeading">
-            <span>02</span>
-            <div>
-              <p>Authority ledger</p>
-              <h2 id="runs-title">Runs</h2>
-            </div>
+        <aside className="runListPane" aria-labelledby="runs-title">
+          <div className="paneHeading">
+            <h2 id="runs-title">Runs</h2>
             <span className="runCount">{snapshot.runs.length}</span>
           </div>
           <div className="runList">
-            {snapshot.runs.map((run, index) => (
+            {snapshot.runs.map((run) => (
               <RunRow
                 key={run.id}
                 run={run}
-                index={snapshot.runs.length - index}
                 selected={run.id === selectedRun?.id}
                 onSelect={() => setSelectedRunId(run.id)}
               />
             ))}
+            {snapshot.runs.length === 0 && (
+              <p className="emptyRuns">No runs yet</p>
+            )}
           </div>
-        </section>
+        </aside>
 
         <section className="runDetail" aria-labelledby="detail-title">
           {selectedRun ? (
             <RunDetail run={selectedRun} onCommand={handleCommand} />
           ) : (
             <div className="emptyDetail">
-              <p>Select a run to inspect its authority record.</p>
+              <p>Select a run</p>
             </div>
           )}
         </section>
       </div>
-
-      <footer className="systemFoot">
-        <span>
-          <i aria-hidden="true" />
-          Sparse state stream
-        </span>
-        <span>Credentials remain on execution hosts</span>
-        <span>Lease fencing enforced by authority</span>
-      </footer>
     </main>
   );
 }
@@ -201,11 +148,11 @@ interface DispatchFormProps {
 
 function DispatchForm({ onSubmit }: DispatchFormProps) {
   const firstProvider = providerOptions[0];
-  const [provider, setProvider] = useState(firstProvider?.id ?? "openai");
+  const [provider, setProvider] = useState(firstProvider?.id ?? "openai-codex");
   const providerOption =
     providerOptions.find((option) => option.id === provider) ?? firstProvider;
   const [model, setModel] = useState(
-    providerOption?.models[0]?.id ?? "gpt-5.2-codex",
+    providerOption?.models[0]?.id ?? "gpt-5.6-sol",
   );
   const [submitting, setSubmitting] = useState(false);
 
@@ -228,25 +175,31 @@ function DispatchForm({ onSubmit }: DispatchFormProps) {
 
   return (
     <form className="dispatchForm" action={(formData) => void submit(formData)}>
-      <label className="field promptField">
-        <span>Instruction</span>
-        <textarea
-          name="prompt"
-          required
-          rows={5}
-          defaultValue="Implement the next safe vertical slice, then run its focused validation."
-        />
-      </label>
-      <label className="field">
-        <span>Project path</span>
-        <input
-          name="project"
-          required
-          defaultValue="~/dev/projects/code"
-          spellCheck="false"
-        />
-      </label>
-      <div className="fieldPair">
+      <div className="promptComposer">
+        <label className="field promptField">
+          <span className="srOnly">Prompt</span>
+          <textarea
+            name="prompt"
+            required
+            rows={2}
+            placeholder="Describe the work to run…"
+            aria-label="Run prompt"
+          />
+        </label>
+        <button className="dispatchButton" type="submit" disabled={submitting}>
+          {submitting ? "Queueing…" : "Queue"}
+        </button>
+      </div>
+      <div className="composerOptions">
+        <label className="field projectField">
+          <span>Project</span>
+          <input
+            name="project"
+            required
+            defaultValue="~/dev/projects/code"
+            spellCheck="false"
+          />
+        </label>
         <label className="field">
           <span>Provider</span>
           <select
@@ -279,31 +232,26 @@ function DispatchForm({ onSubmit }: DispatchFormProps) {
             ))}
           </select>
         </label>
+        <label className="field reasoningField">
+          <span>Reasoning</span>
+          <select name="reasoning" defaultValue="high">
+            <option value="medium">Medium</option>
+            <option value="high">High</option>
+            <option value="xhigh">Extra high</option>
+          </select>
+        </label>
       </div>
-      <label className="field reasoningField">
-        <span>Reasoning</span>
-        <select name="reasoning" defaultValue="high">
-          <option value="medium">Medium</option>
-          <option value="high">High</option>
-          <option value="xhigh">Extra high</option>
-        </select>
-      </label>
-      <button className="dispatchButton" type="submit" disabled={submitting}>
-        <span>{submitting ? "Recording…" : "Place in queue"}</span>
-        <span aria-hidden="true">↗</span>
-      </button>
     </form>
   );
 }
 
 interface RunRowProps {
   run: Run;
-  index: number;
   selected: boolean;
   onSelect: () => void;
 }
 
-function RunRow({ run, index, selected, onSelect }: RunRowProps) {
+function RunRow({ run, selected, onSelect }: RunRowProps) {
   return (
     <button
       type="button"
@@ -311,7 +259,6 @@ function RunRow({ run, index, selected, onSelect }: RunRowProps) {
       aria-pressed={selected}
       onClick={onSelect}
     >
-      <span className="runOrdinal">{String(index).padStart(2, "0")}</span>
       <span className="runSummary">
         <strong>{run.title}</strong>
         <small>{run.project}</small>
@@ -321,9 +268,6 @@ function RunRow({ run, index, selected, onSelect }: RunRowProps) {
         {getRunStatusLabel(run.status)}
       </span>
       <time dateTime={run.updatedAt}>{formatMoment(run.updatedAt)}</time>
-      <span className="rowArrow" aria-hidden="true">
-        →
-      </span>
     </button>
   );
 }
@@ -335,145 +279,127 @@ interface RunDetailProps {
 
 function RunDetail({ run, onCommand }: RunDetailProps) {
   const actions = getRunActionState(run.status);
-  const activeLease =
-    run.lease && run.status !== "completed" && run.status !== "canceled";
+  const activeLease = Boolean(
+    run.lease && !["completed", "canceled", "failed"].includes(run.status),
+  );
 
   return (
     <>
-      <div className="detailHeading">
-        <div className="sectionHeading">
-          <span>03</span>
-          <div>
-            <p>Run record</p>
-            <h2 id="detail-title">Inspect</h2>
-          </div>
+      <header className="detailHeading">
+        <div className="detailTitle">
+          <span className={`detailStatus status-${run.status}`}>
+            <i aria-hidden="true" />
+            {getRunStatusLabel(run.status)}
+          </span>
+          <h2 id="detail-title">{run.title}</h2>
         </div>
-        <span className={`detailStatus status-${run.status}`}>
-          {getRunStatusLabel(run.status)}
-        </span>
-      </div>
-
-      <div className="detailTitleBlock">
-        <p>{run.id}</p>
-        <h3>{run.title}</h3>
-        <span>{run.prompt}</span>
-      </div>
-
-      <div className="actionRail" aria-label="Run controls">
-        {actions.showResume ? (
-          <button
-            className="primaryAction"
-            type="button"
-            onClick={() => void onCommand({ type: "resume" })}
-          >
-            Resume
-            <span aria-hidden="true">▶</span>
-          </button>
-        ) : (
-          <button
-            type="button"
-            disabled={!actions.canPause}
-            onClick={() => void onCommand({ type: "pause" })}
-          >
-            Pause
-            <span aria-hidden="true">Ⅱ</span>
-          </button>
-        )}
-        <button
-          className="cancelAction"
-          type="button"
-          disabled={!actions.canCancel}
-          onClick={() => void onCommand({ type: "cancel" })}
-        >
-          Cancel
-          <span aria-hidden="true">×</span>
-        </button>
-      </div>
-
-      <dl className="telemetry">
-        <div>
-          <dt>Execution host</dt>
-          <dd>
-            {run.host?.name ?? "Unassigned"}
-            <small>{run.host?.id ?? "Awaiting eligible capacity"}</small>
-          </dd>
-        </div>
-        <div>
-          <dt>Lease</dt>
-          <dd>
-            {activeLease ? "Active" : run.lease ? "Closed" : "Not issued"}
-            <small>
-              {run.lease
-                ? `Expires ${formatMoment(run.lease.expiresAt)}`
-                : "Claim begins only after assignment"}
-            </small>
-          </dd>
-        </div>
-        <div>
-          <dt>Fence generation</dt>
-          <dd className="fenceValue">
-            {run.lease
-              ? `GEN-${String(run.lease.generation).padStart(4, "0")}`
-              : "—"}
-            <small>
-              {run.lease ? "Required on every authoritative write" : "Pending"}
-            </small>
-          </dd>
-        </div>
-        <div>
-          <dt>Runtime</dt>
-          <dd>
-            {run.provider} / {run.model}
-            <small>{run.reasoning} reasoning · credentials host-local</small>
-          </dd>
-        </div>
-      </dl>
-
-      <section className="timeline" aria-labelledby="timeline-title">
-        <div className="subheading">
-          <h4 id="timeline-title">Milestones</h4>
-          <span>{run.milestones.length} meaningful writes</span>
-        </div>
-        <ol>
-          {run.milestones.map((milestone, index) => (
-            <li
-              key={milestone.id}
-              className={index === run.milestones.length - 1 ? "current" : ""}
+        <div className="actionRail" aria-label="Run controls">
+          {actions.showResume ? (
+            <button
+              className="primaryAction"
+              type="button"
+              onClick={() => void onCommand({ type: "resume" })}
             >
-              <span className="timelineMark" aria-hidden="true" />
-              <div>
-                <strong>{milestone.label}</strong>
-                <p>{milestone.detail}</p>
-              </div>
-              <time dateTime={milestone.at}>{formatMoment(milestone.at)}</time>
-            </li>
-          ))}
-        </ol>
-      </section>
-
-      <section
-        className={`validation ${run.validation?.passed ? "validationPassed" : ""}`}
-        aria-labelledby="validation-title"
-      >
-        <div>
-          <p>Deterministic check</p>
-          <h4 id="validation-title">
-            {run.validation?.command ?? "Awaiting execution"}
-          </h4>
+              Resume
+            </button>
+          ) : (
+            <button
+              type="button"
+              disabled={!actions.canPause}
+              onClick={() => void onCommand({ type: "pause" })}
+            >
+              Pause
+            </button>
+          )}
+          <button
+            className="cancelAction"
+            type="button"
+            disabled={!actions.canCancel}
+            onClick={() => void onCommand({ type: "cancel" })}
+          >
+            Cancel
+          </button>
         </div>
-        <span>
-          {run.validation
-            ? run.validation.passed
-              ? "Passed"
-              : "Failed"
-            : "Pending"}
-          <small>
-            {run.validation
-              ? `${run.validation.durationMs} ms`
-              : "Publishes as a sparse milestone"}
-          </small>
-        </span>
-      </section>
+      </header>
+
+      <div className="detailBody">
+        <section className="promptPanel" aria-labelledby="prompt-title">
+          <h3 id="prompt-title">Prompt</h3>
+          <p>{run.prompt}</p>
+        </section>
+
+        <dl className="telemetry">
+          <div>
+            <dt>Host</dt>
+            <dd>
+              {run.host?.name ?? "Unassigned"}
+              {run.host && <small>{run.host.id}</small>}
+            </dd>
+          </div>
+          <div>
+            <dt>Lease</dt>
+            <dd>
+              {activeLease ? "Active" : run.lease ? "Closed" : "Not issued"}
+              {run.lease && <small>{formatMoment(run.lease.expiresAt)}</small>}
+            </dd>
+          </div>
+          <div>
+            <dt>Fence</dt>
+            <dd className="fenceValue">
+              {run.lease ? run.lease.generation : "—"}
+            </dd>
+          </div>
+          <div>
+            <dt>Runtime</dt>
+            <dd>
+              {run.model}
+              <small>
+                {run.provider} · {run.reasoning}
+              </small>
+            </dd>
+          </div>
+        </dl>
+
+        <section
+          className={`validation ${run.validation?.passed ? "validationPassed" : run.validation ? "validationFailed" : ""}`}
+          aria-labelledby="validation-title"
+        >
+          <div>
+            <h3 id="validation-title">Validation</h3>
+            <p>{run.validation?.command ?? "Pending"}</p>
+          </div>
+          {run.validation && (
+            <span className="validationResult">
+              {run.validation.passed ? "Passed" : "Failed"}
+              <small>{run.validation.durationMs} ms</small>
+            </span>
+          )}
+        </section>
+
+        <section className="timeline" aria-labelledby="timeline-title">
+          <div className="subheading">
+            <h3 id="timeline-title">Events</h3>
+            <span>{run.milestones.length}</span>
+          </div>
+          <ol>
+            {run.milestones.map((milestone) => (
+              <li key={milestone.id}>
+                <span
+                  className={`timelineMark event-${milestone.kind}`}
+                  aria-hidden="true"
+                />
+                <div>
+                  <strong>{milestone.label}</strong>
+                  <p>{milestone.detail}</p>
+                </div>
+                <time dateTime={milestone.at}>
+                  {formatMoment(milestone.at)}
+                </time>
+              </li>
+            ))}
+          </ol>
+        </section>
+      </div>
     </>
   );
 }
