@@ -1,0 +1,43 @@
+{
+  "name": "@code/web",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "build": "vite build",
+    "dev": "vite dev --host 0.0.0.0",
+    "format": "prettier --check . --ignore-path ../../.gitignore",
+    "format:fix": "prettier --write . --ignore-path ../../.gitignore",
+    "lint": "eslint",
+    "start": "vite preview",
+    "test": "vitest run --passWithNoTests",
+    "typecheck": "tsc --noEmit"
+  },
+  "dependencies": {
+    "@code/config": "workspace:*",
+    "@code/ui-web": "workspace:*",
+    "@tanstack/react-router": "1.170.0",
+    "@tanstack/react-start": "1.168.0",
+    "nitro": "3.0.1-alpha.2",
+    "react": "catalog:",
+    "react-dom": "catalog:"
+  },
+  "devDependencies": {
+    "@code/eslint-config": "workspace:*",
+    "@code/prettier-config": "workspace:*",
+    "@code/tailwind-config": "workspace:*",
+    "@code/tsconfig": "workspace:*",
+    "@tailwindcss/vite": "^4.1.16",
+    "@types/node": "catalog:",
+    "@types/react": "catalog:",
+    "@types/react-dom": "catalog:",
+    "@vitejs/plugin-react": "5.1.0",
+    "eslint": "catalog:",
+    "prettier": "catalog:",
+    "tailwindcss": "^4.1.16",
+    "typescript": "catalog:",
+    "vite": "catalog:",
+    "vite-tsconfig-paths": "^5.1.4",
+    "vitest": "^4.0.17"
+  },
+  "prettier": "@code/prettier-config"
+}

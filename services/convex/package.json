@@ -1,0 +1,29 @@
+{
+  "name": "@code/convex",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "build": "tsc --noEmit",
+    "dev": "convex dev",
+    "deploy": "convex deploy",
+    "format": "prettier --check . --ignore-path ../../.gitignore",
+    "format:fix": "prettier --write . --ignore-path ../../.gitignore",
+    "lint": "eslint",
+    "test": "vitest run --passWithNoTests",
+    "typecheck": "tsc --noEmit"
+  },
+  "dependencies": {
+    "convex": "catalog:"
+  },
+  "devDependencies": {
+    "@code/eslint-config": "workspace:*",
+    "@code/prettier-config": "workspace:*",
+    "@code/tsconfig": "workspace:*",
+    "@types/node": "catalog:",
+    "eslint": "catalog:",
+    "prettier": "catalog:",
+    "typescript": "catalog:",
+    "vitest": "^4.0.17"
+  },
+  "prettier": "@code/prettier-config"
+}

@@ -1,0 +1,50 @@
+# Applies to expo-modules-jsi 56.0.12.
+diff --git a/apple/ExpoModulesJSI.podspec b/apple/ExpoModulesJSI.podspec
+index 09231ec7bbe3be95f3c3eeb6f0bd000b7ad0e58c..c66464f7f05c38f3012b4a17dc3be898f6dfdd36 100644
+--- a/apple/ExpoModulesJSI.podspec
++++ b/apple/ExpoModulesJSI.podspec
+@@ -63,7 +63,7 @@ Pod::Spec.new do |s|
+ 
+   s.script_phase = {
+     :name => "Build #{s.name} xcframework",
+-    :script => '"${PODS_TARGET_SRCROOT}/scripts/build-xcframework.sh"',
++    :script => '"${PODS_TARGET_SRCROOT}/scripts/build-xcframework.sh" 2>&1',
+     :execution_position => :before_headers,
+     # Ensure the script runs on every build so its internal
+     # hash-based caching can decide whether to rebuild.
+diff --git a/apple/Sources/ExpoModulesJSI/Runtime/JavaScriptRuntime.swift b/apple/Sources/ExpoModulesJSI/Runtime/JavaScriptRuntime.swift
+index a0e3e24d6070c5ec0a220af3cb56fe3373fe1968..b318875fa784d70d28d5ae853d4cf66ffc99ad5a 100644
+--- a/apple/Sources/ExpoModulesJSI/Runtime/JavaScriptRuntime.swift
++++ b/apple/Sources/ExpoModulesJSI/Runtime/JavaScriptRuntime.swift
+@@ -215,8 +215,12 @@ open class JavaScriptRuntime: Equatable, @unchecked Sendable {
+       .toOpaque()
+     // Pass a null setter to C++ when the Swift setter is nil so that JS assignment
+     // raises a `jsi::JSError` directly, without crossing the Swift boundary.
+-    let callbacks = expo.HostObjectCallbacks(
+-      context, getter, set == nil ? nil : setter, propertyNamesGetter, deallocate)
++    let callbacks =
++      if set == nil {
++        expo.HostObjectCallbacks(context, getter, nil, propertyNamesGetter, deallocate)
++      } else {
++        expo.HostObjectCallbacks(context, getter, setter, propertyNamesGetter, deallocate)
++      }
+     let hostObject = expo.HostObject.makeObject(pointee, consume callbacks)
+ 
+     return JavaScriptObject(self, hostObject)
+diff --git a/apple/scripts/build-xcframework.sh b/apple/scripts/build-xcframework.sh
+index 7c2587ae2f44066da28a7d57e7d90b9a12926ab2..f7b0d1fb4a8ec46bc4bb4cc87bcef6b2e9dc2a81 100755
+--- a/apple/scripts/build-xcframework.sh
++++ b/apple/scripts/build-xcframework.sh
+@@ -216,8 +216,11 @@ build_slice() {
+     SKIP_INSTALL=NO \
+     DEBUG_INFORMATION_FORMAT=dwarf-with-dsym \
+     COMPILER_INDEX_STORE_ENABLE=NO \
++    SWIFT_SUPPRESS_WARNINGS=YES \
++    GCC_WARN_INHIBIT_ALL_WARNINGS=YES \
++    CLANG_WARN_QUOTED_INCLUDE_IN_FRAMEWORK_HEADER=NO \
+     SWIFT_COMPILATION_MODE=wholemodule \
+-  )
++  ) 2>&1
+ 
+   local product_path="${BUILD_PRODUCTS_PATH}/${build_dir_name}"
+   local framework_src="${product_path}/PackageFrameworks/${PACKAGE_NAME}.framework"

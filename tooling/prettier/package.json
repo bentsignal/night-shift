@@ -1,0 +1,13 @@
+{
+  "name": "@code/prettier-config",
+  "private": true,
+  "type": "module",
+  "exports": {
+    ".": "./index.js"
+  },
+  "dependencies": {
+    "@ianvs/prettier-plugin-sort-imports": "^4.7.0",
+    "prettier": "catalog:",
+    "prettier-plugin-tailwindcss": "^0.7.1"
+  }
+}

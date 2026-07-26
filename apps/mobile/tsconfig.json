@@ -1,0 +1,14 @@
+{
+  "extends": "@code/tsconfig/base.json",
+  "compilerOptions": {
+    "checkJs": false,
+    "jsx": "react-native",
+    "lib": ["ES2022", "DOM"],
+    "moduleSuffixes": [".ios", ".android", ".native", ""],
+    "paths": {
+      "~/*": ["./src/*"]
+    }
+  },
+  "include": ["src", "*.ts", ".expo/types/**/*.ts", "expo-env.d.ts"],
+  "exclude": ["node_modules"]
+}

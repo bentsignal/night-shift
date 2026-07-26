@@ -1,0 +1,40 @@
+{
+  "name": "@code/mobile",
+  "private": true,
+  "main": "index.ts",
+  "scripts": {
+    "android": "expo start --android",
+    "dev": "expo start --dev-client",
+    "format": "prettier --check . --ignore-path ../../.gitignore",
+    "format:fix": "prettier --write . --ignore-path ../../.gitignore",
+    "ios": "expo start --ios",
+    "lint": "eslint",
+    "test": "vitest run --passWithNoTests",
+    "typecheck": "tsc --noEmit"
+  },
+  "dependencies": {
+    "expo": "~56.0.15",
+    "expo-build-properties": "~56.0.22",
+    "expo-dev-client": "~56.0.22",
+    "expo-linking": "~56.0.15",
+    "expo-router": "~56.2.14",
+    "expo-splash-screen": "~56.0.12",
+    "expo-status-bar": "~56.0.4",
+    "react": "catalog:",
+    "react-native": "0.85.3",
+    "react-native-safe-area-context": "~5.7.0",
+    "react-native-screens": "~4.25.2"
+  },
+  "devDependencies": {
+    "@code/eslint-config": "workspace:*",
+    "@code/prettier-config": "workspace:*",
+    "@code/tsconfig": "workspace:*",
+    "@types/node": "catalog:",
+    "@types/react": "catalog:",
+    "eslint": "catalog:",
+    "prettier": "catalog:",
+    "typescript": "catalog:",
+    "vitest": "^4.0.17"
+  },
+  "prettier": "@code/prettier-config"
+}

@@ -1,0 +1,11 @@
+{
+  "name": "@code/tailwind-config",
+  "private": true,
+  "type": "module",
+  "exports": {
+    "./theme": "./theme.css"
+  },
+  "dependencies": {
+    "tailwindcss": "^4.1.16"
+  }
+}

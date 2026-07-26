@@ -1,0 +1,28 @@
+packages:
+  - apps/*
+  - services/*
+  - shared/*
+  - tooling/*
+
+catalog:
+  "@eslint/js": ^9.38.0
+  "@types/node": ^22.18.12
+  "@types/react": ~19.2.14
+  "@types/react-dom": ~19.2.3
+  convex: 1.39.1
+  eslint: ^9.38.0
+  prettier: ^3.6.2
+  react: 19.2.3
+  react-dom: 19.2.3
+  typescript: ~6.0.3
+  vite: 7.1.12
+
+onlyBuiltDependencies:
+  - "@swc/core"
+  - "@tailwindcss/oxide"
+  - electron
+  - esbuild
+
+overrides:
+  lightningcss: 1.30.1
+  vite: 7.1.12

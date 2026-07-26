@@ -1,0 +1,25 @@
+{
+  "name": "@code/config",
+  "private": true,
+  "type": "module",
+  "exports": {
+    "./product": "./src/product.ts",
+    "./urls": "./src/urls.ts"
+  },
+  "scripts": {
+    "format": "prettier --check . --ignore-path ../../.gitignore",
+    "format:fix": "prettier --write . --ignore-path ../../.gitignore",
+    "lint": "eslint",
+    "typecheck": "tsc --noEmit"
+  },
+  "devDependencies": {
+    "@code/eslint-config": "workspace:*",
+    "@code/prettier-config": "workspace:*",
+    "@code/tsconfig": "workspace:*",
+    "@types/node": "catalog:",
+    "eslint": "catalog:",
+    "prettier": "catalog:",
+    "typescript": "catalog:"
+  },
+  "prettier": "@code/prettier-config"
+}

@@ -1,0 +1,32 @@
+{
+  "name": "@code/desktop",
+  "version": "0.1.0",
+  "description": "Electron shell for the Code web control plane.",
+  "private": true,
+  "type": "module",
+  "main": "out/main/index.js",
+  "scripts": {
+    "build": "electron-vite build",
+    "dev": "electron-vite dev",
+    "format": "prettier --check . --ignore-path ../../.gitignore",
+    "format:fix": "prettier --write . --ignore-path ../../.gitignore",
+    "lint": "eslint",
+    "preview": "electron-vite preview",
+    "test": "node --experimental-strip-types --test src/**/*.test.ts",
+    "typecheck": "tsc --noEmit"
+  },
+  "devDependencies": {
+    "@code/config": "workspace:*",
+    "@code/eslint-config": "workspace:*",
+    "@code/prettier-config": "workspace:*",
+    "@code/tsconfig": "workspace:*",
+    "@types/node": "catalog:",
+    "electron": "43.1.0",
+    "electron-vite": "5.0.0",
+    "eslint": "catalog:",
+    "prettier": "catalog:",
+    "typescript": "catalog:",
+    "vite": "catalog:"
+  },
+  "prettier": "@code/prettier-config"
+}
