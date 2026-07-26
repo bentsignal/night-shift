@@ -12,7 +12,7 @@ The first vertical slice includes:
 
 ## Run locally
 
-Use Node 22.19+ (below Node 23) and pnpm 10.
+Use Node 22.19+ (below Node 23) and pnpm 9.15.4.
 
 ```sh
 pnpm install
