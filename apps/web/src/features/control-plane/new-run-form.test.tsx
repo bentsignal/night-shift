@@ -8,11 +8,10 @@ import type {
   ControlPlaneSnapshot,
   SubmitWorkInput,
 } from "../../control-plane/types";
-import { ControlPlaneProvider } from "../../control-plane/client";
+import { controlPlane, ControlPlaneProvider } from "../../control-plane/client";
 import { NewRunForm } from "./new-run-form";
 import {
   createExecutionPreferencesStore,
-  NewRunControlPlane,
   newRunFormState,
   NewRunNavigation,
   NewRunPreferences,
@@ -78,7 +77,10 @@ describe("NewRunForm", () => {
       .mockResolvedValue("run_effect");
     const useFormState = Effect.runSync(
       newRunFormState.pipe(
-        Effect.provideService(NewRunControlPlane, testControlPlane(submitWork)),
+        Effect.provideService(
+          controlPlane.service,
+          testControlPlane(submitWork),
+        ),
         Effect.provideService(
           NewRunPreferences,
           createExecutionPreferencesStore,

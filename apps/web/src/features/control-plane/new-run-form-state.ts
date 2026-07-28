@@ -5,8 +5,8 @@ import { Context, Effect } from "effect";
 import type { Store } from "@night-shift/effect-react";
 import { makeStore, useStoreSelector } from "@night-shift/effect-react";
 
-import type { useControlPlane } from "../../control-plane/client";
 import type { ReasoningLevel } from "../../control-plane/types";
+import { controlPlane } from "../../control-plane/client";
 import {
   getHostCapacity,
   providerOptions,
@@ -23,11 +23,6 @@ export interface ExecutionPreferences {
   readonly provider: string;
   readonly reasoning: ReasoningLevel;
 }
-
-export class NewRunControlPlane extends Context.Tag("NewRunControlPlane")<
-  NewRunControlPlane,
-  typeof useControlPlane
->() {}
 
 export class NewRunPreferences extends Context.Tag("NewRunPreferences")<
   NewRunPreferences,
@@ -49,7 +44,7 @@ export const createExecutionPreferencesStore = () => {
 };
 
 export const newRunFormState = Effect.gen(function* () {
-  const useControlPlane = yield* NewRunControlPlane;
+  const useControlPlane = yield* controlPlane.service;
   const createPreferences = yield* NewRunPreferences;
   const useNavigation = yield* NewRunNavigation;
 

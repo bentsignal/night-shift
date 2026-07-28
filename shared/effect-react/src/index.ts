@@ -2,10 +2,17 @@ export {
   AsyncComponentStateError,
   createComponent,
   type ComponentDefinition,
+  type ComponentEffect,
   type ComponentState,
+  type EffectComponent,
   type StateHook,
 } from "./create-component";
-export { createStore } from "./provider-store";
+export {
+  createStore,
+  type StoreDefinition,
+  type StoreRequirement,
+  type StoreSelector,
+} from "./provider-store";
 export {
   makeStore,
   type ReadableStore,

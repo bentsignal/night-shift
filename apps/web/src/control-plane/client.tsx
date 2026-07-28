@@ -28,7 +28,10 @@ export interface ControlPlaneState extends ControlPlaneSnapshot {
   commandRun: (runId: string, command: RunCommand) => Promise<void>;
 }
 
-const controlPlane = createStore(useControlPlaneState);
+export const controlPlane = createStore({
+  name: "ControlPlane",
+  state: useControlPlaneState,
+});
 
 export const ControlPlaneProvider = controlPlane.Store;
 export const useControlPlane = controlPlane.useStore;

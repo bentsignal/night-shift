@@ -1,7 +1,29 @@
 import type { ReactElement } from "react";
 import { Cause, Effect, Exit, Option } from "effect";
 
+import { provideServiceContext, useServiceContext } from "./service-context";
+
 type RenderResult = ReactElement | null;
+
+export declare const EffectComponentTypeId: unique symbol;
+
+export interface EffectComponent<Props, Error, Requirements> {
+  (props: Props): RenderResult;
+  readonly [EffectComponentTypeId]: Effect.Effect<
+    RenderResult,
+    Error,
+    Requirements
+  >;
+}
+
+export type ComponentEffect<Component> =
+  Component extends EffectComponent<
+    infer _Props,
+    infer Error,
+    infer Requirements
+  >
+    ? Effect.Effect<RenderResult, Error, Requirements>
+    : never;
 
 export type StateHook<Props, State, Error> = (
   props: Props,
@@ -13,12 +35,6 @@ export type ComponentState<Props, State, Error, Requirements> = Effect.Effect<
   Requirements
 >;
 
-type NoRequirements<Requirements> = [Requirements] extends [never]
-  ? unknown
-  : {
-      readonly __unresolvedEffectRequirements: Requirements;
-    };
-
 type FailureRenderer<Error> = [Error] extends [never]
   ? {
       readonly onFailure?: never;
@@ -28,11 +44,21 @@ type FailureRenderer<Error> = [Error] extends [never]
     };
 
 export type ComponentDefinition<Props, State, Error, Requirements> = {
-  readonly component: (state: State) => RenderResult;
+  readonly component: (input: {
+    readonly props: Props;
+    readonly state: State;
+  }) => RenderResult;
   readonly displayName?: string;
   readonly onDefect?: (defect: unknown) => RenderResult;
-  readonly state: ComponentState<Props, State, Error, Requirements> &
-    NoRequirements<Requirements>;
+  readonly state: ComponentState<Props, State, Error, Requirements>;
+} & FailureRenderer<Error>;
+
+type RenderDefinition<Props, State, Error> = {
+  readonly component: (input: {
+    readonly props: Props;
+    readonly state: State;
+  }) => RenderResult;
+  readonly onDefect?: (defect: unknown) => RenderResult;
 } & FailureRenderer<Error>;
 
 export class AsyncComponentStateError extends Error {
@@ -52,28 +78,45 @@ export function createComponent<
   Error = never,
   Requirements = never,
 >(definition: ComponentDefinition<Props, State, Error, Requirements>) {
-  const factory = runState(
-    definition.state as ComponentState<Props, State, Error, never>,
-  );
+  const CreatedComponent = (props: Props) => {
+    const services = useServiceContext();
+    const factory = runState(provideServiceContext(definition.state, services));
 
-  if (Exit.isSuccess(factory)) {
-    const useState = factory.value;
-    const CreatedComponent = (props: Props) => {
-      const state = runState(useState(props));
-      if (Exit.isSuccess(state)) {
-        return definition.component(state.value);
-      }
-      return renderFailure(definition, state.cause);
-    };
-    CreatedComponent.displayName =
-      definition.displayName ?? definition.component.name ?? "EffectComponent";
-    return CreatedComponent;
+    if (Exit.isFailure(factory)) {
+      return renderFailure(definition, factory.cause);
+    }
+
+    return (
+      <EvaluatedState
+        definition={definition}
+        props={props}
+        useState={factory.value}
+      />
+    );
+  };
+  CreatedComponent.displayName =
+    definition.displayName ?? definition.component.name ?? "EffectComponent";
+  return CreatedComponent as unknown as EffectComponent<
+    Props,
+    Error,
+    Requirements
+  >;
+}
+
+function EvaluatedState<Props, State, Error>({
+  definition,
+  props,
+  useState,
+}: {
+  definition: RenderDefinition<Props, State, Error>;
+  props: Props;
+  useState: StateHook<Props, State, Error>;
+}) {
+  const state = runState(useState(props));
+  if (Exit.isFailure(state)) {
+    return renderFailure(definition, state.cause);
   }
-
-  rejectAsyncState(factory.cause);
-  const FailedComponent = () => renderFailure(definition, factory.cause);
-  FailedComponent.displayName = definition.displayName ?? "EffectFailure";
-  return FailedComponent;
+  return definition.component({ props, state: state.value });
 }
 
 function runState<Success, Error>(effect: Effect.Effect<Success, Error>) {

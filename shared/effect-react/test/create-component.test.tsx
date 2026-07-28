@@ -10,21 +10,30 @@ import {
 } from "../src";
 
 describe("createComponent", () => {
-  test("passes state output directly to the component", () => {
+  test("passes props and state to the component", () => {
     const state = vi.fn(() => Effect.succeed({ count: 42 }));
-    const component = vi.fn(({ count }: { count: number }) => (
-      <span>{count}</span>
-    ));
+    const component = vi.fn(
+      ({
+        props,
+        state: componentState,
+      }: {
+        props: { label: string };
+        state: { count: number };
+      }) => <span>{`${props.label}: ${componentState.count}`}</span>,
+    );
     const Counter = createComponent({
       state: Effect.succeed(state),
       component,
     });
 
-    render(<Counter />);
+    render(<Counter label="Count" />);
 
-    expect(screen.getByText("42")).toBeInTheDocument();
-    expect(state).toHaveBeenCalledOnce();
-    expect(component).toHaveBeenCalledWith({ count: 42 });
+    expect(screen.getByText("Count: 42")).toBeInTheDocument();
+    expect(state).toHaveBeenCalledWith({ label: "Count" });
+    expect(component).toHaveBeenCalledWith({
+      props: { label: "Count" },
+      state: { count: 42 },
+    });
   });
 
   test("keeps store selection inside state", () => {
@@ -35,7 +44,7 @@ describe("createComponent", () => {
           count: useStoreSelector(store, (snapshot) => snapshot.count),
         }),
       ),
-      component: ({ count }) => <span>{count}</span>,
+      component: ({ state }) => <span>{state.count}</span>,
     });
 
     render(<Counter />);
@@ -48,7 +57,7 @@ describe("createComponent", () => {
       state: Effect.fail("missing-store" as const).pipe(
         Effect.as(() => Effect.succeed({ ready: false })),
       ),
-      component: ({ ready }) => <span>{String(ready)}</span>,
+      component: ({ state }) => <span>{String(state.ready)}</span>,
       onFailure: (error) => <span>{error}</span>,
     });
 
@@ -62,7 +71,7 @@ describe("createComponent", () => {
       state: Effect.die("broken-state").pipe(
         Effect.as(() => Effect.succeed({ ready: false })),
       ),
-      component: ({ ready }) => <span>{String(ready)}</span>,
+      component: ({ state }) => <span>{String(state.ready)}</span>,
       onDefect: (defect) => <span>{String(defect)}</span>,
     });
 
@@ -76,12 +85,12 @@ describe("createComponent", () => {
       async () => () => Effect.succeed({ ready: true }),
     );
 
-    expect(() =>
-      createComponent({
-        state,
-        component: () => null,
-      }),
-    ).toThrow(AsyncComponentStateError);
+    const Async = createComponent({
+      state,
+      component: () => null,
+    });
+
+    expect(() => render(<Async />)).toThrow(AsyncComponentStateError);
   });
 
   test("preserves typed failures through state evaluation", () => {

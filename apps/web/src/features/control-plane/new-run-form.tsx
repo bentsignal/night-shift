@@ -4,11 +4,9 @@ import { Effect } from "effect";
 import { createComponent } from "@night-shift/effect-react";
 import { Card, CardFooter } from "@night-shift/ui-web/components/card";
 
-import { useControlPlane } from "../../control-plane/client";
 import { NewRunFormFields, QueueButton } from "./new-run-form-fields";
 import {
   createExecutionPreferencesStore,
-  NewRunControlPlane,
   newRunFormState,
   NewRunNavigation,
   NewRunPreferences,
@@ -17,11 +15,10 @@ import {
 export const NewRunForm = createComponent({
   displayName: "NewRunForm",
   state: newRunFormState.pipe(
-    Effect.provideService(NewRunControlPlane, useControlPlane),
     Effect.provideService(NewRunPreferences, createExecutionPreferencesStore),
     Effect.provideService(NewRunNavigation, useNavigate),
   ),
-  component: (state) => (
+  component: ({ state }) => (
     <form action={(formData) => void state.submit(formData)}>
       <Card>
         <NewRunFormFields {...state} />

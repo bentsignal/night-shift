@@ -1,16 +1,36 @@
 import { useState } from "react";
 import { renderToString } from "react-dom/server";
 import { act, render, screen } from "@testing-library/react";
+import { Effect } from "effect";
 import { describe, expect, test } from "vitest";
 
-import { createStore } from "../src/provider-store";
+import { createComponent, createStore } from "../src";
 
 describe("provider stores", () => {
+  test("rejects duplicate service identities", () => {
+    createStore({
+      name: "UniqueStoreIdentity",
+      state: () => ({ count: 0 }),
+    });
+
+    expect(() =>
+      createStore({
+        name: "UniqueStoreIdentity",
+        state: () => ({ label: "wrong service" }),
+      }),
+    ).toThrow(
+      'Effect React store names must be unique. "UniqueStoreIdentity" is already registered.',
+    );
+  });
+
   test("rerenders consumers only when their selected state changes", () => {
-    const example = createStore(() => {
-      const [count, setCount] = useState(0);
-      const [text, setText] = useState("initial");
-      return { count, setCount, setText, text };
+    const example = createStore({
+      name: "SelectiveRerenders",
+      state: function useSelectiveRerendersStore() {
+        const [count, setCount] = useState(0);
+        const [text, setText] = useState("initial");
+        return { count, setCount, setText, text };
+      },
     });
     let countRenders = 0;
 
@@ -55,7 +75,10 @@ describe("provider stores", () => {
   });
 
   test("isolates nested provider state", () => {
-    const example = createStore(({ value }: { value: string }) => ({ value }));
+    const example = createStore({
+      name: "NestedProviders",
+      state: ({ value }: { value: string }) => ({ value }),
+    });
 
     function Value({ label }: { label: string }) {
       const value = example.useStore((state) => state.value);
@@ -76,7 +99,10 @@ describe("provider stores", () => {
   });
 
   test("publishes provider prop changes", () => {
-    const example = createStore(({ value }: { value: string }) => ({ value }));
+    const example = createStore({
+      name: "ProviderProps",
+      state: ({ value }: { value: string }) => ({ value }),
+    });
 
     function Value() {
       const value = example.useStore((state) => state.value);
@@ -98,7 +124,10 @@ describe("provider stores", () => {
   });
 
   test("fails clearly outside its provider", () => {
-    const example = createStore(() => ({ count: 0 }));
+    const example = createStore({
+      name: "MissingProvider",
+      state: () => ({ count: 0 }),
+    });
 
     function Count() {
       return <span>{example.useStore((state) => state.count)}</span>;
@@ -110,7 +139,10 @@ describe("provider stores", () => {
   });
 
   test("renders the initial provider snapshot on the server", () => {
-    const example = createStore(({ count }: { count: number }) => ({ count }));
+    const example = createStore({
+      name: "ServerSnapshot",
+      state: ({ count }: { count: number }) => ({ count }),
+    });
 
     function Count() {
       return <span>{example.useStore((state) => state.count)}</span>;
@@ -123,5 +155,44 @@ describe("provider stores", () => {
         </example.Store>,
       ),
     ).toContain(">7<");
+  });
+
+  test("provides its generated Effect service to descendant components", () => {
+    const example = createStore({
+      name: "EffectCounter",
+      state: function useEffectCounterStore() {
+        const [count, setCount] = useState(0);
+        return { count, setCount };
+      },
+    });
+    const Counter = createComponent({
+      state: Effect.gen(function* () {
+        const useCounter = yield* example.service;
+        return function useCounterState() {
+          const count = useCounter((state) => state.count);
+          const setCount = useCounter((state) => state.setCount);
+          return Effect.succeed({
+            count,
+            increment: () => setCount((current) => current + 1),
+          });
+        };
+      }),
+      component: ({ state }) => (
+        <button type="button" onClick={state.increment}>
+          {state.count}
+        </button>
+      ),
+    });
+
+    render(
+      <example.Store>
+        <Counter />
+      </example.Store>,
+    );
+
+    act(() => {
+      screen.getByRole("button", { name: "0" }).click();
+    });
+    expect(screen.getByRole("button", { name: "1" })).toBeInTheDocument();
   });
 });
