@@ -1,19 +1,33 @@
 import { Effect } from "effect";
+import analysis from "virtual:effect-react-analysis";
 
 import { createComponent } from "@night-shift/effect-react";
 
-const nodes = [
-  { kind: "react", label: "Route", note: "React" },
-  { kind: "effect", label: "EffectLab", note: "Effect" },
-  { kind: "effect", label: "WorkspaceFrame", note: "Effect" },
-  { kind: "provider", label: "Counter provider", note: "provides" },
-  { kind: "effect", label: "CounterInstrument", note: "Effect" },
-  { kind: "service", label: "Readout + controls", note: "uses" },
-] as const;
+const root = analysis.boundaries.find(
+  (boundary) => boundary.ownerName === "EffectLabRoute",
+);
+const componentById = new Map(
+  analysis.components.map((component) => [component.id, component]),
+);
+const nodes = root
+  ? [
+      { kind: "react", label: root.ownerName, note: "React root" },
+      ...walkComponents(root.componentId).map((component) => ({
+        kind: component.kind === "provided" ? "provider" : "effect",
+        label: component.name,
+        note: describeComponent(component),
+      })),
+    ]
+  : [];
 
 export const RuntimeTrace = createComponent({
   displayName: "RuntimeTrace",
-  state: Effect.succeed(() => Effect.succeed({ nodes })),
+  state: Effect.succeed(() =>
+    Effect.succeed({
+      nodes,
+      unresolved: root?.requirements.length ?? analysis.diagnostics.length,
+    }),
+  ),
   component: ({ state }) => (
     <aside aria-labelledby="trace-title" className="trace">
       <div className="trace-heading">
@@ -36,9 +50,41 @@ export const RuntimeTrace = createComponent({
       </ol>
 
       <div className="trace-result">
-        <span>Counter requirement</span>
-        <strong>resolved</strong>
+        <span>Unresolved requirements</span>
+        <strong>{state.unresolved}</strong>
       </div>
     </aside>
   ),
 });
+
+function walkComponents(rootId: string) {
+  const visited = new Set<string>();
+  const ordered = analysis.components.slice(0, 0);
+
+  const visit = (componentId: string) => {
+    if (visited.has(componentId)) {
+      return;
+    }
+    visited.add(componentId);
+
+    const component = componentById.get(componentId);
+    if (!component) {
+      return;
+    }
+    ordered.push(component);
+    component.dependencies.forEach(visit);
+  };
+
+  visit(rootId);
+  return ordered;
+}
+
+function describeComponent(component: (typeof analysis.components)[number]) {
+  if (component.providedRequirements.length > 0) {
+    return `provides ${component.providedRequirements.join(", ")}`;
+  }
+  if (component.directRequirements.length > 0) {
+    return `requires ${component.directRequirements.join(", ")}`;
+  }
+  return "Effect component";
+}

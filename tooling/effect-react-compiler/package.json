@@ -2,11 +2,22 @@
   "name": "@night-shift/effect-react-compiler",
   "private": true,
   "type": "module",
+  "types": "./dist/index.d.ts",
   "exports": {
-    ".": "./src/index.ts",
-    "./vite": "./src/vite.ts"
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js"
+    },
+    "./vite": {
+      "types": "./dist/vite.d.ts",
+      "import": "./dist/vite.js"
+    },
+    "./virtual": {
+      "types": "./src/virtual.d.ts"
+    }
   },
   "scripts": {
+    "build": "tsc -p tsconfig.build.json",
     "format": "prettier --check . --ignore-path ../../.gitignore",
     "format:fix": "prettier --write . --ignore-path ../../.gitignore",
     "lint": "eslint",

@@ -6,8 +6,8 @@ import type {
   EffectReactAnalysis,
   EffectReactDiagnostic,
   EffectReactRoot,
-} from "./types";
-import { analyzeEffectReact } from "./analyzer";
+} from "./types.js";
+import { analyzeEffectReact } from "./analyzer.js";
 
 export const effectReactAnalysisModuleId = "virtual:effect-react-analysis";
 const resolvedAnalysisModuleId = `\0${effectReactAnalysisModuleId}`;

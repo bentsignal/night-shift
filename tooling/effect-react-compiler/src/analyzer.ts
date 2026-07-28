@@ -8,7 +8,7 @@ import type {
   EffectReactDiagnostic,
   ReactBoundary,
   SourceLocation,
-} from "./types";
+} from "./types.js";
 
 type SymbolReference = {
   readonly fileName: string;

@@ -16,6 +16,7 @@
     "build": "turbo run build",
     "dev": "turbo run dev --parallel",
     "dev:desktop": "pnpm --filter @night-shift/desktop dev",
+    "dev:lab": "pnpm --filter @night-shift/effect-lab dev",
     "dev:mobile": "pnpm --filter @night-shift/mobile dev",
     "dev:web": "node scripts/dev.mjs",
     "dev:web-only": "pnpm --filter @night-shift/web dev",

@@ -6,7 +6,7 @@
     "paths": {
       "~/*": ["./src/*"]
     },
-    "types": ["vite/client"]
+    "types": ["vite/client", "@night-shift/effect-react-compiler/virtual"]
   },
   "include": ["src", "vite.config.ts", "vitest.config.ts", "eslint.config.ts"],
   "exclude": ["node_modules", "dist", ".output"]
