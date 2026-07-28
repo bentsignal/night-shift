@@ -32,12 +32,17 @@ export interface ControlPlaneState {
   commandRun: (runId: string, command: RunCommand) => Promise<void>;
 }
 
-export function useControlPlane(): ControlPlaneState {
+export function useControlPlaneClient(): ControlPlaneClient {
   const client = useContext(ControlPlaneContext);
   if (!client) {
     throw new Error("useControlPlane must be used inside ControlPlaneProvider");
   }
 
+  return client;
+}
+
+export function useControlPlane(): ControlPlaneState {
+  const client = useControlPlaneClient();
   const snapshot = useSyncExternalStore(
     client.subscribe,
     client.getSnapshot,

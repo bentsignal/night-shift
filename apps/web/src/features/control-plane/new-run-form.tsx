@@ -1,7 +1,11 @@
-import { useState } from "react";
+import type { ComponentType } from "react";
+import { useState, useSyncExternalStore } from "react";
 import { useNavigate } from "@tanstack/react-router";
+import { Context, Effect } from "effect";
 import { ArrowRight, LoaderCircle } from "lucide-react";
 
+import type { Store } from "@code/effect-react";
+import { Component, makeStore, useStoreSelector } from "@code/effect-react";
 import { Button } from "@code/ui-web/components/button";
 import {
   Card,
@@ -21,24 +25,118 @@ import {
 } from "@code/ui-web/components/select";
 import { Textarea } from "@code/ui-web/components/textarea";
 
-import type { ReasoningLevel } from "../../control-plane/types";
-import { useControlPlane } from "../../control-plane/client";
+import type {
+  ControlPlaneClient,
+  ReasoningLevel,
+  SubmitWorkInput,
+} from "../../control-plane/types";
+import { useControlPlaneClient } from "../../control-plane/client";
 import {
   getHostCapacity,
   providerOptions,
 } from "../../control-plane/view-model";
 
-export function NewRunForm() {
-  const navigate = useNavigate();
-  const { snapshot, submitWork } = useControlPlane();
+export interface ExecutionPreferences {
+  readonly model: string;
+  readonly provider: string;
+  readonly reasoning: ReasoningLevel;
+}
+
+export class NewRunControlPlane extends Context.Tag("NewRunControlPlane")<
+  NewRunControlPlane,
+  ControlPlaneClient
+>() {}
+
+export class NewRunPreferences extends Context.Tag("NewRunPreferences")<
+  NewRunPreferences,
+  Store<ExecutionPreferences>
+>() {}
+
+export function createExecutionPreferencesStore(): Store<ExecutionPreferences> {
   const firstProvider = providerOptions[0];
-  const [provider, setProvider] = useState(firstProvider?.id ?? "openai-codex");
-  const activeProvider =
-    providerOptions.find((option) => option.id === provider) ?? firstProvider;
-  const [model, setModel] = useState(
-    activeProvider?.models[0]?.id ?? "gpt-5.6-sol",
+  return makeStore<ExecutionPreferences>({
+    model: firstProvider?.models[0]?.id ?? "gpt-5.6-sol",
+    provider: firstProvider?.id ?? "openai-codex",
+    reasoning: "high",
+  });
+}
+
+export function selectProvider(provider: string) {
+  return (preferences: ExecutionPreferences): ExecutionPreferences => {
+    const next = providerOptions.find((option) => option.id === provider);
+    return {
+      ...preferences,
+      model: next?.models[0]?.id ?? "",
+      provider,
+    };
+  };
+}
+
+export async function queueNewRun(
+  client: ControlPlaneClient,
+  preferences: ExecutionPreferences,
+  fields: Pick<SubmitWorkInput, "project" | "prompt">,
+): Promise<string> {
+  return client.submitWork({
+    ...fields,
+    ...preferences,
+  });
+}
+
+export const newRunFormFactory = Component.make(
+  Effect.gen(function* () {
+    const client = yield* NewRunControlPlane;
+    const preferences = yield* NewRunPreferences;
+
+    return function EffectNewRunForm() {
+      return <NewRunFormView client={client} preferences={preferences} />;
+    };
+  }),
+);
+
+export function createNewRunFormComponent(
+  client: ControlPlaneClient,
+  preferences: Store<ExecutionPreferences>,
+): ComponentType {
+  return Component.mount(
+    newRunFormFactory.pipe(
+      Effect.provideService(NewRunControlPlane, client),
+      Effect.provideService(NewRunPreferences, preferences),
+    ),
+    {
+      displayName: "NewRunForm",
+      onFailure: (error: never) => error,
+    },
   );
-  const [reasoning, setReasoning] = useState<ReasoningLevel>("high");
+}
+
+export function NewRunForm() {
+  const client = useControlPlaneClient();
+  const [preferences] = useState(createExecutionPreferencesStore);
+  const [Form] = useState(() => createNewRunFormComponent(client, preferences));
+
+  return <Form />;
+}
+
+function NewRunFormView({
+  client,
+  preferences,
+}: {
+  client: ControlPlaneClient;
+  preferences: Store<ExecutionPreferences>;
+}) {
+  const navigate = useNavigate();
+  const snapshot = useSyncExternalStore(
+    client.subscribe,
+    client.getSnapshot,
+    client.getSnapshot,
+  );
+  const provider = useStoreSelector(preferences, (state) => state.provider);
+  const activeProvider =
+    providerOptions.find((option) => option.id === provider) ??
+    providerOptions[0];
+  const model = useStoreSelector(preferences, (state) => state.model);
+  const reasoning = useStoreSelector(preferences, (state) => state.reasoning);
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string>();
   const capacity = getHostCapacity(snapshot.hosts);
@@ -47,12 +145,9 @@ export function NewRunForm() {
     setSubmitting(true);
     setError(undefined);
     try {
-      const runId = await submitWork({
+      const runId = await queueNewRun(client, preferences.getSnapshot(), {
         prompt: String(formData.get("prompt") ?? ""),
         project: String(formData.get("project") ?? ""),
-        provider,
-        model,
-        reasoning,
       });
       await navigate({ to: "/runs/$runId", params: { runId } });
     } catch (cause) {
@@ -98,11 +193,7 @@ export function NewRunForm() {
               <Select
                 value={provider}
                 onValueChange={(value) => {
-                  const next = providerOptions.find(
-                    (option) => option.id === value,
-                  );
-                  setProvider(value);
-                  setModel(next?.models[0]?.id ?? "");
+                  preferences.update(selectProvider(value));
                 }}
               >
                 <SelectTrigger className="w-full" id="provider">
@@ -120,7 +211,15 @@ export function NewRunForm() {
 
             <div className="grid gap-2">
               <Label htmlFor="model">Model</Label>
-              <Select value={model} onValueChange={setModel}>
+              <Select
+                value={model}
+                onValueChange={(value) => {
+                  preferences.update((current) => ({
+                    ...current,
+                    model: value,
+                  }));
+                }}
+              >
                 <SelectTrigger className="w-full" id="model">
                   <SelectValue />
                 </SelectTrigger>
@@ -138,7 +237,12 @@ export function NewRunForm() {
               <Label htmlFor="reasoning">Reasoning</Label>
               <Select
                 value={reasoning}
-                onValueChange={(value) => setReasoning(value as ReasoningLevel)}
+                onValueChange={(value) => {
+                  preferences.update((current) => ({
+                    ...current,
+                    reasoning: value as ReasoningLevel,
+                  }));
+                }}
               >
                 <SelectTrigger className="w-full" id="reasoning">
                   <SelectValue />
