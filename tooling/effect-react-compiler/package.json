@@ -1,0 +1,28 @@
+{
+  "name": "@night-shift/effect-react-compiler",
+  "private": true,
+  "type": "module",
+  "exports": {
+    ".": "./src/index.ts",
+    "./vite": "./src/vite.ts"
+  },
+  "scripts": {
+    "format": "prettier --check . --ignore-path ../../.gitignore",
+    "format:fix": "prettier --write . --ignore-path ../../.gitignore",
+    "lint": "eslint",
+    "test": "vitest run",
+    "typecheck": "tsc --noEmit"
+  },
+  "devDependencies": {
+    "@night-shift/eslint-config": "workspace:*",
+    "@night-shift/prettier-config": "workspace:*",
+    "@night-shift/tsconfig": "workspace:*",
+    "@types/node": "catalog:",
+    "eslint": "catalog:",
+    "prettier": "catalog:",
+    "typescript": "catalog:",
+    "vite": "catalog:",
+    "vitest": "^4.0.17"
+  },
+  "prettier": "@night-shift/prettier-config"
+}

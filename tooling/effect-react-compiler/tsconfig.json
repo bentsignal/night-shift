@@ -1,0 +1,8 @@
+{
+  "extends": "@night-shift/tsconfig/base.json",
+  "compilerOptions": {
+    "types": ["node", "vitest/globals"]
+  },
+  "include": ["."],
+  "exclude": ["node_modules"]
+}
