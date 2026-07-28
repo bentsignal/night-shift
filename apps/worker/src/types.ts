@@ -1,11 +1,12 @@
-import type { ModelThinkingLevel } from "@earendil-works/pi-ai";
-
 export type RunDesiredState = "running" | "paused" | "canceled";
+
+export type ReasoningLevel =
+  "off" | "minimal" | "low" | "medium" | "high" | "xhigh" | "max";
 
 export interface RuntimeSelection {
   provider: string;
   model: string;
-  reasoning: ModelThinkingLevel;
+  reasoning: ReasoningLevel;
 }
 
 export interface WorkerAssignment {

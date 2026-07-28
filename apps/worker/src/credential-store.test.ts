@@ -3,7 +3,7 @@ import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { afterEach, describe, expect, it } from "vitest";
 
-import { PiCredentialStore } from "./credential-store.ts";
+import { HostCredentialStore } from "./credential-store.ts";
 
 const temporaryDirectories: string[] = [];
 
@@ -15,12 +15,12 @@ afterEach(async () => {
   );
 });
 
-describe("PiCredentialStore", () => {
+describe("HostCredentialStore", () => {
   it("serializes modifications and preserves provider OAuth fields", async () => {
     const directory = await mkdtemp(join(tmpdir(), "code-worker-auth-"));
     temporaryDirectories.push(directory);
     const path = join(directory, "auth.json");
-    const store = new PiCredentialStore(path);
+    const store = new HostCredentialStore(path);
 
     await store.modify("openai-codex", async () => ({
       type: "oauth",

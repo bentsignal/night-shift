@@ -9,14 +9,20 @@
     "format": "prettier --check . --ignore-path ../../.gitignore",
     "format:fix": "prettier --write . --ignore-path ../../.gitignore",
     "lint": "eslint",
+    "smoke:codex": "node --experimental-strip-types src/smoke-codex.ts",
     "start": "node --experimental-strip-types src/main.ts",
     "test": "vitest run",
     "typecheck": "tsc --noEmit"
   },
   "dependencies": {
-    "@earendil-works/pi-agent-core": "0.82.1",
-    "@earendil-works/pi-ai": "0.82.1",
-    "convex": "catalog:"
+    "@effect/ai": "0.37.0",
+    "@effect/ai-anthropic": "0.27.0",
+    "@effect/ai-openai": "0.41.0",
+    "@effect/experimental": "0.61.0",
+    "@effect/platform": "0.97.0",
+    "@effect/rpc": "0.76.0",
+    "convex": "catalog:",
+    "effect": "3.22.0"
   },
   "devDependencies": {
     "@code/eslint-config": "workspace:*",
