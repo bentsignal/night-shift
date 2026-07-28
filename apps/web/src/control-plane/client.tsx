@@ -1,6 +1,6 @@
 import { useSyncExternalStore } from "react";
 
-import { createStore } from "@code/effect-react";
+import { createStore } from "@night-shift/effect-react";
 
 import type {
   ControlPlaneClient,

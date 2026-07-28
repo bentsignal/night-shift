@@ -1,4 +1,4 @@
-# Code
+# night shift
 
 A personal control plane for agentic coding work. Convex owns durable orchestration state while enrolled host workers execute runs through a product-owned Effect AI harness.
 
@@ -9,7 +9,7 @@ The first vertical slice includes:
   with durable admission executed as an Effect through Confect
 - A TypeScript worker with host registration, health, fenced leases, sparse checkpoints, pause/resume/cancel, and deterministic validation
 - A bounded Effect AI harness with typed tools, provider Layers, and sparse turn checkpoints
-- An experimental `@code/effect-react` package with selector stores and Effect-built,
+- An experimental `@night-shift/effect-react` package with selector stores and Effect-built,
   dependency-checked component and hook factories
 - Viable CLI, Electron, and Expo client scaffolds
 
@@ -29,10 +29,10 @@ may download Electron or ask you to finish the local Convex setup.
 Start a local execution host in another terminal:
 
 ```sh
-CODE_RUNTIME_MODE=faux pnpm dev:worker
+NIGHT_SHIFT_RUNTIME_MODE=faux pnpm dev:worker
 ```
 
-`CODE_RUNTIME_MODE=faux` provides deterministic local execution without a
+`NIGHT_SHIFT_RUNTIME_MODE=faux` provides deterministic local execution without a
 provider call. Real execution supports `OPENAI_API_KEY`, `ANTHROPIC_API_KEY`,
 and the existing OpenAI Codex subscription OAuth credential stored under
 `PI_CODING_AGENT_DIR` or `~/.pi/agent/auth.json`. The worker owns the provider
@@ -44,7 +44,7 @@ expired; automatic OAuth refresh is not implemented yet. Its opt-in live smoke
 test has no tools and refuses to make a request unless explicitly enabled:
 
 ```sh
-CODE_LIVE_CODEX_SMOKE=1 pnpm --filter @code/worker smoke:codex
+NIGHT_SHIFT_LIVE_CODEX_SMOKE=1 pnpm --filter @night-shift/worker smoke:codex
 ```
 
 Focused development commands are also available:

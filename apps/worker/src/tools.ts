@@ -40,7 +40,7 @@ interface WorkspaceService {
   >;
 }
 
-export class Workspace extends Context.Tag("@code/worker/Workspace")<
+export class Workspace extends Context.Tag("@night-shift/worker/Workspace")<
   Workspace,
   WorkspaceService
 >() {}
@@ -164,7 +164,7 @@ export function workspaceLayer(projectPath: string) {
 
           const temporaryPath = resolve(
             parent,
-            `.${randomUUID()}.code-write.tmp`,
+            `.${randomUUID()}.night-shift-write.tmp`,
           );
           try {
             await writeFile(temporaryPath, contents, {

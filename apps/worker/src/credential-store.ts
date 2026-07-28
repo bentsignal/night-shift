@@ -151,8 +151,8 @@ export class HostCredentialStore {
 }
 
 function defaultCredentialPath() {
-  if (process.env.CODE_PROVIDER_AUTH_FILE) {
-    return process.env.CODE_PROVIDER_AUTH_FILE;
+  if (process.env.NIGHT_SHIFT_PROVIDER_AUTH_FILE) {
+    return process.env.NIGHT_SHIFT_PROVIDER_AUTH_FILE;
   }
   const base =
     process.env.PI_CODING_AGENT_DIR ??

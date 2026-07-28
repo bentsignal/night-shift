@@ -3,11 +3,11 @@ import { spawn } from "node:child_process";
 import { getLocalConvexUrl, repositoryRoot } from "./local-environment.mjs";
 
 const packageManager = process.platform === "win32" ? "pnpm.cmd" : "pnpm";
-const worker = spawn(packageManager, ["--filter", "@code/worker", "start"], {
+const worker = spawn(packageManager, ["--filter", "@night-shift/worker", "start"], {
   cwd: repositoryRoot,
   env: {
     ...process.env,
-    CODE_OWNER_ID: process.env.CODE_OWNER_ID ?? "personal",
+    NIGHT_SHIFT_OWNER_ID: process.env.NIGHT_SHIFT_OWNER_ID ?? "personal",
     CONVEX_URL: await getLocalConvexUrl(),
   },
   stdio: "inherit",

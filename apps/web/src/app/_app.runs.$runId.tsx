@@ -1,14 +1,14 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { ArrowLeft } from "lucide-react";
 
-import { Button } from "@code/ui-web/components/button";
+import { Button } from "@night-shift/ui-web/components/button";
 import {
   Card,
   CardContent,
   CardHeader,
   CardTitle,
-} from "@code/ui-web/components/card";
-import { Skeleton } from "@code/ui-web/components/skeleton";
+} from "@night-shift/ui-web/components/card";
+import { Skeleton } from "@night-shift/ui-web/components/skeleton";
 
 import { useControlPlane } from "../control-plane/client";
 import { Page } from "../features/control-plane/page";

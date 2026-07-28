@@ -1,9 +1,9 @@
 ---
-name: code-expo-build
-description: Build, install, and test the Code Expo app with local EAS development-client workflows, including the iOS 27 scene-lifecycle accommodations.
+name: night-shift-expo-build
+description: Build, install, and test the night shift Expo app with local EAS development-client workflows, including the iOS 27 scene-lifecycle accommodations.
 ---
 
-# Code Expo Build
+# night shift Expo build
 
 Treat `apps/mobile` as an Expo-managed app. Build native binaries through
 Expo and local EAS. Do not edit generated `apps/mobile/ios` or
@@ -12,8 +12,8 @@ Expo and local EAS. Do not edit generated `apps/mobile/ios` or
 Before a native build, run:
 
 ```bash
-pnpm --filter @code/mobile lint
-pnpm --filter @code/mobile typecheck
+pnpm --filter @night-shift/mobile lint
+pnpm --filter @night-shift/mobile typecheck
 ```
 
 Build an iOS Simulator development client locally:
@@ -21,18 +21,18 @@ Build an iOS Simulator development client locally:
 ```bash
 cd apps/mobile
 pnpm exec eas build --local --platform ios --profile development:client:sim \
-  --output ./build/code-development-client-simulator.tar.gz
+  --output ./build/night-shift-development-client-simulator.tar.gz
 ```
 
 Use XcodeBuildMCP after extracting the artifact to install, launch, inspect,
 and interact with the app. Run Metro with:
 
 ```bash
-pnpm --filter @code/mobile dev
+pnpm --filter @night-shift/mobile dev
 ```
 
 For Android, use the same local profile with
-`--platform android --output ./build/code-development-client.apk`.
+`--platform android --output ./build/night-shift-development-client.apk`.
 
 The Expo config plugins preserve the iOS scene lifecycle and force a consistent
 pods deployment target for builds made with Xcode/macOS 27 beta. The checked-in

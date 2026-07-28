@@ -1,12 +1,12 @@
 import { ArrowUpRight, Plus } from "lucide-react";
 
-import { Button } from "@code/ui-web/components/button";
+import { Button } from "@night-shift/ui-web/components/button";
 import {
   Card,
   CardContent,
   CardHeader,
   CardTitle,
-} from "@code/ui-web/components/card";
+} from "@night-shift/ui-web/components/card";
 
 import type { Run } from "../../control-plane/types";
 import { formatMoment } from "../../control-plane/view-model";

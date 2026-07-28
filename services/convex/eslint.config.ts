@@ -2,9 +2,9 @@ import type { Linter } from "eslint";
 import convexPlugin from "@convex-dev/eslint-plugin";
 import { defineConfig } from "eslint/config";
 
-import { baseConfig } from "@code/eslint-config/base";
-import { convexConfig } from "@code/eslint-config/convex";
-import { createStrictSyntax } from "@code/eslint-config/syntax";
+import { baseConfig } from "@night-shift/eslint-config/base";
+import { convexConfig } from "@night-shift/eslint-config/convex";
+import { createStrictSyntax } from "@night-shift/eslint-config/syntax";
 
 const convexRecommendedConfig = convexPlugin.configs.recommended.map(
   (config: Linter.Config) => ({

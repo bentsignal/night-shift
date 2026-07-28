@@ -17,7 +17,7 @@ afterEach(async () => {
 
 describe("HostCredentialStore", () => {
   it("serializes modifications and preserves provider OAuth fields", async () => {
-    const directory = await mkdtemp(join(tmpdir(), "code-worker-auth-"));
+    const directory = await mkdtemp(join(tmpdir(), "night-shift-worker-auth-"));
     temporaryDirectories.push(directory);
     const path = join(directory, "auth.json");
     const store = new HostCredentialStore(path);

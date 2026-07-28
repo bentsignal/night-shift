@@ -58,10 +58,9 @@ export interface ModelResolverService {
   ): Effect.Effect<LanguageModel.Service, ModelResolutionError>;
 }
 
-export class ModelResolver extends Context.Tag("@code/worker/ModelResolver")<
-  ModelResolver,
-  ModelResolverService
->() {}
+export class ModelResolver extends Context.Tag(
+  "@night-shift/worker/ModelResolver",
+)<ModelResolver, ModelResolverService>() {}
 
 export function modelResolverLayer(service: ModelResolverService) {
   return Layer.succeed(ModelResolver, service);
@@ -89,10 +88,9 @@ interface CheckpointSinkService {
   ): Effect.Effect<void, CheckpointPublishError>;
 }
 
-export class CheckpointSink extends Context.Tag("@code/worker/CheckpointSink")<
-  CheckpointSink,
-  CheckpointSinkService
->() {}
+export class CheckpointSink extends Context.Tag(
+  "@night-shift/worker/CheckpointSink",
+)<CheckpointSink, CheckpointSinkService>() {}
 
 export function checkpointSinkLayer(
   publish: (milestone: RuntimeMilestone) => Promise<void>,

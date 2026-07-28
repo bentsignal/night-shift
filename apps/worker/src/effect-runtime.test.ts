@@ -197,7 +197,7 @@ function runtimeSelection() {
 }
 
 async function temporaryDirectory() {
-  const directory = await mkdtemp(join(tmpdir(), "code-effect-worker-"));
+  const directory = await mkdtemp(join(tmpdir(), "night-shift-effect-worker-"));
   temporaryDirectories.push(directory);
   return directory;
 }

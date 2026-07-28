@@ -1,5 +1,5 @@
 {
-  "name": "@code/web",
+  "name": "@night-shift/web",
   "private": true,
   "type": "module",
   "scripts": {
@@ -13,9 +13,9 @@
     "typecheck": "tsc --noEmit"
   },
   "dependencies": {
-    "@code/config": "workspace:*",
-    "@code/effect-react": "workspace:*",
-    "@code/ui-web": "workspace:*",
+    "@night-shift/config": "workspace:*",
+    "@night-shift/effect-react": "workspace:*",
+    "@night-shift/ui-web": "workspace:*",
     "@tanstack/react-router": "1.170.0",
     "@tanstack/react-start": "1.168.0",
     "convex": "catalog:",
@@ -26,10 +26,10 @@
     "react-dom": "catalog:"
   },
   "devDependencies": {
-    "@code/eslint-config": "workspace:*",
-    "@code/prettier-config": "workspace:*",
-    "@code/tailwind-config": "workspace:*",
-    "@code/tsconfig": "workspace:*",
+    "@night-shift/eslint-config": "workspace:*",
+    "@night-shift/prettier-config": "workspace:*",
+    "@night-shift/tailwind-config": "workspace:*",
+    "@night-shift/tsconfig": "workspace:*",
     "@tailwindcss/vite": "^4.1.16",
     "@testing-library/react": "^16.3.1",
     "@types/node": "catalog:",
@@ -46,5 +46,5 @@
     "vite-tsconfig-paths": "^5.1.4",
     "vitest": "^4.0.17"
   },
-  "prettier": "@code/prettier-config"
+  "prettier": "@night-shift/prettier-config"
 }

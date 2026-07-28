@@ -1,10 +1,14 @@
 import { Check, Clock3, Pause, Play, Server, Square, X } from "lucide-react";
 
-import { Badge } from "@code/ui-web/components/badge";
-import { Button } from "@code/ui-web/components/button";
-import { Card, CardContent, CardHeader } from "@code/ui-web/components/card";
-import { Separator } from "@code/ui-web/components/separator";
-import { cn } from "@code/ui-web/lib/utils";
+import { Badge } from "@night-shift/ui-web/components/badge";
+import { Button } from "@night-shift/ui-web/components/button";
+import {
+  Card,
+  CardContent,
+  CardHeader,
+} from "@night-shift/ui-web/components/card";
+import { Separator } from "@night-shift/ui-web/components/separator";
+import { cn } from "@night-shift/ui-web/lib/utils";
 
 import type { Run, RunCommand } from "../../control-plane/types";
 import {

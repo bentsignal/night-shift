@@ -1,11 +1,13 @@
 import { app, BrowserWindow, shell } from "electron";
 
-import { defaultDevelopmentWebUrl } from "@code/config/urls";
+import { defaultDevelopmentWebUrl } from "@night-shift/config/urls";
 
 function createWindow() {
-  const webUrl = new URL(process.env.CODE_WEB_URL ?? defaultDevelopmentWebUrl);
+  const webUrl = new URL(
+    process.env.NIGHT_SHIFT_WEB_URL ?? defaultDevelopmentWebUrl,
+  );
   const window = new BrowserWindow({
-    title: "Code",
+    title: "night shift",
     width: 1280,
     height: 840,
     minWidth: 800,

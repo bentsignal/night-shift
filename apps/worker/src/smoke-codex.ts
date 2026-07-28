@@ -4,16 +4,16 @@ import { HostCredentialStore } from "./credential-store.ts";
 import { productionModelResolver } from "./providers.ts";
 import { ProviderRequestError } from "./runtime-services.ts";
 
-if (process.env.CODE_LIVE_CODEX_SMOKE !== "1") {
+if (process.env.NIGHT_SHIFT_LIVE_CODEX_SMOKE !== "1") {
   throw new Error(
-    "Refusing a provider request without CODE_LIVE_CODEX_SMOKE=1",
+    "Refusing a provider request without NIGHT_SHIFT_LIVE_CODEX_SMOKE=1",
   );
 }
 
 const resolver = productionModelResolver({
   credentials: new HostCredentialStore(),
 });
-const modelName = process.env.CODE_CODEX_SMOKE_MODEL ?? "gpt-5.6-sol";
+const modelName = process.env.NIGHT_SHIFT_CODEX_SMOKE_MODEL ?? "gpt-5.6-sol";
 const program = Effect.gen(function* () {
   const model = yield* resolver.resolve(
     {

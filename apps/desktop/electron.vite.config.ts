@@ -3,7 +3,7 @@ import { defineConfig, externalizeDepsPlugin } from "electron-vite";
 
 export default defineConfig({
   main: {
-    plugins: [externalizeDepsPlugin({ exclude: ["@code/config"] })],
+    plugins: [externalizeDepsPlugin({ exclude: ["@night-shift/config"] })],
     build: { rollupOptions: { input: resolve("src/main/index.ts") } },
   },
   preload: {

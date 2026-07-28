@@ -1,21 +1,21 @@
 import { ArrowRight, LoaderCircle } from "lucide-react";
 
-import { Button } from "@code/ui-web/components/button";
+import { Button } from "@night-shift/ui-web/components/button";
 import {
   CardContent,
   CardHeader,
   CardTitle,
-} from "@code/ui-web/components/card";
-import { Input } from "@code/ui-web/components/input";
-import { Label } from "@code/ui-web/components/label";
+} from "@night-shift/ui-web/components/card";
+import { Input } from "@night-shift/ui-web/components/input";
+import { Label } from "@night-shift/ui-web/components/label";
 import {
   Select,
   SelectContent,
   SelectItem,
   SelectTrigger,
   SelectValue,
-} from "@code/ui-web/components/select";
-import { Textarea } from "@code/ui-web/components/textarea";
+} from "@night-shift/ui-web/components/select";
+import { Textarea } from "@night-shift/ui-web/components/textarea";
 
 import type { NewRunFormState } from "./new-run-form-state";
 
@@ -41,7 +41,7 @@ export function NewRunFormFields(state: NewRunFormState) {
         <div className="grid gap-2">
           <Label htmlFor="project">Project</Label>
           <Input
-            defaultValue="~/dev/projects/code"
+            defaultValue="~/dev/projects/night-shift"
             id="project"
             name="project"
             required

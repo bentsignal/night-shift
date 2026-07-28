@@ -1,5 +1,5 @@
-import { Badge } from "@code/ui-web/components/badge";
-import { cn } from "@code/ui-web/lib/utils";
+import { Badge } from "@night-shift/ui-web/components/badge";
+import { cn } from "@night-shift/ui-web/lib/utils";
 
 import type { RunStatus } from "../../control-plane/types";
 import { getRunStatusLabel } from "../../control-plane/view-model";

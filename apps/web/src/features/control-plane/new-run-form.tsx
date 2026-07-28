@@ -1,8 +1,8 @@
 import { useNavigate } from "@tanstack/react-router";
 import { Effect } from "effect";
 
-import { createComponent } from "@code/effect-react";
-import { Card, CardFooter } from "@code/ui-web/components/card";
+import { createComponent } from "@night-shift/effect-react";
+import { Card, CardFooter } from "@night-shift/ui-web/components/card";
 
 import { useControlPlane } from "../../control-plane/client";
 import { NewRunFormFields, QueueButton } from "./new-run-form-fields";

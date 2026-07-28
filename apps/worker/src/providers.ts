@@ -181,7 +181,7 @@ function codexHeaders(accountId: string) {
       HttpClient.mapRequest((request) =>
         request.pipe(
           HttpClientRequest.setHeader("chatgpt-account-id", accountId),
-          HttpClientRequest.setHeader("originator", "code"),
+          HttpClientRequest.setHeader("originator", "night-shift"),
           HttpClientRequest.setHeader("OpenAI-Beta", "responses=experimental"),
           HttpClientRequest.setHeader("accept", "text/event-stream"),
         ),

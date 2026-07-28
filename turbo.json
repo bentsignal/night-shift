@@ -34,7 +34,7 @@
     "CI",
     "NODE_ENV",
     "PORT",
-    "CODE_WEB_URL",
+    "NIGHT_SHIFT_WEB_URL",
     "VITE_CONVEX_URL"
   ]
 }

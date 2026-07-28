@@ -14,7 +14,7 @@
     "components": "~/components",
     "hooks": "~/hooks",
     "lib": "~/lib",
-    "utils": "@code/ui-web/lib/utils",
-    "ui": "@code/ui-web/components"
+    "utils": "@night-shift/ui-web/lib/utils",
+    "ui": "@night-shift/ui-web/components"
   }
 }

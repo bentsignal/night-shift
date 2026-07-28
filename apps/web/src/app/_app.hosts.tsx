@@ -1,14 +1,14 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { Cpu, Server } from "lucide-react";
 
-import { Badge } from "@code/ui-web/components/badge";
+import { Badge } from "@night-shift/ui-web/components/badge";
 import {
   Card,
   CardContent,
   CardHeader,
   CardTitle,
-} from "@code/ui-web/components/card";
-import { cn } from "@code/ui-web/lib/utils";
+} from "@night-shift/ui-web/components/card";
+import { cn } from "@night-shift/ui-web/lib/utils";
 
 import type { Host } from "../control-plane/types";
 import { useControlPlane } from "../control-plane/client";

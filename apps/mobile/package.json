@@ -1,5 +1,5 @@
 {
-  "name": "@code/mobile",
+  "name": "@night-shift/mobile",
   "private": true,
   "main": "index.ts",
   "scripts": {
@@ -26,9 +26,9 @@
     "react-native-screens": "~4.25.2"
   },
   "devDependencies": {
-    "@code/eslint-config": "workspace:*",
-    "@code/prettier-config": "workspace:*",
-    "@code/tsconfig": "workspace:*",
+    "@night-shift/eslint-config": "workspace:*",
+    "@night-shift/prettier-config": "workspace:*",
+    "@night-shift/tsconfig": "workspace:*",
     "@types/node": "catalog:",
     "@types/react": "catalog:",
     "eslint": "catalog:",
@@ -36,5 +36,5 @@
     "typescript": "catalog:",
     "vitest": "^4.0.17"
   },
-  "prettier": "@code/prettier-config"
+  "prettier": "@night-shift/prettier-config"
 }

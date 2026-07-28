@@ -9,10 +9,10 @@ import { productionModelResolver } from "./providers.ts";
 import { CommandValidator } from "./validator.ts";
 
 const convexUrl = requiredEnvironment("CONVEX_URL");
-const ownerId = process.env.CODE_OWNER_ID ?? "personal";
-const hostKey = process.env.CODE_HOST_KEY ?? hostname();
+const ownerId = process.env.NIGHT_SHIFT_OWNER_ID ?? "personal";
+const hostKey = process.env.NIGHT_SHIFT_HOST_KEY ?? hostname();
 
-const deterministic = process.env.CODE_RUNTIME_MODE === "faux";
+const deterministic = process.env.NIGHT_SHIFT_RUNTIME_MODE === "faux";
 const credentials = new HostCredentialStore();
 const resolver = deterministic
   ? deterministicModelResolver()
@@ -28,7 +28,7 @@ const daemon = new WorkerDaemon({
   runtime,
   validator: new CommandValidator(),
   hostKey,
-  displayName: process.env.CODE_HOST_NAME ?? hostname(),
+  displayName: process.env.NIGHT_SHIFT_HOST_NAME ?? hostname(),
   capabilities: {
     platform: process.platform,
     arch: process.arch,
@@ -38,7 +38,7 @@ const daemon = new WorkerDaemon({
       : ["openai-codex", "openai", "anthropic"],
     adapterVersion: "effect-ai/0.1.0",
   },
-  renewEveryMs: Number(process.env.CODE_LEASE_RENEW_MS ?? 30_000),
+  renewEveryMs: Number(process.env.NIGHT_SHIFT_LEASE_RENEW_MS ?? 30_000),
 });
 
 for (const signal of ["SIGINT", "SIGTERM"] as const) {

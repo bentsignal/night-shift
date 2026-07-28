@@ -18,7 +18,7 @@ const submission = {
   ownerId: "owner-1",
   submitKey: "submit-1",
   prompt: "Implement the next vertical slice",
-  projectId: "code",
+  projectId: "night-shift",
   requiredCapabilities: ["git", "typescript", "git"],
   runtime: {
     provider: "openai-codex",

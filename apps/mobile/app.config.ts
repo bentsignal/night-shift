@@ -2,19 +2,19 @@ import type { ConfigContext, ExpoConfig } from "expo/config";
 
 export default ({ config }: ConfigContext): ExpoConfig => ({
   ...config,
-  name: "Code",
-  slug: "code-control-plane",
-  scheme: "code-control",
+  name: "night shift",
+  slug: "night-shift",
+  scheme: "night-shift",
   version: "0.1.0",
   orientation: "portrait",
   userInterfaceStyle: "automatic",
   ios: {
-    bundleIdentifier: "dev.shawn.codecontrol",
+    bundleIdentifier: "dev.shawn.nightshift",
     supportsTablet: true,
     infoPlist: { ITSAppUsesNonExemptEncryption: false },
   },
   android: {
-    package: "dev.shawn.codecontrol",
+    package: "dev.shawn.nightshift",
   },
   experiments: {
     typedRoutes: true,

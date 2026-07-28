@@ -5,7 +5,7 @@ import {
   Scripts,
 } from "@tanstack/react-router";
 
-import { productDescription, productName } from "@code/config/product";
+import { productDescription, productName } from "@night-shift/config/product";
 
 import appStyles from "./styles.css?url";
 

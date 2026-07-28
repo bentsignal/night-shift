@@ -11,7 +11,7 @@ const web = spawn(
     cwd: resolve(repositoryRoot, "apps/web"),
     env: {
       ...process.env,
-      VITE_CODE_OWNER_ID: process.env.VITE_CODE_OWNER_ID ?? "personal",
+      VITE_NIGHT_SHIFT_OWNER_ID: process.env.VITE_NIGHT_SHIFT_OWNER_ID ?? "personal",
       VITE_CONVEX_URL: await getLocalConvexUrl(),
     },
     stdio: "inherit",

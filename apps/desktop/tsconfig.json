@@ -1,5 +1,5 @@
 {
-  "extends": "@code/tsconfig/base.json",
+  "extends": "@night-shift/tsconfig/base.json",
   "compilerOptions": {
     "lib": ["DOM", "ES2022"],
     "types": ["node", "electron-vite/node"]

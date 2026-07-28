@@ -23,7 +23,7 @@ const initialSnapshot = {
       title: "Isolate retry boundaries in worker loop",
       prompt:
         "Make retry boundaries explicit and verify a stale attempt cannot complete.",
-      project: "~/dev/projects/code",
+      project: "~/dev/projects/night-shift",
       provider: "OpenAI",
       model: "gpt-5.2-codex",
       reasoning: "high",
@@ -45,7 +45,7 @@ const initialSnapshot = {
       title: "Prove pause and resume boundaries",
       prompt:
         "Exercise the explicit pause state and keep the attempt recoverable.",
-      project: "~/dev/projects/code",
+      project: "~/dev/projects/night-shift",
       provider: "OpenAI",
       model: "gpt-5.2-codex",
       reasoning: "xhigh",
@@ -93,7 +93,7 @@ const initialSnapshot = {
       title: "Validate lease fencing contract",
       prompt:
         "Add focused coverage for queue claiming and stale generation rejection.",
-      project: "~/dev/projects/code",
+      project: "~/dev/projects/night-shift",
       provider: "OpenAI",
       model: "gpt-5.2-codex",
       reasoning: "high",

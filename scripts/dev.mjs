@@ -6,7 +6,7 @@ const convexUrl = await getLocalConvexUrl();
 const packageManager = process.platform === "win32" ? "pnpm.cmd" : "pnpm";
 const sharedEnvironment = {
   ...process.env,
-  VITE_CODE_OWNER_ID: process.env.VITE_CODE_OWNER_ID ?? "personal",
+  VITE_NIGHT_SHIFT_OWNER_ID: process.env.VITE_NIGHT_SHIFT_OWNER_ID ?? "personal",
   VITE_CONVEX_URL: convexUrl,
 };
 const webOnly = process.argv.includes("--web-only");
@@ -15,13 +15,13 @@ const processes = [
   ...(webOnly
     ? []
     : [
-        spawn(packageManager, ["--filter", "@code/convex", "dev"], {
+        spawn(packageManager, ["--filter", "@night-shift/convex", "dev"], {
           cwd: repositoryRoot,
           env: sharedEnvironment,
           stdio: "inherit",
         }),
       ]),
-  spawn(packageManager, ["--filter", "@code/web", "dev"], {
+  spawn(packageManager, ["--filter", "@night-shift/web", "dev"], {
     cwd: repositoryRoot,
     env: sharedEnvironment,
     stdio: "inherit",

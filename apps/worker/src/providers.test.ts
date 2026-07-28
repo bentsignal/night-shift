@@ -108,7 +108,7 @@ describe("productionModelResolver", () => {
 });
 
 async function credentialStore() {
-  const directory = await mkdtemp(join(tmpdir(), "code-provider-test-"));
+  const directory = await mkdtemp(join(tmpdir(), "night-shift-provider-test-"));
   temporaryDirectories.push(directory);
   return new HostCredentialStore(join(directory, "auth.json"));
 }

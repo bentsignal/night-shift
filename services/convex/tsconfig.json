@@ -1,5 +1,5 @@
 {
-  "extends": "@code/tsconfig/base.json",
+  "extends": "@night-shift/tsconfig/base.json",
   "compilerOptions": {
     "lib": ["ES2022", "DOM"],
     "module": "ESNext",

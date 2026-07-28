@@ -1,5 +1,5 @@
 {
-  "name": "@code/prettier-config",
+  "name": "@night-shift/prettier-config",
   "private": true,
   "type": "module",
   "exports": {

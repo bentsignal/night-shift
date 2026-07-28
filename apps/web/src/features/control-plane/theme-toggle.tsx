@@ -1,13 +1,13 @@
 import { Laptop, Moon, Sun } from "lucide-react";
 
-import { Button } from "@code/ui-web/components/button";
+import { Button } from "@night-shift/ui-web/components/button";
 import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuTrigger,
-} from "@code/ui-web/components/dropdown-menu";
-import { useTheme } from "@code/ui-web/theme-provider";
+} from "@night-shift/ui-web/components/dropdown-menu";
+import { useTheme } from "@night-shift/ui-web/theme-provider";
 
 export function ThemeToggle() {
   const { theme, setTheme } = useTheme();

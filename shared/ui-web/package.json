@@ -1,5 +1,5 @@
 {
-  "name": "@code/ui-web",
+  "name": "@night-shift/ui-web",
   "private": true,
   "type": "module",
   "imports": {
@@ -21,9 +21,9 @@
     "typecheck": "tsc --noEmit"
   },
   "devDependencies": {
-    "@code/eslint-config": "workspace:*",
-    "@code/prettier-config": "workspace:*",
-    "@code/tsconfig": "workspace:*",
+    "@night-shift/eslint-config": "workspace:*",
+    "@night-shift/prettier-config": "workspace:*",
+    "@night-shift/tsconfig": "workspace:*",
     "@types/node": "catalog:",
     "@types/react": "catalog:",
     "eslint": "catalog:",
@@ -36,7 +36,7 @@
     "react": "catalog:",
     "react-dom": "catalog:"
   },
-  "prettier": "@code/prettier-config",
+  "prettier": "@night-shift/prettier-config",
   "dependencies": {
     "class-variance-authority": "^0.7.1",
     "clsx": "^2.1.1",

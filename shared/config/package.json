@@ -1,5 +1,5 @@
 {
-  "name": "@code/config",
+  "name": "@night-shift/config",
   "private": true,
   "type": "module",
   "exports": {
@@ -13,13 +13,13 @@
     "typecheck": "tsc --noEmit"
   },
   "devDependencies": {
-    "@code/eslint-config": "workspace:*",
-    "@code/prettier-config": "workspace:*",
-    "@code/tsconfig": "workspace:*",
+    "@night-shift/eslint-config": "workspace:*",
+    "@night-shift/prettier-config": "workspace:*",
+    "@night-shift/tsconfig": "workspace:*",
     "@types/node": "catalog:",
     "eslint": "catalog:",
     "prettier": "catalog:",
     "typescript": "catalog:"
   },
-  "prettier": "@code/prettier-config"
+  "prettier": "@night-shift/prettier-config"
 }

@@ -6,8 +6,8 @@ import {
   SidebarInset,
   SidebarProvider,
   SidebarTrigger,
-} from "@code/ui-web/components/sidebar";
-import { ThemeProvider } from "@code/ui-web/theme-provider";
+} from "@night-shift/ui-web/components/sidebar";
+import { ThemeProvider } from "@night-shift/ui-web/theme-provider";
 
 import type { ControlPlaneClient } from "../../control-plane/types";
 import { ControlPlaneProvider } from "../../control-plane/client";
@@ -21,7 +21,7 @@ function pageTitle(pathname: string) {
   if (pathname === "/runs") return "Runs";
   if (pathname.startsWith("/runs/")) return "Run";
   if (pathname === "/hosts") return "Hosts";
-  return "Code";
+  return "night shift";
 }
 
 export function ControlPlaneShell() {
@@ -35,7 +35,7 @@ export function ControlPlaneShell() {
     if (!url) return;
     const convexClient = new ConvexControlPlaneClient(
       url,
-      import.meta.env.VITE_CODE_OWNER_ID ?? "personal",
+      import.meta.env.VITE_NIGHT_SHIFT_OWNER_ID ?? "personal",
     );
     const activation = window.setTimeout(() => setClient(convexClient), 0);
     return () => {

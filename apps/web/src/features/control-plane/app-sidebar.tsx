@@ -23,7 +23,7 @@ import {
   SidebarMenuItem,
   SidebarRail,
   useSidebar,
-} from "@code/ui-web/components/sidebar";
+} from "@night-shift/ui-web/components/sidebar";
 
 import { useControlPlane } from "../../control-plane/client";
 import { getHostCapacity } from "../../control-plane/view-model";
@@ -66,14 +66,14 @@ export function AppSidebar() {
               asChild
               className="h-11 data-[slot=sidebar-menu-button]:font-semibold"
               size="lg"
-              tooltip="Code"
+              tooltip="night shift"
             >
               <QuickLink to="/new">
                 <span className="bg-sidebar-primary text-sidebar-primary-foreground flex size-7 items-center justify-center rounded-md">
                   <SquareTerminal className="size-4" />
                 </span>
                 <span className="group-data-[collapsible=icon]:hidden">
-                  Code
+                  night shift
                 </span>
               </QuickLink>
             </SidebarMenuButton>

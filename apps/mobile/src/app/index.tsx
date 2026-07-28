@@ -30,7 +30,7 @@ export default function HomeScreen() {
             marginTop: 8,
           }}
         >
-          Code
+          night shift
         </Text>
         <Text
           style={{

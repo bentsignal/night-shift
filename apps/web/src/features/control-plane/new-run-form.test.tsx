@@ -95,14 +95,14 @@ describe("NewRunForm", () => {
     });
 
     const formData = new FormData();
-    formData.set("project", "~/dev/projects/code");
+    formData.set("project", "~/dev/projects/night-shift");
     formData.set("prompt", "Wire the Effect boundary.");
 
     await act(async () => result.current.submit(formData));
 
     expect(submitWork).toHaveBeenCalledWith({
       model: "claude-opus-4-1",
-      project: "~/dev/projects/code",
+      project: "~/dev/projects/night-shift",
       prompt: "Wire the Effect boundary.",
       provider: "anthropic",
       reasoning: "xhigh",

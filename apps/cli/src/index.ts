@@ -3,11 +3,13 @@
 const command = process.argv[2] ?? "help";
 
 if (command === "status") {
-  console.log("Code control plane CLI is installed; no host is connected yet.");
+  console.log(
+    "night shift control plane CLI is installed; no host is connected yet.",
+  );
 } else {
-  console.log(`Code control plane
+  console.log(`night shift control plane
 
 Usage:
-  code-control status   Show local client status
+  night-shift status   Show local client status
 `);
 }

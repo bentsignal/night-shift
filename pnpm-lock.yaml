@@ -49,7 +49,7 @@ importers:
 
   .:
     devDependencies:
-      '@code/prettier-config':
+      '@night-shift/prettier-config':
         specifier: workspace:*
         version: link:tooling/prettier
       prettier:
@@ -64,13 +64,13 @@ importers:
 
   apps/cli:
     devDependencies:
-      '@code/eslint-config':
+      '@night-shift/eslint-config':
         specifier: workspace:*
         version: link:../../tooling/eslint
-      '@code/prettier-config':
+      '@night-shift/prettier-config':
         specifier: workspace:*
         version: link:../../tooling/prettier
-      '@code/tsconfig':
+      '@night-shift/tsconfig':
         specifier: workspace:*
         version: link:../../tooling/typescript
       '@types/node':
@@ -88,16 +88,16 @@ importers:
 
   apps/desktop:
     devDependencies:
-      '@code/config':
+      '@night-shift/config':
         specifier: workspace:*
         version: link:../../shared/config
-      '@code/eslint-config':
+      '@night-shift/eslint-config':
         specifier: workspace:*
         version: link:../../tooling/eslint
-      '@code/prettier-config':
+      '@night-shift/prettier-config':
         specifier: workspace:*
         version: link:../../tooling/prettier
-      '@code/tsconfig':
+      '@night-shift/tsconfig':
         specifier: workspace:*
         version: link:../../tooling/typescript
       '@types/node':
@@ -158,13 +158,13 @@ importers:
         specifier: ~4.25.2
         version: 4.25.2(react-native@0.85.3(@babel/core@7.29.7)(@react-native/metro-config@0.86.1(@babel/core@7.29.7))(@types/react@19.2.17)(react@19.2.3))(react@19.2.3)
     devDependencies:
-      '@code/eslint-config':
+      '@night-shift/eslint-config':
         specifier: workspace:*
         version: link:../../tooling/eslint
-      '@code/prettier-config':
+      '@night-shift/prettier-config':
         specifier: workspace:*
         version: link:../../tooling/prettier
-      '@code/tsconfig':
+      '@night-shift/tsconfig':
         specifier: workspace:*
         version: link:../../tooling/typescript
       '@types/node':
@@ -188,13 +188,13 @@ importers:
 
   apps/web:
     dependencies:
-      '@code/config':
+      '@night-shift/config':
         specifier: workspace:*
         version: link:../../shared/config
-      '@code/effect-react':
+      '@night-shift/effect-react':
         specifier: workspace:*
         version: link:../../shared/effect-react
-      '@code/ui-web':
+      '@night-shift/ui-web':
         specifier: workspace:*
         version: link:../../shared/ui-web
       '@tanstack/react-router':
@@ -222,16 +222,16 @@ importers:
         specifier: 'catalog:'
         version: 19.2.3(react@19.2.3)
     devDependencies:
-      '@code/eslint-config':
+      '@night-shift/eslint-config':
         specifier: workspace:*
         version: link:../../tooling/eslint
-      '@code/prettier-config':
+      '@night-shift/prettier-config':
         specifier: workspace:*
         version: link:../../tooling/prettier
-      '@code/tailwind-config':
+      '@night-shift/tailwind-config':
         specifier: workspace:*
         version: link:../../tooling/tailwind
-      '@code/tsconfig':
+      '@night-shift/tsconfig':
         specifier: workspace:*
         version: link:../../tooling/typescript
       '@tailwindcss/vite':
@@ -307,13 +307,13 @@ importers:
         specifier: 3.22.0
         version: 3.22.0
     devDependencies:
-      '@code/eslint-config':
+      '@night-shift/eslint-config':
         specifier: workspace:*
         version: link:../../tooling/eslint
-      '@code/prettier-config':
+      '@night-shift/prettier-config':
         specifier: workspace:*
         version: link:../../tooling/prettier
-      '@code/tsconfig':
+      '@night-shift/tsconfig':
         specifier: workspace:*
         version: link:../../tooling/typescript
       '@types/node':
@@ -350,18 +350,18 @@ importers:
         specifier: 3.22.0
         version: 3.22.0
     devDependencies:
-      '@code/eslint-config':
-        specifier: workspace:*
-        version: link:../../tooling/eslint
-      '@code/prettier-config':
-        specifier: workspace:*
-        version: link:../../tooling/prettier
-      '@code/tsconfig':
-        specifier: workspace:*
-        version: link:../../tooling/typescript
       '@convex-dev/eslint-plugin':
         specifier: ^1.1.1
         version: 1.2.2(convex@1.39.1(react@19.2.3))(eslint@9.39.5(jiti@2.7.0))(typescript@6.0.3)
+      '@night-shift/eslint-config':
+        specifier: workspace:*
+        version: link:../../tooling/eslint
+      '@night-shift/prettier-config':
+        specifier: workspace:*
+        version: link:../../tooling/prettier
+      '@night-shift/tsconfig':
+        specifier: workspace:*
+        version: link:../../tooling/typescript
       '@types/node':
         specifier: 'catalog:'
         version: 22.20.1
@@ -383,13 +383,13 @@ importers:
 
   shared/config:
     devDependencies:
-      '@code/eslint-config':
+      '@night-shift/eslint-config':
         specifier: workspace:*
         version: link:../../tooling/eslint
-      '@code/prettier-config':
+      '@night-shift/prettier-config':
         specifier: workspace:*
         version: link:../../tooling/prettier
-      '@code/tsconfig':
+      '@night-shift/tsconfig':
         specifier: workspace:*
         version: link:../../tooling/typescript
       '@types/node':
@@ -414,13 +414,13 @@ importers:
         specifier: ^1.6.0
         version: 1.6.0(react@19.2.3)
     devDependencies:
-      '@code/eslint-config':
+      '@night-shift/eslint-config':
         specifier: workspace:*
         version: link:../../tooling/eslint
-      '@code/prettier-config':
+      '@night-shift/prettier-config':
         specifier: workspace:*
         version: link:../../tooling/prettier
-      '@code/tsconfig':
+      '@night-shift/tsconfig':
         specifier: workspace:*
         version: link:../../tooling/typescript
       '@testing-library/jest-dom':
@@ -487,13 +487,13 @@ importers:
         specifier: ^1.4.0
         version: 1.4.0
     devDependencies:
-      '@code/eslint-config':
+      '@night-shift/eslint-config':
         specifier: workspace:*
         version: link:../../tooling/eslint
-      '@code/prettier-config':
+      '@night-shift/prettier-config':
         specifier: workspace:*
         version: link:../../tooling/prettier
-      '@code/tsconfig':
+      '@night-shift/tsconfig':
         specifier: workspace:*
         version: link:../../tooling/typescript
       '@types/node':
@@ -533,10 +533,10 @@ importers:
         specifier: ^8.46.2
         version: 8.65.0(eslint@9.39.5(jiti@2.7.0))(typescript@6.0.3)
     devDependencies:
-      '@code/prettier-config':
+      '@night-shift/prettier-config':
         specifier: workspace:*
         version: link:../prettier
-      '@code/tsconfig':
+      '@night-shift/tsconfig':
         specifier: workspace:*
         version: link:../typescript
       '@types/node':

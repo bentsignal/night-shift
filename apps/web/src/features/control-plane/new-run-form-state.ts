@@ -2,8 +2,8 @@ import type { useNavigate } from "@tanstack/react-router";
 import { useState } from "react";
 import { Context, Effect } from "effect";
 
-import type { Store } from "@code/effect-react";
-import { makeStore, useStoreSelector } from "@code/effect-react";
+import type { Store } from "@night-shift/effect-react";
+import { makeStore, useStoreSelector } from "@night-shift/effect-react";
 
 import type { useControlPlane } from "../../control-plane/client";
 import type { ReasoningLevel } from "../../control-plane/types";

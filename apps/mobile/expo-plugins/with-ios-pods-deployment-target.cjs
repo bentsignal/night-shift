@@ -3,7 +3,7 @@ const path = require("node:path");
 const { withDangerousMod } = require("expo/config-plugins");
 
 const DEPLOYMENT_TARGET = "16.4";
-const MARKER = "Code force iOS pods deployment target";
+const MARKER = "night shift force iOS pods deployment target";
 
 function patchPodfile(contents) {
   if (contents.includes(MARKER)) return contents;

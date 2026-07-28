@@ -1,4 +1,4 @@
-import { createComponent } from "@code/effect-react";
+import { createComponent } from "@night-shift/effect-react";
 
 import { newRunFormState } from "./new-run-form-state";
 

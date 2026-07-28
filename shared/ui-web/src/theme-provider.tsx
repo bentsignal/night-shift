@@ -9,7 +9,7 @@ export type Theme = "dark" | "light" | "system";
 export function ThemeProvider({
   children,
   defaultTheme = "dark",
-  storageKey = "code-theme",
+  storageKey = "night-shift-theme",
 }: {
   children: ReactNode;
   defaultTheme?: Theme;

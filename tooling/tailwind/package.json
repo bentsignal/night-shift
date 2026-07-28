@@ -1,5 +1,5 @@
 {
-  "name": "@code/tailwind-config",
+  "name": "@night-shift/tailwind-config",
   "private": true,
   "type": "module",
   "exports": {

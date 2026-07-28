@@ -31,10 +31,10 @@ Verbatim planning transcripts are stored under `docs/raw/`. They are source mate
 
 ## Source repositories
 
-- Rodge Mail scaffold source: `/Users/shawn/dev/projects/rodge-mail`
+- Legacy scaffold source: `/Users/shawn/dev/projects/rodge-mail`
 - UAV source: `/Users/shawn/dev/projects/uav`
 
-Do not modify either source repository while extracting or studying reusable pieces. Rodge Mail currently has uncommitted work that must be preserved. Derive from a deliberate snapshot or copy tracked pieces into this repository.
+Do not modify either source repository while extracting or studying reusable pieces. The legacy scaffold currently has uncommitted work that must be preserved. Derive from a deliberate snapshot or copy tracked pieces into this repository.
 
 ## Delegation during initial implementation
 

@@ -1,8 +1,8 @@
 import { defineConfig } from "eslint/config";
 
-import { baseConfig } from "@code/eslint-config/base";
-import { reactConfig } from "@code/eslint-config/react";
-import { createStrictSyntax } from "@code/eslint-config/syntax";
+import { baseConfig } from "@night-shift/eslint-config/base";
+import { reactConfig } from "@night-shift/eslint-config/react";
+import { createStrictSyntax } from "@night-shift/eslint-config/syntax";
 
 export default defineConfig(
   { ignores: [".expo/**", "expo-plugins/**"] },
