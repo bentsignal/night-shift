@@ -1,13 +1,16 @@
 # Code
 
-A personal control plane for agentic coding work. Convex owns durable orchestration state while enrolled host workers execute runs through a product-owned Pi runtime adapter.
+A personal control plane for agentic coding work. Convex owns durable orchestration state while enrolled host workers execute runs through a product-owned Effect AI harness.
 
 The first vertical slice includes:
 
 - A TanStack Start operations console for queueing and controlling runs
-- A Convex service with explicit run, host, attempt, milestone, and command state
+- A Convex service with explicit run, host, attempt, milestone, and command state,
+  with durable admission executed as an Effect through Confect
 - A TypeScript worker with host registration, health, fenced leases, sparse checkpoints, pause/resume/cancel, and deterministic validation
-- A Pi adapter using `@earendil-works/pi-agent-core` and `@earendil-works/pi-ai`
+- A bounded Effect AI harness with typed tools, provider Layers, and sparse turn checkpoints
+- An experimental `@code/effect-react` package with selector stores and Effect-built,
+  dependency-checked component and hook factories
 - Viable CLI, Electron, and Expo client scaffolds
 
 ## Run locally
@@ -30,10 +33,19 @@ CODE_RUNTIME_MODE=faux pnpm dev:worker
 ```
 
 `CODE_RUNTIME_MODE=faux` provides deterministic local execution without a
-provider call. Real execution reads Pi-compatible provider credentials from
-the host, including the OpenAI Codex subscription stored under
-`PI_CODING_AGENT_DIR` or `~/.pi/agent/auth.json`. Credentials never enter
-Convex.
+provider call. Real execution supports `OPENAI_API_KEY`, `ANTHROPIC_API_KEY`,
+and the existing OpenAI Codex subscription OAuth credential stored under
+`PI_CODING_AGENT_DIR` or `~/.pi/agent/auth.json`. The worker owns the provider
+transport and credential types; the compatible path only avoids forcing a new
+login during migration. Credentials never enter Convex.
+
+The Codex subscription transport fails explicitly when its access token is
+expired; automatic OAuth refresh is not implemented yet. Its opt-in live smoke
+test has no tools and refuses to make a request unless explicitly enabled:
+
+```sh
+CODE_LIVE_CODEX_SMOKE=1 pnpm --filter @code/worker smoke:codex
+```
 
 Focused development commands are also available:
 

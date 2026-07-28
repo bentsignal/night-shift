@@ -20,6 +20,10 @@
     "typecheck": "tsc --noEmit"
   },
   "dependencies": {
+    "@confect/core": "9.2.5",
+    "@confect/server": "9.2.5",
+    "@effect/platform": "0.96.3",
+    "effect": "3.22.0",
     "convex": "catalog:"
   },
   "devDependencies": {
@@ -28,6 +32,7 @@
     "@code/prettier-config": "workspace:*",
     "@code/tsconfig": "workspace:*",
     "@types/node": "catalog:",
+    "convex-test": "0.0.54",
     "eslint": "catalog:",
     "prettier": "catalog:",
     "typescript": "catalog:",

@@ -37,16 +37,18 @@ const navigation = [
 ];
 
 export function AppSidebar() {
-  const { snapshot } = useControlPlane();
+  const authorityState = useControlPlane((state) => state.authority);
+  const hosts = useControlPlane((state) => state.hosts);
+  const runs = useControlPlane((state) => state.runs);
   const { isMobile, setOpenMobile } = useSidebar();
   const pathname = useRouterState({
     select: (state) => state.location.pathname,
   });
-  const capacity = getHostCapacity(snapshot.hosts);
+  const capacity = getHostCapacity(hosts);
   const authority =
-    snapshot.authority === "connected"
+    authorityState === "connected"
       ? { label: "Authority online", tone: "text-success" }
-      : snapshot.authority === "recovering"
+      : authorityState === "recovering"
         ? { label: "Reconnecting", tone: "text-warning" }
         : { label: "Authority offline", tone: "text-destructive" };
 
@@ -105,7 +107,7 @@ export function AppSidebar() {
           <SidebarGroupLabel>Recent runs</SidebarGroupLabel>
           <SidebarGroupContent className="min-h-0">
             <SidebarMenu>
-              {snapshot.runs.slice(0, 12).map((run) => (
+              {runs.slice(0, 12).map((run) => (
                 <SidebarMenuItem key={run.id}>
                   <SidebarMenuButton
                     asChild
@@ -120,7 +122,7 @@ export function AppSidebar() {
                   </SidebarMenuButton>
                 </SidebarMenuItem>
               ))}
-              <EmptyRecentRuns visible={snapshot.runs.length === 0} />
+              <EmptyRecentRuns visible={runs.length === 0} />
             </SidebarMenu>
           </SidebarGroupContent>
         </SidebarGroup>

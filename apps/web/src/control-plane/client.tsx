@@ -1,5 +1,6 @@
-import type { ReactNode } from "react";
-import { createContext, use, useSyncExternalStore } from "react";
+import { useSyncExternalStore } from "react";
+
+import { createStore } from "@code/effect-react";
 
 import type {
   ControlPlaneClient,
@@ -8,36 +9,7 @@ import type {
   SubmitWorkInput,
 } from "./types";
 
-const ControlPlaneContext = createContext<ControlPlaneClient | undefined>(
-  undefined,
-);
-
-export function ControlPlaneProvider({
-  client,
-  children,
-}: {
-  client: ControlPlaneClient;
-  children: ReactNode;
-}) {
-  return (
-    <ControlPlaneContext.Provider value={client}>
-      {children}
-    </ControlPlaneContext.Provider>
-  );
-}
-
-export interface ControlPlaneState {
-  snapshot: ControlPlaneSnapshot;
-  submitWork: (input: SubmitWorkInput) => Promise<string>;
-  commandRun: (runId: string, command: RunCommand) => Promise<void>;
-}
-
-export function useControlPlane() {
-  const client = use(ControlPlaneContext);
-  if (!client) {
-    throw new Error("useControlPlane must be used inside ControlPlaneProvider");
-  }
-
+function useControlPlaneState({ client }: { client: ControlPlaneClient }) {
   const snapshot = useSyncExternalStore(
     client.subscribe,
     client.getSnapshot,
@@ -45,8 +17,18 @@ export function useControlPlane() {
   );
 
   return {
-    snapshot,
-    submitWork: client.submitWork,
+    ...snapshot,
     commandRun: client.commandRun,
+    submitWork: client.submitWork,
   };
 }
+
+export interface ControlPlaneState extends ControlPlaneSnapshot {
+  submitWork: (input: SubmitWorkInput) => Promise<string>;
+  commandRun: (runId: string, command: RunCommand) => Promise<void>;
+}
+
+const controlPlane = createStore(useControlPlaneState);
+
+export const ControlPlaneProvider = controlPlane.Store;
+export const useControlPlane = controlPlane.useStore;

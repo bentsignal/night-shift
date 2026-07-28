@@ -25,7 +25,9 @@ Verbatim planning transcripts are stored under `docs/raw/`. They are source mate
 - Only parent orchestrators may create child agents initially. Children must not recursively spawn agents.
 - Child coding attempts use isolated Git worktrees created and managed by deterministic workflow code.
 - Keep provider/model/authentication choices independent from orchestration. Credentials stay on execution hosts, not in Convex.
-- Use `@earendil-works/pi-agent-core` and `@earendil-works/pi-ai` behind a product-owned adapter for the initial worker loop unless concrete implementation evidence warrants revisiting the decision.
+- Use Effect AI behind the product-owned host runtime. Keep the bounded agent loop,
+  tools, provider selection, and host-local subscription authentication under
+  product control rather than adopting Pi's harness or session model.
 
 ## Source repositories
 

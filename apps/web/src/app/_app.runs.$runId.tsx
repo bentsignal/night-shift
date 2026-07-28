@@ -21,11 +21,14 @@ export const Route = createFileRoute("/_app/runs/$runId")({
 
 function RunPage() {
   const { runId } = Route.useParams();
-  const { snapshot, commandRun } = useControlPlane();
-  const run = snapshot.runs.find((candidate) => candidate.id === runId);
+  const authority = useControlPlane((state) => state.authority);
+  const commandRun = useControlPlane((state) => state.commandRun);
+  const run = useControlPlane((state) =>
+    state.runs.find((candidate) => candidate.id === runId),
+  );
 
   if (!run) {
-    if (snapshot.authority !== "connected") {
+    if (authority !== "connected") {
       return (
         <div className="mx-auto grid w-full max-w-6xl gap-5 px-5 py-8 md:px-8 md:py-10 lg:grid-cols-[minmax(0,1fr)_19rem]">
           <Skeleton className="h-72 w-full" />

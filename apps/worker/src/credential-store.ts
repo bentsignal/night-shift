@@ -7,15 +7,37 @@ import {
   writeFile,
 } from "node:fs/promises";
 import { dirname, join } from "node:path";
-import type {
-  Credential,
-  CredentialInfo,
-  CredentialStore,
-} from "@earendil-works/pi-ai";
 
-type CredentialFile = Record<string, Credential>;
+export interface ApiKeyCredential {
+  type: "api_key";
+  key: string;
+  [key: string]: unknown;
+}
 
-export class PiCredentialStore implements CredentialStore {
+export interface OAuthCredential {
+  type: "oauth";
+  access: string;
+  refresh?: string;
+  expires: number;
+  accountId?: string;
+  [key: string]: unknown;
+}
+
+export type ProviderCredential = ApiKeyCredential | OAuthCredential;
+
+export interface CredentialInfo {
+  providerId: string;
+  type: ProviderCredential["type"];
+}
+
+type CredentialFile = Record<string, ProviderCredential>;
+
+/**
+ * Host-local provider credentials. Convex never receives values from this
+ * store. The default path remains compatible with existing Pi OAuth logins
+ * during the migration, but the type and lifecycle are product-owned.
+ */
+export class HostCredentialStore {
   readonly #path: string;
   readonly #lockPath: string;
   readonly #chains = new Map<string, Promise<unknown>>();
@@ -25,7 +47,7 @@ export class PiCredentialStore implements CredentialStore {
     this.#lockPath = `${path}.lock`;
   }
 
-  async read(providerId: string): Promise<Credential | undefined> {
+  async read(providerId: string): Promise<ProviderCredential | undefined> {
     return (await this.#readAll())[providerId];
   }
 
@@ -39,8 +61,10 @@ export class PiCredentialStore implements CredentialStore {
 
   modify(
     providerId: string,
-    fn: (current: Credential | undefined) => Promise<Credential | undefined>,
-  ): Promise<Credential | undefined> {
+    fn: (
+      current: ProviderCredential | undefined,
+    ) => Promise<ProviderCredential | undefined>,
+  ): Promise<ProviderCredential | undefined> {
     return this.#enqueue(providerId, async () =>
       this.#withFileLock(async () => {
         const credentials = await this.#readAll();
@@ -127,6 +151,9 @@ export class PiCredentialStore implements CredentialStore {
 }
 
 function defaultCredentialPath() {
+  if (process.env.CODE_PROVIDER_AUTH_FILE) {
+    return process.env.CODE_PROVIDER_AUTH_FILE;
+  }
   const base =
     process.env.PI_CODING_AGENT_DIR ??
     join(process.env.HOME ?? process.cwd(), ".pi", "agent");

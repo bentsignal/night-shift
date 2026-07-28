@@ -13,7 +13,7 @@ export const Route = createFileRoute("/_app/runs/")({
 });
 
 function RunsPage() {
-  const { snapshot } = useControlPlane();
+  const runs = useControlPlane((state) => state.runs);
 
   return (
     <Page
@@ -28,7 +28,7 @@ function RunsPage() {
       description="Durable assignments across queued, active, and completed work."
       title="Runs"
     >
-      <RunList runs={snapshot.runs} />
+      <RunList runs={runs} />
     </Page>
   );
 }

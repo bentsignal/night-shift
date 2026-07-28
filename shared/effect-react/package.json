@@ -1,38 +1,42 @@
 {
-  "name": "@code/worker",
-  "version": "0.1.0",
-  "description": "Host-local execution worker for the Code control plane.",
+  "name": "@code/effect-react",
   "private": true,
   "type": "module",
+  "exports": {
+    ".": "./src/index.ts"
+  },
   "scripts": {
-    "build": "tsc --noEmit",
     "format": "prettier --check . --ignore-path ../../.gitignore",
     "format:fix": "prettier --write . --ignore-path ../../.gitignore",
     "lint": "eslint",
-    "smoke:codex": "node --experimental-strip-types src/smoke-codex.ts",
-    "start": "node --experimental-strip-types src/main.ts",
     "test": "vitest run",
     "typecheck": "tsc --noEmit"
   },
   "dependencies": {
-    "@effect/ai": "0.37.0",
-    "@effect/ai-anthropic": "0.27.0",
-    "@effect/ai-openai": "0.41.0",
-    "@effect/experimental": "0.61.0",
-    "@effect/platform": "0.97.0",
-    "@effect/rpc": "0.76.0",
-    "convex": "catalog:",
-    "effect": "3.22.0"
+    "effect": "^3.22.0",
+    "use-sync-external-store": "^1.6.0"
   },
   "devDependencies": {
     "@code/eslint-config": "workspace:*",
     "@code/prettier-config": "workspace:*",
     "@code/tsconfig": "workspace:*",
+    "@testing-library/jest-dom": "^6.9.1",
+    "@testing-library/react": "^16.3.1",
     "@types/node": "catalog:",
+    "@types/react": "catalog:",
+    "@types/react-dom": "catalog:",
+    "@types/use-sync-external-store": "^1.5.0",
     "eslint": "catalog:",
+    "jsdom": "^27.4.0",
     "prettier": "catalog:",
+    "react": "catalog:",
+    "react-dom": "catalog:",
     "typescript": "catalog:",
     "vitest": "^4.0.17"
+  },
+  "peerDependencies": {
+    "react": "catalog:",
+    "react-dom": "catalog:"
   },
   "prettier": "@code/prettier-config"
 }

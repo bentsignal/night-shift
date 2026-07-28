@@ -20,14 +20,14 @@ export const Route = createFileRoute("/_app/hosts")({
 });
 
 function HostsPage() {
-  const { snapshot } = useControlPlane();
+  const hosts = useControlPlane((state) => state.hosts);
 
   return (
     <Page
       description="Execution machines enrolled with the control plane."
       title="Hosts"
     >
-      <HostsContent hosts={snapshot.hosts} />
+      <HostsContent hosts={hosts} />
     </Page>
   );
 }
