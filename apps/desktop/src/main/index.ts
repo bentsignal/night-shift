@@ -26,7 +26,23 @@ function createWindow() {
   window.webContents.on("will-navigate", (event, url) => {
     if (new URL(url).origin !== webUrl.origin) event.preventDefault();
   });
-  void window.loadURL(webUrl.href);
+  loadWebApp(window, webUrl);
+}
+
+function loadWebApp(window: BrowserWindow, webUrl: URL) {
+  let retry: ReturnType<typeof setTimeout> | undefined;
+
+  const load = () => {
+    if (window.isDestroyed()) return;
+    void window.loadURL(webUrl.href).catch(() => {
+      retry = setTimeout(load, 500);
+    });
+  };
+
+  window.once("closed", () => {
+    if (retry) clearTimeout(retry);
+  });
+  load();
 }
 
 void app.whenReady().then(() => {

@@ -19,9 +19,9 @@ pnpm install
 pnpm dev
 ```
 
-This starts the web control plane at `http://localhost:3000` and its local
-Convex deployment together. The first run may ask you to finish the local
-Convex setup.
+This runs the workspace's full Turbo `dev` graph: the web control plane, local
+Convex deployment, Electron shell, and Expo development server. The first run
+may download Electron or ask you to finish the local Convex setup.
 
 Start a local execution host in another terminal:
 
@@ -35,14 +35,16 @@ the host, including the OpenAI Codex subscription stored under
 `PI_CODING_AGENT_DIR` or `~/.pi/agent/auth.json`. Credentials never enter
 Convex.
 
-The other clients remain opt-in so they cannot break the default web workflow:
+Focused development commands are also available:
 
 ```sh
 pnpm dev:desktop
 pnpm dev:mobile
+pnpm dev:web
 ```
 
-Use `pnpm dev:web-only` when Convex is already running separately.
+Use `pnpm dev:web-only` when Convex is already running separately. Both web
+commands load the local Convex URL automatically.
 
 ## Validate
 

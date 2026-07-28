@@ -5,8 +5,8 @@
   "scripts": {
     "android": "expo start --android",
     "dev": "expo start --dev-client",
-    "format": "prettier --check . --ignore-path ../../.gitignore",
-    "format:fix": "prettier --write . --ignore-path ../../.gitignore",
+    "format": "prettier --check . --ignore-path ../../.gitignore --ignore-path .gitignore",
+    "format:fix": "prettier --write . --ignore-path ../../.gitignore --ignore-path .gitignore",
     "ios": "expo start --ios",
     "lint": "eslint",
     "test": "vitest run --passWithNoTests",

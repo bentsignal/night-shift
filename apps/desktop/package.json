@@ -12,6 +12,7 @@
     "format:fix": "prettier --write . --ignore-path ../../.gitignore",
     "lint": "eslint",
     "preview": "electron-vite preview",
+    "predev": "install-electron",
     "test": "node --experimental-strip-types --test src/**/*.test.ts",
     "typecheck": "tsc --noEmit"
   },
