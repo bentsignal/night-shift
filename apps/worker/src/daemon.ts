@@ -128,7 +128,8 @@ export class WorkerDaemon {
       now: this.#now,
     });
     const controller = new AbortController();
-    let desiredState: RunDesiredState = "running";
+    let desiredState: RunDesiredState;
+    desiredState = "running";
     let controlGeneration = assignment.controlGeneration;
     let authorityLost = false;
     let renewing = false;
@@ -277,7 +278,7 @@ export class WorkerDaemon {
   }
 }
 
-function identityOf(assignment: WorkerAssignment): AttemptIdentity {
+function identityOf(assignment: WorkerAssignment) {
   return {
     runId: assignment.runId,
     attemptId: assignment.attemptId,

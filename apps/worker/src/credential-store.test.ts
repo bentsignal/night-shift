@@ -5,7 +5,7 @@ import { afterEach, describe, expect, it } from "vitest";
 
 import { PiCredentialStore } from "./credential-store.ts";
 
-const temporaryDirectories: string[] = [];
+const temporaryDirectories = new Array<string>();
 
 afterEach(async () => {
   await Promise.all(

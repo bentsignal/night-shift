@@ -69,6 +69,14 @@ export interface MilestoneInput {
   validationOutcome?: "passed" | "failed";
 }
 
+export interface MilestoneStateInput {
+  run: RunState;
+  attempt: AttemptState;
+  proof: AuthorityProof;
+  milestone: MilestoneInput;
+  now: number;
+}
+
 export class AuthorityError extends Error {
   constructor(
     readonly code:
@@ -100,7 +108,7 @@ export class IdempotencyError extends Error {
 export function idempotencyDecision(
   existingFingerprint: string | undefined,
   proposedFingerprint: string,
-): "create" | "replay" {
+) {
   if (existingFingerprint === undefined) return "create";
   if (existingFingerprint === proposedFingerprint) return "replay";
   throw new IdempotencyError(
@@ -114,18 +122,14 @@ const terminalRunStatuses = new Set<RunStatus>([
   "completed",
 ]);
 
-export function isRunTerminal(status: RunStatus): boolean {
+export function isRunTerminal(status: RunStatus) {
   return terminalRunStatuses.has(status);
 }
 
-export function claimState(
-  run: RunState,
-  attemptId: string,
-  now: number,
-): StatePatch {
+export function claimState(run: RunState, attemptId: string, now: number) {
   requireRunStatus(run, ["queued"], "claim");
 
-  return {
+  return statePatch({
     run: {
       status: "claimed",
       activeAttemptId: attemptId,
@@ -137,7 +141,7 @@ export function claimState(
       leaseExpiresAt: now + LEASE_DURATION_MS,
       fencingGeneration: run.fencingGeneration + 1,
     },
-  };
+  });
 }
 
 /**
@@ -149,7 +153,7 @@ export function assertAuthority(
   attempt: AttemptState,
   proof: AuthorityProof,
   now: number,
-): void {
+) {
   if (
     run.activeAttemptId !== proof.attemptId ||
     attempt.id !== proof.attemptId
@@ -196,39 +200,39 @@ export function renewLeaseState(
   attempt: AttemptState,
   proof: AuthorityProof,
   now: number,
-): StatePatch {
+) {
   assertAuthority(run, attempt, proof, now);
   if (isRunTerminal(run.status)) {
     throw invalidTransition(run.status, "renew lease");
   }
-  return {
+  return statePatch({
     run: {},
     attempt: { leaseExpiresAt: now + LEASE_DURATION_MS },
-  };
+  });
 }
 
-export function milestoneState(
-  run: RunState,
-  attempt: AttemptState,
-  proof: AuthorityProof,
-  input: MilestoneInput,
-  now: number,
-): StatePatch {
+export function milestoneState({
+  run,
+  attempt,
+  proof,
+  milestone,
+  now,
+}: MilestoneStateInput) {
   assertAuthority(run, attempt, proof, now);
 
-  switch (input.kind) {
+  switch (milestone.kind) {
     case "started":
-      requireRunStatus(run, ["claimed"], input.kind);
-      return {
+      requireRunStatus(run, ["claimed"], milestone.kind);
+      return statePatch({
         run: { status: "running", startedAt: now },
         attempt: { status: "running" },
-      };
+      });
     case "checkpoint":
-      requireRunStatus(run, ["running"], input.kind);
-      return { run: {}, attempt: {} };
+      requireRunStatus(run, ["running"], milestone.kind);
+      return statePatch({ run: {}, attempt: {} });
     case "paused":
-      requireRunStatus(run, ["pause_requested"], input.kind);
-      return {
+      requireRunStatus(run, ["pause_requested"], milestone.kind);
+      return statePatch({
         run: {
           status: "paused",
           activeAttemptId: undefined,
@@ -236,45 +240,45 @@ export function milestoneState(
           startedAt: undefined,
         },
         attempt: { status: "paused" },
-      };
+      });
     case "validation": {
-      requireRunStatus(run, ["running"], input.kind);
-      if (!input.validationOutcome) {
+      requireRunStatus(run, ["running"], milestone.kind);
+      if (!milestone.validationOutcome) {
         throw invalidTransition(run.status, "validation without an outcome");
       }
-      return {
-        run: { validationStatus: input.validationOutcome },
+      return statePatch({
+        run: { validationStatus: milestone.validationOutcome },
         attempt: {},
-      };
+      });
     }
     case "completed":
-      requireRunStatus(run, ["running"], input.kind);
+      requireRunStatus(run, ["running"], milestone.kind);
       if (run.validationStatus !== "passed") {
         throw new AuthorityError(
           "VALIDATION_REQUIRED",
           "A passing deterministic validation is required before completion",
         );
       }
-      return {
+      return statePatch({
         run: { status: "completed", activeAttemptId: undefined },
         attempt: { status: "completed" },
-      };
+      });
     case "failed":
       requireRunStatus(
         run,
         ["claimed", "running", "pause_requested", "paused", "cancel_requested"],
-        input.kind,
+        milestone.kind,
       );
-      return {
+      return statePatch({
         run: { status: "failed", activeAttemptId: undefined },
         attempt: { status: "failed" },
-      };
+      });
     case "canceled":
-      requireRunStatus(run, ["cancel_requested"], input.kind);
-      return {
+      requireRunStatus(run, ["cancel_requested"], milestone.kind);
+      return statePatch({
         run: { status: "canceled", activeAttemptId: undefined },
         attempt: { status: "canceled" },
-      };
+      });
   }
 }
 
@@ -290,7 +294,7 @@ export interface CommandPatch {
  * before the worker acknowledges it; the stale pause acknowledgement then
  * fails the generation check in assertAuthority.
  */
-export function commandState(run: RunState, kind: CommandKind): CommandPatch {
+export function commandState(run: RunState, kind: CommandKind) {
   if (isRunTerminal(run.status)) {
     return unchangedCommand(run);
   }
@@ -301,7 +305,7 @@ export function commandState(run: RunState, kind: CommandKind): CommandPatch {
       if (run.status !== "claimed" && run.status !== "running") {
         return unchangedCommand(run);
       }
-      return {
+      return commandPatch({
         accepted: true,
         status: "pending",
         controlGeneration: generation,
@@ -309,13 +313,13 @@ export function commandState(run: RunState, kind: CommandKind): CommandPatch {
           controlGeneration: generation,
           status: "pause_requested",
         },
-      };
+      });
     case "resume":
       if (run.status !== "pause_requested" && run.status !== "paused") {
         return unchangedCommand(run);
       }
       if (run.status === "paused") {
-        return {
+        return commandPatch({
           accepted: true,
           status: "acknowledged",
           controlGeneration: generation,
@@ -326,9 +330,9 @@ export function commandState(run: RunState, kind: CommandKind): CommandPatch {
             validationStatus: "pending",
             startedAt: undefined,
           },
-        };
+        });
       }
-      return {
+      return commandPatch({
         accepted: true,
         status: "pending",
         controlGeneration: generation,
@@ -336,10 +340,10 @@ export function commandState(run: RunState, kind: CommandKind): CommandPatch {
           controlGeneration: generation,
           status: run.startedAt === undefined ? "claimed" : "running",
         },
-      };
+      });
     case "cancel":
       if (run.status === "queued") {
-        return {
+        return commandPatch({
           accepted: true,
           status: "acknowledged",
           controlGeneration: generation,
@@ -348,9 +352,9 @@ export function commandState(run: RunState, kind: CommandKind): CommandPatch {
             status: "canceled",
             activeAttemptId: undefined,
           },
-        };
+        });
       }
-      return {
+      return commandPatch({
         accepted: true,
         status: "pending",
         controlGeneration: generation,
@@ -358,7 +362,7 @@ export function commandState(run: RunState, kind: CommandKind): CommandPatch {
           controlGeneration: generation,
           status: "cancel_requested",
         },
-      };
+      });
   }
 }
 
@@ -371,7 +375,7 @@ export function recoverExpiredState(
   run: RunState,
   attempt: AttemptState,
   now: number,
-): StatePatch | undefined {
+) {
   if (
     run.activeAttemptId !== attempt.id ||
     attempt.leaseExpiresAt > now ||
@@ -381,13 +385,13 @@ export function recoverExpiredState(
   }
 
   if (run.status === "cancel_requested") {
-    return {
+    return statePatch({
       run: { status: "canceled", activeAttemptId: undefined },
       attempt: { status: "canceled" },
-    };
+    });
   }
 
-  return {
+  return statePatch({
     run: {
       status: "queued",
       activeAttemptId: undefined,
@@ -395,31 +399,39 @@ export function recoverExpiredState(
       startedAt: undefined,
     },
     attempt: { status: "expired" },
-  };
+  });
 }
 
-function unchangedCommand(run: RunState): CommandPatch {
-  return {
+function unchangedCommand(run: RunState) {
+  return commandPatch({
     accepted: false,
     status: "superseded",
     controlGeneration: run.controlGeneration,
     run: {},
-  };
+  });
 }
 
 function requireRunStatus(
   run: RunState,
   expected: RunStatus[],
   action: string,
-): void {
+) {
   if (!expected.includes(run.status)) {
     throw invalidTransition(run.status, action);
   }
 }
 
-function invalidTransition(status: RunStatus, action: string): AuthorityError {
+function invalidTransition(status: RunStatus, action: string) {
   return new AuthorityError(
     "INVALID_TRANSITION",
     `Cannot ${action} while run is ${status}`,
   );
+}
+
+function statePatch(patch: StatePatch) {
+  return patch;
+}
+
+function commandPatch(patch: CommandPatch) {
+  return patch;
 }

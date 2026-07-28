@@ -1,5 +1,5 @@
 import type { ReactNode } from "react";
-import { createContext, useContext, useSyncExternalStore } from "react";
+import { createContext, use, useSyncExternalStore } from "react";
 
 import type {
   ControlPlaneClient,
@@ -32,8 +32,8 @@ export interface ControlPlaneState {
   commandRun: (runId: string, command: RunCommand) => Promise<void>;
 }
 
-export function useControlPlane(): ControlPlaneState {
-  const client = useContext(ControlPlaneContext);
+export function useControlPlane() {
+  const client = use(ControlPlaneContext);
   if (!client) {
     throw new Error("useControlPlane must be used inside ControlPlaneProvider");
   }

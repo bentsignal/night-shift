@@ -6,7 +6,7 @@ export interface ProviderOption {
   models: { id: string; label: string }[];
 }
 
-export const providerOptions: ProviderOption[] = [
+export const providerOptions = [
   {
     id: "openai-codex",
     label: "OpenAI subscription",
@@ -23,9 +23,9 @@ export const providerOptions: ProviderOption[] = [
       { id: "claude-opus-4-5", label: "Claude Opus 4.5" },
     ],
   },
-];
+] satisfies ProviderOption[];
 
-const statusLabels: Record<RunStatus, string> = {
+const statusLabels = {
   queued: "Queued",
   claimed: "Claimed",
   running: "Running",
@@ -34,9 +34,9 @@ const statusLabels: Record<RunStatus, string> = {
   canceled: "Canceled",
   failed: "Failed",
   completed: "Completed",
-};
+} satisfies Record<RunStatus, string>;
 
-export function getRunStatusLabel(status: RunStatus): string {
+export function getRunStatusLabel(status: RunStatus) {
   return statusLabels[status];
 }
 
@@ -46,7 +46,7 @@ export interface RunActionState {
   canCancel: boolean;
 }
 
-export function getRunActionState(status: RunStatus): RunActionState {
+export function getRunActionState(status: RunStatus) {
   const terminal = ["completed", "failed", "canceled"].includes(status);
   return {
     canPause: status === "running",
@@ -61,7 +61,7 @@ export interface HostCapacity {
   message: string;
 }
 
-export function getHostCapacity(hosts: Host[]): HostCapacity {
+export function getHostCapacity(hosts: Host[]) {
   const available = hosts.filter((host) => host.health === "ready").length;
   return {
     total: hosts.length,
@@ -73,7 +73,7 @@ export function getHostCapacity(hosts: Host[]): HostCapacity {
   };
 }
 
-export function formatMoment(isoTimestamp: string): string {
+export function formatMoment(isoTimestamp: string) {
   const time = new Date(isoTimestamp);
   return new Intl.DateTimeFormat("en-US", {
     hour: "numeric",

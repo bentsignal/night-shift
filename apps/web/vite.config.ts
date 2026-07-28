@@ -17,7 +17,11 @@ export default defineConfig({
       srcDirectory: "src",
       router: { routesDirectory: "app" },
     }),
-    viteReact(),
+    viteReact({
+      babel: {
+        plugins: ["babel-plugin-react-compiler"],
+      },
+    }),
     nitro(),
   ],
 });

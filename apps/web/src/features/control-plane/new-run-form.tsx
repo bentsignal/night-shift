@@ -55,9 +55,9 @@ export function NewRunForm() {
         reasoning,
       });
       await navigate({ to: "/runs/$runId", params: { runId } });
+      setSubmitting(false);
     } catch (cause) {
       setError(cause instanceof Error ? cause.message : "Unable to queue run");
-    } finally {
       setSubmitting(false);
     }
   }
@@ -154,23 +154,33 @@ export function NewRunForm() {
         </CardContent>
         <CardFooter className="bg-muted/20 justify-between border-t">
           <div className="text-muted-foreground min-w-0 text-xs">
-            {capacity.available > 0
-              ? `${capacity.available} ${capacity.available === 1 ? "host" : "hosts"} ready`
-              : "No host ready — this run will wait in the queue"}
-            {error && (
-              <span className="text-destructive mt-1 block">{error}</span>
-            )}
+            <CapacityMessage available={capacity.available} />
+            <SubmissionError message={error} />
           </div>
           <Button disabled={submitting} type="submit">
-            {submitting ? (
-              <LoaderCircle className="animate-spin" />
-            ) : (
-              <ArrowRight />
-            )}
+            <SubmissionIcon submitting={submitting} />
             Queue run
           </Button>
         </CardFooter>
       </Card>
     </form>
   );
+}
+
+function CapacityMessage({ available }: { available: number }) {
+  if (available === 0) {
+    return "No host ready — this run will wait in the queue";
+  }
+
+  return `${available} ${available === 1 ? "host" : "hosts"} ready`;
+}
+
+function SubmissionError({ message }: { message: string | undefined }) {
+  if (!message) return null;
+  return <span className="text-destructive mt-1 block">{message}</span>;
+}
+
+function SubmissionIcon({ submitting }: { submitting: boolean }) {
+  if (submitting) return <LoaderCircle className="animate-spin" />;
+  return <ArrowRight />;
 }

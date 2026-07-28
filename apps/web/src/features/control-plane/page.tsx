@@ -24,15 +24,20 @@ export function Page({
       <div className="mb-7 flex min-w-0 items-start justify-between gap-4">
         <div className="min-w-0">
           <h1 className="text-xl font-semibold tracking-tight">{title}</h1>
-          {description && (
-            <p className="text-muted-foreground mt-1.5 max-w-2xl text-sm">
-              {description}
-            </p>
-          )}
+          <PageDescription description={description} />
         </div>
         {actions}
       </div>
       {children}
     </div>
+  );
+}
+
+function PageDescription({ description }: { description: string | undefined }) {
+  if (!description) return null;
+  return (
+    <p className="text-muted-foreground mt-1.5 max-w-2xl text-sm">
+      {description}
+    </p>
   );
 }

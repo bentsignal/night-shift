@@ -1,4 +1,4 @@
-import { createFileRoute, Link } from "@tanstack/react-router";
+import { createFileRoute } from "@tanstack/react-router";
 import { ArrowLeft } from "lucide-react";
 
 import { Button } from "@code/ui-web/components/button";
@@ -13,6 +13,7 @@ import { Skeleton } from "@code/ui-web/components/skeleton";
 import { useControlPlane } from "../control-plane/client";
 import { Page } from "../features/control-plane/page";
 import { RunDetail } from "../features/control-plane/run-detail";
+import { QuickLink } from "../features/quick-link/quick-link";
 
 export const Route = createFileRoute("/_app/runs/$runId")({
   component: RunPage,
@@ -43,10 +44,10 @@ function RunPage() {
           </CardHeader>
           <CardContent>
             <Button asChild size="sm" variant="outline">
-              <Link to="/runs">
+              <QuickLink to="/runs">
                 <ArrowLeft />
                 Back to runs
-              </Link>
+              </QuickLink>
             </Button>
           </CardContent>
         </Card>

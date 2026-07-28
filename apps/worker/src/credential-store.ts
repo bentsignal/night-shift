@@ -68,7 +68,7 @@ export class PiCredentialStore implements CredentialStore {
   async #readAll(): Promise<CredentialFile> {
     try {
       const contents = await readFile(this.#path, "utf8");
-      const value: unknown = JSON.parse(contents);
+      const value = JSON.parse(contents) as unknown;
       if (!value || typeof value !== "object" || Array.isArray(value)) {
         throw new Error("Credential file must contain a provider-keyed object");
       }
@@ -126,14 +126,14 @@ export class PiCredentialStore implements CredentialStore {
   }
 }
 
-function defaultCredentialPath(): string {
+function defaultCredentialPath() {
   const base =
     process.env.PI_CODING_AGENT_DIR ??
     join(process.env.HOME ?? process.cwd(), ".pi", "agent");
   return join(base, "auth.json");
 }
 
-function isNotFound(error: unknown): boolean {
+function isNotFound(error: unknown) {
   return (
     error instanceof Error &&
     "code" in error &&
@@ -141,7 +141,7 @@ function isNotFound(error: unknown): boolean {
   );
 }
 
-function isAlreadyExists(error: unknown): boolean {
+function isAlreadyExists(error: unknown) {
   return (
     error instanceof Error &&
     "code" in error &&

@@ -46,7 +46,7 @@ describe("run action state", () => {
 });
 
 describe("host capacity", () => {
-  const hosts: Host[] = [
+  const hosts = [
     {
       id: "one",
       name: "One",
@@ -61,7 +61,7 @@ describe("host capacity", () => {
       lastSeenAt: "2026-07-26T12:00:00.000Z",
       capabilities: [],
     },
-  ];
+  ] satisfies Host[];
 
   it("explicitly reassures the operator when no host can claim", () => {
     expect(getHostCapacity(hosts)).toEqual({

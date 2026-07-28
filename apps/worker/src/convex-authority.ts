@@ -235,15 +235,13 @@ function proofWithoutControl(input: AttemptIdentity) {
   };
 }
 
-function desiredStateOf(status: string): "running" | "paused" | "canceled" {
+function desiredStateOf(status: string) {
   if (status === "pause_requested" || status === "paused") return "paused";
   if (status === "cancel_requested" || status === "canceled") return "canceled";
   return "running";
 }
 
-function normalizeReasoning(
-  value: string | undefined,
-): WorkerAssignment["selection"]["reasoning"] {
+function normalizeReasoning(value: string | undefined) {
   if (
     value === "off" ||
     value === "minimal" ||

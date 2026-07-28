@@ -3,7 +3,7 @@ import { describe, expect, it, vi } from "vitest";
 import type { ControlPlaneSnapshot, Run } from "./types";
 import { createDemoControlPlaneClient } from "./demo-client";
 
-function run(status: Run["status"]): Run {
+function run(status: Run["status"]) {
   return {
     id: "run_test",
     title: "Test authority transitions",
@@ -21,15 +21,15 @@ function run(status: Run["status"]): Run {
       expiresAt: "2026-07-26T12:05:00.000Z",
     },
     milestones: [],
-  };
+  } satisfies Run;
 }
 
-function snapshot(seedRun: Run): ControlPlaneSnapshot {
+function snapshot(seedRun: Run) {
   return {
     authority: "connected",
     hosts: [],
     runs: [seedRun],
-  };
+  } satisfies ControlPlaneSnapshot;
 }
 
 describe("demo control-plane client", () => {

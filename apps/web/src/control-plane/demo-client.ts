@@ -6,7 +6,7 @@ import type {
   SubmitWorkInput,
 } from "./types";
 
-const initialSnapshot: ControlPlaneSnapshot = {
+const initialSnapshot = {
   authority: "connected",
   hosts: [
     {
@@ -156,16 +156,16 @@ const initialSnapshot: ControlPlaneSnapshot = {
       ],
     },
   ],
-};
+} satisfies ControlPlaneSnapshot;
 
-function titleFromPrompt(prompt: string): string {
+function titleFromPrompt(prompt: string) {
   const normalized = prompt.trim().replace(/\s+/g, " ");
   const sentence = normalized.split(/[.!?]/)[0] ?? normalized;
   const title = sentence.length > 58 ? `${sentence.slice(0, 55)}…` : sentence;
   return title || "Untitled assignment";
 }
 
-function nextRunForCommand(run: Run, command: RunCommand): Run {
+function nextRunForCommand(run: Run, command: RunCommand) {
   const at = new Date().toISOString();
   const base = { ...run, updatedAt: at };
 
@@ -183,7 +183,7 @@ function nextRunForCommand(run: Run, command: RunCommand): Run {
           at,
         },
       ],
-    };
+    } satisfies Run;
   }
 
   if (command.type === "resume" && run.status === "paused") {
@@ -202,7 +202,7 @@ function nextRunForCommand(run: Run, command: RunCommand): Run {
           at,
         },
       ],
-    };
+    } satisfies Run;
   }
 
   if (
@@ -222,7 +222,7 @@ function nextRunForCommand(run: Run, command: RunCommand): Run {
           at,
         },
       ],
-    };
+    } satisfies Run;
   }
 
   return run;
@@ -230,7 +230,7 @@ function nextRunForCommand(run: Run, command: RunCommand): Run {
 
 export function createDemoControlPlaneClient(
   seed: ControlPlaneSnapshot = initialSnapshot,
-): ControlPlaneClient {
+) {
   let snapshot = seed;
   let sequence = seed.runs.length;
   const listeners = new Set<() => void>();
@@ -250,7 +250,7 @@ export function createDemoControlPlaneClient(
       sequence += 1;
       const at = new Date().toISOString();
       const id = `run_demo_${String(sequence).padStart(3, "0")}`;
-      const run: Run = {
+      const run = {
         id,
         title: titleFromPrompt(input.prompt),
         prompt: input.prompt,
@@ -275,7 +275,7 @@ export function createDemoControlPlaneClient(
             at,
           },
         ],
-      };
+      } satisfies Run;
       publish({ ...snapshot, runs: [run, ...snapshot.runs] });
       return id;
     },
@@ -287,7 +287,7 @@ export function createDemoControlPlaneClient(
         ),
       });
     },
-  };
+  } satisfies ControlPlaneClient;
 }
 
 export const demoControlPlaneClient = createDemoControlPlaneClient();

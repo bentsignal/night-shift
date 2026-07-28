@@ -3,11 +3,11 @@ import { isAbsolute, relative, resolve } from "node:path";
 import type { AgentTool } from "@earendil-works/pi-agent-core";
 import { Type } from "@earendil-works/pi-ai";
 
-export function createCodingTools(projectPath: string): AgentTool[] {
+export function createCodingTools(projectPath: string) {
   return [createReadTool(projectPath), createWriteTool(projectPath)];
 }
 
-function createReadTool(projectPath: string): AgentTool {
+function createReadTool(projectPath: string) {
   const parameters = Type.Object({
     path: Type.String({
       description: "Project-relative path to read.",
@@ -29,10 +29,10 @@ function createReadTool(projectPath: string): AgentTool {
         details: { path: inputPath, truncated: contents.length > 40_000 },
       };
     },
-  };
+  } satisfies AgentTool;
 }
 
-function createWriteTool(projectPath: string): AgentTool {
+function createWriteTool(projectPath: string) {
   const parameters = Type.Object({
     path: Type.String({
       description: "Project-relative path to write.",
@@ -58,10 +58,10 @@ function createWriteTool(projectPath: string): AgentTool {
         details: { path: inputPath, bytes: Buffer.byteLength(contents) },
       };
     },
-  };
+  } satisfies AgentTool;
 }
 
-function resolveInside(projectPath: string, inputPath: string): string {
+function resolveInside(projectPath: string, inputPath: string) {
   if (isAbsolute(inputPath)) {
     throw new Error("Tool paths must be relative to the assigned project");
   }

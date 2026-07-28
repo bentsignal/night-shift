@@ -31,25 +31,7 @@ export function RunDetail({
             <div className="flex flex-wrap items-center justify-between gap-3">
               <StatusBadge status={run.status} />
               <div className="flex items-center gap-2">
-                {actions.showResume ? (
-                  <Button
-                    onClick={() => void onCommand({ type: "resume" })}
-                    size="sm"
-                  >
-                    <Play />
-                    Resume
-                  </Button>
-                ) : (
-                  <Button
-                    disabled={!actions.canPause}
-                    onClick={() => void onCommand({ type: "pause" })}
-                    size="sm"
-                    variant="outline"
-                  >
-                    <Pause />
-                    Pause
-                  </Button>
-                )}
+                <PrimaryRunAction actions={actions} onCommand={onCommand} />
                 <Button
                   disabled={!actions.canCancel}
                   onClick={() => void onCommand({ type: "cancel" })}
@@ -75,49 +57,7 @@ export function RunDetail({
             <h2 className="text-sm font-semibold">Activity</h2>
           </CardHeader>
           <CardContent className="pt-1">
-            {run.milestones.length === 0 ? (
-              <p className="text-muted-foreground py-8 text-center text-sm">
-                Waiting for the first event
-              </p>
-            ) : (
-              <ol>
-                {run.milestones.map((milestone, index) => (
-                  <li
-                    className="relative grid grid-cols-[1.25rem_minmax(0,1fr)_auto] gap-3 py-4"
-                    key={milestone.id}
-                  >
-                    {index < run.milestones.length - 1 && (
-                      <span className="bg-border absolute top-8 bottom-0 left-[0.34rem] w-px" />
-                    )}
-                    <span
-                      className={cn(
-                        "border-background ring-border relative mt-1 size-3 rounded-full border-2 bg-current ring-1",
-                        statusTone(
-                          milestone.kind === "validation"
-                            ? run.validation?.passed
-                              ? "completed"
-                              : "failed"
-                            : milestone.kind === "progress" ||
-                                milestone.kind === "started" ||
-                                milestone.kind === "resumed"
-                              ? "running"
-                              : milestone.kind,
-                        ),
-                      )}
-                    />
-                    <div className="min-w-0">
-                      <p className="text-sm font-medium">{milestone.label}</p>
-                      <p className="text-muted-foreground mt-1 text-sm">
-                        {milestone.detail}
-                      </p>
-                    </div>
-                    <time className="text-muted-foreground font-mono text-[11px]">
-                      {formatMoment(milestone.at)}
-                    </time>
-                  </li>
-                ))}
-              </ol>
-            )}
+            <ActivityContent run={run} />
           </CardContent>
         </Card>
       </div>
@@ -164,40 +104,141 @@ export function RunDetail({
             <h2 className="text-sm font-semibold">Validation</h2>
           </CardHeader>
           <CardContent className="pt-5">
-            {run.validation ? (
-              <div className="flex items-start gap-3">
-                <span
-                  className={cn(
-                    "flex size-8 shrink-0 items-center justify-center rounded-full",
-                    run.validation.passed
-                      ? "bg-success/10 text-success"
-                      : "bg-destructive/10 text-destructive",
-                  )}
-                >
-                  {run.validation.passed ? <Check /> : <X />}
-                </span>
-                <div className="min-w-0">
-                  <p className="text-sm font-medium">
-                    {run.validation.passed ? "Passed" : "Failed"}
-                  </p>
-                  <p className="text-muted-foreground mt-1 font-mono text-[11px] break-all">
-                    {run.validation.command}
-                  </p>
-                  <Badge className="mt-3" variant="secondary">
-                    {run.validation.durationMs} ms
-                  </Badge>
-                </div>
-              </div>
-            ) : (
-              <p className="text-muted-foreground text-sm">
-                Validation has not run yet.
-              </p>
-            )}
+            <ValidationContent validation={run.validation} />
           </CardContent>
         </Card>
       </div>
     </div>
   );
+}
+
+function PrimaryRunAction({
+  actions,
+  onCommand,
+}: {
+  actions: ReturnType<typeof getRunActionState>;
+  onCommand: (command: RunCommand) => Promise<void>;
+}) {
+  if (actions.showResume) {
+    return (
+      <Button onClick={() => void onCommand({ type: "resume" })} size="sm">
+        <Play />
+        Resume
+      </Button>
+    );
+  }
+
+  return (
+    <Button
+      disabled={!actions.canPause}
+      onClick={() => void onCommand({ type: "pause" })}
+      size="sm"
+      variant="outline"
+    >
+      <Pause />
+      Pause
+    </Button>
+  );
+}
+
+function ActivityContent({ run }: { run: Run }) {
+  if (run.milestones.length === 0) {
+    return (
+      <p className="text-muted-foreground py-8 text-center text-sm">
+        Waiting for the first event
+      </p>
+    );
+  }
+
+  return (
+    <ol>
+      {run.milestones.map((milestone, index) => (
+        <li
+          className="relative grid grid-cols-[1.25rem_minmax(0,1fr)_auto] gap-3 py-4"
+          key={milestone.id}
+        >
+          <MilestoneConnector visible={index < run.milestones.length - 1} />
+          <span
+            className={cn(
+              "border-background ring-border relative mt-1 size-3 rounded-full border-2 bg-current ring-1",
+              statusTone(
+                milestone.kind === "validation"
+                  ? run.validation?.passed
+                    ? "completed"
+                    : "failed"
+                  : milestone.kind === "progress" ||
+                      milestone.kind === "started" ||
+                      milestone.kind === "resumed"
+                    ? "running"
+                    : milestone.kind,
+              ),
+            )}
+          />
+          <div className="min-w-0">
+            <p className="text-sm font-medium">{milestone.label}</p>
+            <p className="text-muted-foreground mt-1 text-sm">
+              {milestone.detail}
+            </p>
+          </div>
+          <time className="text-muted-foreground font-mono text-[11px]">
+            {formatMoment(milestone.at)}
+          </time>
+        </li>
+      ))}
+    </ol>
+  );
+}
+
+function MilestoneConnector({ visible }: { visible: boolean }) {
+  if (!visible) return null;
+  return (
+    <span className="bg-border absolute top-8 bottom-0 left-[0.34rem] w-px" />
+  );
+}
+
+function ValidationContent({ validation }: { validation: Run["validation"] }) {
+  if (!validation) {
+    return (
+      <p className="text-muted-foreground text-sm">
+        Validation has not run yet.
+      </p>
+    );
+  }
+
+  return (
+    <div className="flex items-start gap-3">
+      <span
+        className={cn(
+          "flex size-8 shrink-0 items-center justify-center rounded-full",
+          validation.passed
+            ? "bg-success/10 text-success"
+            : "bg-destructive/10 text-destructive",
+        )}
+      >
+        <ValidationIcon passed={validation.passed} />
+      </span>
+      <div className="min-w-0">
+        <p className="text-sm font-medium">
+          {validationLabel(validation.passed)}
+        </p>
+        <p className="text-muted-foreground mt-1 font-mono text-[11px] break-all">
+          {validation.command}
+        </p>
+        <Badge className="mt-3" variant="secondary">
+          {validation.durationMs} ms
+        </Badge>
+      </div>
+    </div>
+  );
+}
+
+function ValidationIcon({ passed }: { passed: boolean }) {
+  if (passed) return <Check />;
+  return <X />;
+}
+
+function validationLabel(passed: boolean) {
+  return passed ? "Passed" : "Failed";
 }
 
 function MetadataRow({

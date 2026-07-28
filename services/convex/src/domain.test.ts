@@ -15,16 +15,16 @@ import {
 
 const now = 1_000_000;
 
-function queuedRun(): RunState {
+function queuedRun() {
   return {
     status: "queued",
     validationStatus: "pending",
     fencingGeneration: 0,
     controlGeneration: 0,
-  };
+  } satisfies RunState;
 }
 
-function activeRun(overrides: Partial<RunState> = {}): RunState {
+function activeRun(overrides: Partial<RunState> = {}) {
   return {
     status: "running",
     validationStatus: "pending",
@@ -33,10 +33,10 @@ function activeRun(overrides: Partial<RunState> = {}): RunState {
     activeAttemptId: "attempt-3",
     startedAt: now - 1_000,
     ...overrides,
-  };
+  } satisfies RunState;
 }
 
-function activeAttempt(overrides: Partial<AttemptState> = {}): AttemptState {
+function activeAttempt(overrides: Partial<AttemptState> = {}) {
   return {
     id: "attempt-3",
     hostId: "host-1",
@@ -45,10 +45,10 @@ function activeAttempt(overrides: Partial<AttemptState> = {}): AttemptState {
     status: "running",
     leaseExpiresAt: now + LEASE_DURATION_MS,
     ...overrides,
-  };
+  } satisfies AttemptState;
 }
 
-function proof(overrides: Partial<AuthorityProof> = {}): AuthorityProof {
+function proof(overrides: Partial<AuthorityProof> = {}) {
   return {
     attemptId: "attempt-3",
     hostId: "host-1",
@@ -56,7 +56,7 @@ function proof(overrides: Partial<AuthorityProof> = {}): AuthorityProof {
     fencingGeneration: 3,
     controlGeneration: 0,
     ...overrides,
-  };
+  } satisfies AuthorityProof;
 }
 
 describe("queue claiming", () => {
@@ -126,13 +126,13 @@ describe("lease and fencing authority", () => {
     const recoveredRun = { ...run, ...recovery?.run };
     const recoveredAttempt = { ...attempt, ...recovery?.attempt };
     expect(() =>
-      milestoneState(
-        recoveredRun,
-        recoveredAttempt,
-        proof(),
-        { kind: "completed" },
-        now + 1,
-      ),
+      milestoneState({
+        run: recoveredRun,
+        attempt: recoveredAttempt,
+        proof: proof(),
+        milestone: { kind: "completed" },
+        now: now + 1,
+      }),
     ).toThrowError(expect.objectContaining({ code: "ATTEMPT_NOT_ACTIVE" }));
   });
 });
@@ -144,32 +144,32 @@ describe("state transitions and validation gate", () => {
       startedAt: undefined,
     });
     const claimedAttempt = activeAttempt({ status: "claimed" });
-    const started = milestoneState(
-      claimedRun,
-      claimedAttempt,
-      proof(),
-      { kind: "started" },
+    const started = milestoneState({
+      run: claimedRun,
+      attempt: claimedAttempt,
+      proof: proof(),
+      milestone: { kind: "started" },
       now,
-    );
+    });
     const runningRun = { ...claimedRun, ...started.run };
     const runningAttempt = { ...claimedAttempt, ...started.attempt };
     expect(runningRun.status).toBe("running");
 
-    const validated = milestoneState(
-      runningRun,
-      runningAttempt,
-      proof(),
-      { kind: "validation", validationOutcome: "passed" },
-      now + 1,
-    );
+    const validated = milestoneState({
+      run: runningRun,
+      attempt: runningAttempt,
+      proof: proof(),
+      milestone: { kind: "validation", validationOutcome: "passed" },
+      now: now + 1,
+    });
     const validatedRun = { ...runningRun, ...validated.run };
-    const completed = milestoneState(
-      validatedRun,
-      runningAttempt,
-      proof(),
-      { kind: "completed" },
-      now + 2,
-    );
+    const completed = milestoneState({
+      run: validatedRun,
+      attempt: runningAttempt,
+      proof: proof(),
+      milestone: { kind: "completed" },
+      now: now + 2,
+    });
     expect(completed).toMatchObject({
       run: { status: "completed", activeAttemptId: undefined },
       attempt: { status: "completed" },
@@ -178,25 +178,25 @@ describe("state transitions and validation gate", () => {
 
   it("rejects completion until validation passes", () => {
     expect(() =>
-      milestoneState(
-        activeRun(),
-        activeAttempt(),
-        proof(),
-        { kind: "completed" },
+      milestoneState({
+        run: activeRun(),
+        attempt: activeAttempt(),
+        proof: proof(),
+        milestone: { kind: "completed" },
         now,
-      ),
+      }),
     ).toThrowError(expect.objectContaining({ code: "VALIDATION_REQUIRED" }));
   });
 
   it("does not allow arbitrary transitions", () => {
     expect(() =>
-      milestoneState(
-        activeRun({ status: "paused" }),
-        activeAttempt({ status: "paused" }),
-        proof(),
-        { kind: "checkpoint" },
+      milestoneState({
+        run: activeRun({ status: "paused" }),
+        attempt: activeAttempt({ status: "paused" }),
+        proof: proof(),
+        milestone: { kind: "checkpoint" },
         now,
-      ),
+      }),
     ).toThrowError(expect.objectContaining({ code: "INVALID_TRANSITION" }));
   });
 });
@@ -207,13 +207,13 @@ describe("pause/resume command races", () => {
       status: "pause_requested",
       controlGeneration: 1,
     });
-    const paused = milestoneState(
-      pauseRequested,
-      activeAttempt(),
-      proof({ controlGeneration: 1 }),
-      { kind: "paused" },
+    const paused = milestoneState({
+      run: pauseRequested,
+      attempt: activeAttempt(),
+      proof: proof({ controlGeneration: 1 }),
+      milestone: { kind: "paused" },
       now,
-    );
+    });
     expect(paused).toMatchObject({
       run: {
         status: "paused",
@@ -255,13 +255,13 @@ describe("pause/resume command races", () => {
     });
 
     expect(() =>
-      milestoneState(
-        resumed,
-        activeAttempt(),
-        proof({ controlGeneration: 1 }),
-        { kind: "paused" },
+      milestoneState({
+        run: resumed,
+        attempt: activeAttempt(),
+        proof: proof({ controlGeneration: 1 }),
+        milestone: { kind: "paused" },
         now,
-      ),
+      }),
     ).toThrowError(
       expect.objectContaining({ code: "CONTROL_GENERATION_STALE" }),
     );

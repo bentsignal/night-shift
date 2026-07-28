@@ -13,12 +13,12 @@ import type {
 } from "./types.ts";
 import { WorkerDaemon } from "./daemon.ts";
 
-const registration: HostRegistration = {
+const registration = {
   hostId: "host-1",
   sessionId: "session-1",
-};
+} satisfies HostRegistration;
 
-const assignment: WorkerAssignment = {
+const assignment = {
   runId: "run-1",
   attemptId: "attempt-1",
   generation: 3,
@@ -33,7 +33,7 @@ const assignment: WorkerAssignment = {
     model: "test",
     reasoning: "high",
   },
-};
+} satisfies WorkerAssignment;
 
 describe("WorkerDaemon", () => {
   it("leaves durable work unclaimed when the authority has no assignment", async () => {
@@ -59,14 +59,14 @@ describe("WorkerDaemon", () => {
     authority.renew = async () => {
       throw new Error("Convex unavailable");
     };
-    const runtime: RuntimeAdapter = {
+    const runtime = {
       execute: async (_input, _selection, signal) =>
         new Promise<RuntimeResult>((_resolve, reject) => {
           signal.addEventListener("abort", () => reject(signal.reason), {
             once: true,
           });
         }),
-    };
+    } satisfies RuntimeAdapter;
     const daemon = createDaemon(authority, runtime, 1);
 
     await expect(daemon.runOneCycle()).resolves.toBe(true);
@@ -83,14 +83,14 @@ describe("WorkerDaemon", () => {
       desiredState: "paused",
       controlGeneration: 4,
     });
-    const runtime: RuntimeAdapter = {
+    const runtime = {
       execute: async (_input, _selection, signal) =>
         new Promise<RuntimeResult>((_resolve, reject) => {
           signal.addEventListener("abort", () => reject(signal.reason), {
             once: true,
           });
         }),
-    };
+    } satisfies RuntimeAdapter;
     const daemon = createDaemon(authority, runtime, 1);
 
     await daemon.runOneCycle();
@@ -114,12 +114,12 @@ describe("WorkerDaemon", () => {
         controlGeneration: 0,
       };
     };
-    const runtime: RuntimeAdapter = {
+    const runtime = {
       execute: async () => {
         await new Promise((resolve) => setTimeout(resolve, 35));
         return { summary: "done" };
       },
-    };
+    } satisfies RuntimeAdapter;
 
     await createDaemon(authority, runtime, 1).runOneCycle();
     expect(maximumInFlight).toBe(1);
@@ -197,8 +197,8 @@ function createDaemon(
   authority: WorkerAuthority,
   runtime: RuntimeAdapter,
   renewEveryMs = 30_000,
-): WorkerDaemon {
-  const validator: Validator = {
+) {
+  const validator = {
     validate: vi.fn(async () => ({
       name: "test",
       status: "passed" as const,
@@ -206,7 +206,7 @@ function createDaemon(
       durationMs: 1,
       summary: "passed",
     })),
-  };
+  } satisfies Validator;
   return new WorkerDaemon({
     authority,
     runtime,
@@ -225,8 +225,8 @@ function createDaemon(
   });
 }
 
-function immediateRuntime(): RuntimeAdapter {
+function immediateRuntime() {
   return {
     execute: vi.fn(async () => ({ summary: "done" })),
-  };
+  } satisfies RuntimeAdapter;
 }

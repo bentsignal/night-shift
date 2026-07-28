@@ -42,13 +42,13 @@ for (const signal of ["SIGINT", "SIGTERM"] as const) {
 
 await daemon.run();
 
-function requiredEnvironment(name: string): string {
+function requiredEnvironment(name: string) {
   const value = process.env[name];
   if (!value) throw new Error(`${name} is required`);
   return value;
 }
 
-function createDeterministicRuntime(): PiRuntimeAdapter {
+function createDeterministicRuntime() {
   const faux = fauxProvider({
     provider: "faux",
     models: [{ id: "control", reasoning: true }],

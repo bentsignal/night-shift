@@ -1,4 +1,3 @@
-import { Link } from "@tanstack/react-router";
 import { ArrowUpRight, Plus } from "lucide-react";
 
 import { Button } from "@code/ui-web/components/button";
@@ -11,6 +10,7 @@ import {
 
 import type { Run } from "../../control-plane/types";
 import { formatMoment } from "../../control-plane/view-model";
+import { QuickLink } from "../quick-link/quick-link";
 import { StatusBadge } from "./status-badge";
 
 export function RunList({ runs }: { runs: Run[] }) {
@@ -25,10 +25,10 @@ export function RunList({ runs }: { runs: Run[] }) {
             </p>
           </div>
           <Button asChild size="sm">
-            <Link to="/new">
+            <QuickLink to="/new">
               <Plus />
               New run
-            </Link>
+            </QuickLink>
           </Button>
         </CardContent>
       </Card>
@@ -43,7 +43,7 @@ export function RunList({ runs }: { runs: Run[] }) {
       <CardContent className="p-0">
         <div className="divide-y">
           {runs.map((run) => (
-            <Link
+            <QuickLink
               className="group hover:bg-muted/40 grid min-w-0 gap-2 px-4 py-4 transition-colors sm:grid-cols-[minmax(0,1fr)_auto_auto] sm:items-center sm:gap-5"
               key={run.id}
               params={{ runId: run.id }}
@@ -60,7 +60,7 @@ export function RunList({ runs }: { runs: Run[] }) {
                 <span>{formatMoment(run.updatedAt)}</span>
                 <ArrowUpRight className="size-4 opacity-0 transition-opacity group-hover:opacity-100" />
               </div>
-            </Link>
+            </QuickLink>
           ))}
         </div>
       </CardContent>

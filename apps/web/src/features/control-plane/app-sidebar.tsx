@@ -1,5 +1,5 @@
 import { useEffect } from "react";
-import { Link, useRouterState } from "@tanstack/react-router";
+import { useRouterState } from "@tanstack/react-router";
 import {
   Bot,
   CircleDot,
@@ -27,6 +27,7 @@ import {
 
 import { useControlPlane } from "../../control-plane/client";
 import { getHostCapacity } from "../../control-plane/view-model";
+import { QuickLink } from "../quick-link/quick-link";
 import { statusTone } from "./status-badge";
 
 const navigation = [
@@ -49,6 +50,7 @@ export function AppSidebar() {
         ? { label: "Reconnecting", tone: "text-warning" }
         : { label: "Authority offline", tone: "text-destructive" };
 
+  // eslint-disable-next-line no-restricted-syntax -- Route changes are an external navigation signal that must close the mobile drawer.
   useEffect(() => {
     if (isMobile) setOpenMobile(false);
   }, [isMobile, pathname, setOpenMobile]);
@@ -64,14 +66,14 @@ export function AppSidebar() {
               size="lg"
               tooltip="Code"
             >
-              <Link to="/new">
+              <QuickLink to="/new">
                 <span className="bg-sidebar-primary text-sidebar-primary-foreground flex size-7 items-center justify-center rounded-md">
                   <SquareTerminal className="size-4" />
                 </span>
                 <span className="group-data-[collapsible=icon]:hidden">
                   Code
                 </span>
-              </Link>
+              </QuickLink>
             </SidebarMenuButton>
           </SidebarMenuItem>
         </SidebarMenu>
@@ -88,10 +90,10 @@ export function AppSidebar() {
                     isActive={pathname === item.to}
                     tooltip={item.label}
                   >
-                    <Link to={item.to}>
+                    <QuickLink to={item.to}>
                       <item.icon />
                       <span>{item.label}</span>
-                    </Link>
+                    </QuickLink>
                   </SidebarMenuButton>
                 </SidebarMenuItem>
               ))}
@@ -111,18 +113,14 @@ export function AppSidebar() {
                     className="h-auto min-h-9 py-2"
                     tooltip={run.title}
                   >
-                    <Link to="/runs/$runId" params={{ runId: run.id }}>
+                    <QuickLink to="/runs/$runId" params={{ runId: run.id }}>
                       <CircleDot className={statusTone(run.status)} />
                       <span className="truncate">{run.title}</span>
-                    </Link>
+                    </QuickLink>
                   </SidebarMenuButton>
                 </SidebarMenuItem>
               ))}
-              {snapshot.runs.length === 0 && (
-                <li className="text-sidebar-foreground/50 px-2 py-3 text-xs group-data-[collapsible=icon]:hidden">
-                  No runs yet
-                </li>
-              )}
+              <EmptyRecentRuns visible={snapshot.runs.length === 0} />
             </SidebarMenu>
           </SidebarGroupContent>
         </SidebarGroup>
@@ -149,5 +147,15 @@ export function AppSidebar() {
       </SidebarFooter>
       <SidebarRail />
     </Sidebar>
+  );
+}
+
+function EmptyRecentRuns({ visible }: { visible: boolean }) {
+  if (!visible) return null;
+
+  return (
+    <li className="text-sidebar-foreground/50 px-2 py-3 text-xs group-data-[collapsible=icon]:hidden">
+      No runs yet
+    </li>
   );
 }

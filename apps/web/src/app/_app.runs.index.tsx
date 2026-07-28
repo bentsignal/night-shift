@@ -1,4 +1,4 @@
-import { createFileRoute, Link } from "@tanstack/react-router";
+import { createFileRoute } from "@tanstack/react-router";
 import { Plus } from "lucide-react";
 
 import { Button } from "@code/ui-web/components/button";
@@ -6,6 +6,7 @@ import { Button } from "@code/ui-web/components/button";
 import { useControlPlane } from "../control-plane/client";
 import { Page } from "../features/control-plane/page";
 import { RunList } from "../features/control-plane/run-list";
+import { QuickLink } from "../features/quick-link/quick-link";
 
 export const Route = createFileRoute("/_app/runs/")({
   component: RunsPage,
@@ -18,10 +19,10 @@ function RunsPage() {
     <Page
       actions={
         <Button asChild size="sm">
-          <Link to="/new">
+          <QuickLink to="/new">
             <Plus />
             New run
-          </Link>
+          </QuickLink>
         </Button>
       }
       description="Durable assignments across queued, active, and completed work."

@@ -8,7 +8,6 @@ import type {
   Milestone,
   Run,
   RunCommand,
-  RunStatus,
   SubmitWorkInput,
 } from "./types";
 
@@ -208,7 +207,7 @@ interface RawHost {
   sessionExpiresAt: number;
 }
 
-function toRun(run: RawRun, detail: RawRunDetail | undefined): Run {
+function toRun(run: RawRun, detail: RawRunDetail | undefined) {
   const attempt =
     detail?.attempts.find(
       (candidate) => candidate._id === run.activeAttemptId,
@@ -247,10 +246,10 @@ function toRun(run: RawRun, detail: RawRunDetail | undefined): Run {
         }
       : undefined,
     milestones: (detail?.milestones ?? []).map(toMilestone),
-  };
+  } satisfies Run;
 }
 
-export function runTitle(prompt: string): string {
+export function runTitle(prompt: string) {
   const firstLine = prompt.trim().split("\n")[0]?.replace(/\s+/g, " ") ?? "";
   if (!firstLine) return "Untitled assignment";
   if (firstLine.length <= 72) return firstLine;
@@ -260,7 +259,7 @@ export function runTitle(prompt: string): string {
   return `${preview.slice(0, boundary > 48 ? boundary : 69).trimEnd()}…`;
 }
 
-function toMilestone(milestone: RawMilestone): Milestone {
+function toMilestone(milestone: RawMilestone) {
   const kind =
     milestone.kind === "checkpoint"
       ? "progress"
@@ -271,10 +270,10 @@ function toMilestone(milestone: RawMilestone): Milestone {
     label: kind.charAt(0).toUpperCase() + kind.slice(1),
     detail: milestone.summary,
     at: new Date(milestone.createdAt).toISOString(),
-  };
+  } satisfies Milestone;
 }
 
-function toHost(host: RawHost): Host {
+function toHost(host: RawHost) {
   const expired = host.sessionExpiresAt <= Date.now();
   return {
     id: host._id,
@@ -287,10 +286,10 @@ function toHost(host: RawHost): Host {
           : "ready",
     lastSeenAt: new Date(host.lastSeenAt).toISOString(),
     capabilities: host.capabilities,
-  };
+  } satisfies Host;
 }
 
-function normalizeStatus(status: string): RunStatus {
+function normalizeStatus(status: string) {
   if (status === "pause_requested") return "running";
   if (status === "cancel_requested") return "canceling";
   if (
@@ -307,17 +306,15 @@ function normalizeStatus(status: string): RunStatus {
   return "failed";
 }
 
-function normalizeReasoning(value: string | undefined): Run["reasoning"] {
+function normalizeReasoning(value: string | undefined) {
   return value === "medium" || value === "xhigh" ? value : "high";
 }
 
-function hostName(hostId: string): string {
+function hostName(hostId: string) {
   return `Host ${hostId.slice(-6)}`;
 }
 
-function parseValidationDetails(value: string | undefined): {
-  durationMs?: number;
-} {
+function parseValidationDetails(value: string | undefined) {
   if (!value) return {};
   try {
     return JSON.parse(value) as { durationMs?: number };
@@ -326,6 +323,6 @@ function parseValidationDetails(value: string | undefined): {
   }
 }
 
-function operationId(): string {
+function operationId() {
   return globalThis.crypto?.randomUUID?.() ?? `${Date.now()}-${Math.random()}`;
 }

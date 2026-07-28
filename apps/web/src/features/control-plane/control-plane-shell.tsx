@@ -29,6 +29,7 @@ export function ControlPlaneShell() {
     import.meta.env.VITE_CONVEX_URL ? null : demoControlPlaneClient,
   );
 
+  // eslint-disable-next-line no-restricted-syntax -- The Convex connection is an external transport whose lifecycle must follow this shell.
   useEffect(() => {
     const url = import.meta.env.VITE_CONVEX_URL;
     if (!url) return;

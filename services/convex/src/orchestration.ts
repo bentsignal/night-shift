@@ -5,7 +5,6 @@ import type { MutationCtx } from "./_generated/server";
 import type {
   AttemptState,
   AttemptStatus,
-  AuthorityProof,
   MilestoneKind,
   RunState,
   RunStatus,
@@ -305,16 +304,16 @@ export const recordMilestone = mutation({
     const now = Date.now();
     const { run, attempt } = await loadAuthoritativeAttempt(ctx, args, now);
     const patch = domainCall(() =>
-      milestoneState(
-        toRunState(run),
-        toAttemptState(attempt),
-        toProof(args),
-        {
+      milestoneState({
+        run: toRunState(run),
+        attempt: toAttemptState(attempt),
+        proof: toProof(args),
+        milestone: {
           kind: args.kind,
           validationOutcome: args.validation?.outcome,
         },
         now,
-      ),
+      }),
     );
 
     const milestoneId = await ctx.db.insert("milestones", {
@@ -330,7 +329,14 @@ export const recordMilestone = mutation({
       createdAt: now,
     });
 
-    await applyMilestonePatch(ctx, run, attempt, patch, args, now);
+    await applyMilestonePatch({
+      ctx,
+      run,
+      attempt,
+      patch,
+      milestone: args,
+      now,
+    });
     await acknowledgeCurrentCommand(
       ctx,
       args.runId,
@@ -438,7 +444,7 @@ async function recoverExpiredForOwner(
   ctx: MutationCtx,
   ownerId: string,
   now: number,
-): Promise<number> {
+) {
   const expired = await ctx.db
     .query("attempts")
     .withIndex("by_lease_expiration", (q) => q.lte("leaseExpiresAt", now))
@@ -504,7 +510,7 @@ async function loadAuthoritativeAttempt(
     controlGeneration: number;
   },
   now: number,
-): Promise<{ run: Doc<"runs">; attempt: Doc<"attempts"> }> {
+) {
   const [run, attempt, host] = await Promise.all([
     ctx.db.get("runs", args.runId),
     ctx.db.get("attempts", args.attemptId),
@@ -545,15 +551,22 @@ async function loadAuthoritativeAttempt(
   return { run, attempt };
 }
 
-async function applyMilestonePatch(
-  ctx: MutationCtx,
-  run: Doc<"runs">,
-  attempt: Doc<"attempts">,
+async function applyMilestonePatch({
+  ctx,
+  run,
+  attempt,
+  patch,
+  milestone,
+  now,
+}: {
+  ctx: MutationCtx;
+  run: Doc<"runs">;
+  attempt: Doc<"attempts">;
   patch: {
     run: Partial<RunState>;
     attempt?: Partial<AttemptState>;
-  },
-  args: {
+  };
+  milestone: {
     kind: MilestoneKind;
     summary: string;
     validation?: {
@@ -561,10 +574,10 @@ async function applyMilestonePatch(
       outcome: "passed" | "failed";
       details?: string;
     };
-  },
-  now: number,
-): Promise<void> {
-  const runPatch: {
+  };
+  now: number;
+}) {
+  type RunPatch = {
     status?: RunStatus;
     validationStatus?: ValidationStatus;
     activeAttemptId?: undefined;
@@ -573,7 +586,8 @@ async function applyMilestonePatch(
     resultSummary?: string;
     failure?: string;
     updatedAt: number;
-  } = { updatedAt: now };
+  };
+  const runPatch = definePatch<RunPatch>({ updatedAt: now });
   if (patch.run.status) runPatch.status = patch.run.status;
   if (patch.run.validationStatus) {
     runPatch.validationStatus = patch.run.validationStatus;
@@ -585,33 +599,36 @@ async function applyMilestonePatch(
     runPatch.startedAt = patch.run.startedAt;
   }
   if (
-    args.kind === "completed" ||
-    args.kind === "failed" ||
-    args.kind === "canceled"
+    milestone.kind === "completed" ||
+    milestone.kind === "failed" ||
+    milestone.kind === "canceled"
   ) {
     runPatch.finishedAt = now;
   }
-  if (args.kind === "completed") runPatch.resultSummary = args.summary;
-  if (args.kind === "failed") runPatch.failure = args.summary;
+  if (milestone.kind === "completed") {
+    runPatch.resultSummary = milestone.summary;
+  }
+  if (milestone.kind === "failed") runPatch.failure = milestone.summary;
 
-  const attemptPatch: {
+  type AttemptPatch = {
     status?: AttemptStatus;
     startedAt?: number;
     finishedAt?: number;
     failure?: string;
     updatedAt: number;
-  } = { updatedAt: now };
+  };
+  const attemptPatch = definePatch<AttemptPatch>({ updatedAt: now });
   if (patch.attempt?.status) attemptPatch.status = patch.attempt.status;
-  if (args.kind === "started") attemptPatch.startedAt = now;
+  if (milestone.kind === "started") attemptPatch.startedAt = now;
   if (
-    args.kind === "paused" ||
-    args.kind === "completed" ||
-    args.kind === "failed" ||
-    args.kind === "canceled"
+    milestone.kind === "paused" ||
+    milestone.kind === "completed" ||
+    milestone.kind === "failed" ||
+    milestone.kind === "canceled"
   ) {
     attemptPatch.finishedAt = now;
   }
-  if (args.kind === "failed") attemptPatch.failure = args.summary;
+  if (milestone.kind === "failed") attemptPatch.failure = milestone.summary;
 
   await Promise.all([
     ctx.db.patch("runs", run._id, runPatch),
@@ -624,7 +641,7 @@ async function acknowledgeCurrentCommand(
   runId: Id<"runs">,
   controlGeneration: number,
   now: number,
-): Promise<void> {
+) {
   const commands = await ctx.db
     .query("commands")
     .withIndex("by_run_generation", (q) =>
@@ -643,7 +660,7 @@ async function acknowledgeCurrentCommand(
   );
 }
 
-function toRunState(run: Doc<"runs">): RunState {
+function toRunState(run: Doc<"runs">) {
   return {
     status: run.status,
     validationStatus: run.validationStatus,
@@ -654,7 +671,7 @@ function toRunState(run: Doc<"runs">): RunState {
   };
 }
 
-function toAttemptState(attempt: Doc<"attempts">): AttemptState {
+function toAttemptState(attempt: Doc<"attempts">) {
   return {
     id: attempt._id,
     hostId: attempt.hostId,
@@ -671,7 +688,7 @@ function toProof(args: {
   hostSessionId: string;
   fencingGeneration: number;
   controlGeneration: number;
-}): AuthorityProof {
+}) {
   return {
     attemptId: args.attemptId,
     hostId: args.hostId,
@@ -681,7 +698,7 @@ function toProof(args: {
   };
 }
 
-function domainCall<T>(fn: () => T): T {
+function domainCall<T>(fn: () => T) {
   try {
     return fn();
   } catch (error) {
@@ -692,6 +709,10 @@ function domainCall<T>(fn: () => T): T {
   }
 }
 
-function authorityError(code: string, message: string): ConvexError<string> {
+function authorityError(code: string, message: string) {
   return new ConvexError(JSON.stringify({ code, message }));
+}
+
+function definePatch<Patch>(patch: Patch) {
+  return patch;
 }
