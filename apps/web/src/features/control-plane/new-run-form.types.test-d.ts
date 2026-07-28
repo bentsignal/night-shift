@@ -1,6 +1,9 @@
-import { Component } from "@code/effect-react";
+import { createComponent } from "@code/effect-react";
 
-import { newRunFormFactory } from "./new-run-form";
+import { newRunFormState } from "./new-run-form-state";
 
-// @ts-expect-error the raw factory still requires both tagged services
-Component.mount(newRunFormFactory, { onFailure: () => null });
+createComponent({
+  // @ts-expect-error raw state still requires all tagged services
+  state: newRunFormState,
+  component: () => null,
+});

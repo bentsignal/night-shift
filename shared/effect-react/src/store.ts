@@ -1,4 +1,4 @@
-import { useCallback, useMemo, useSyncExternalStore } from "react";
+import { useSyncExternalStoreWithSelector } from "use-sync-external-store/with-selector";
 
 type Listener = () => void;
 
@@ -24,7 +24,7 @@ export interface SelectorOptions<Selected> {
 export function makeStore<State>(
   initialState: State,
   options: StoreOptions<State> = {},
-): Store<State> {
+) {
   let state = initialState;
   const listeners = new Set<Listener>();
 
@@ -45,7 +45,7 @@ export function makeStore<State>(
     getServerSnapshot: options.getServerSnapshot ?? getSnapshot,
     getSnapshot,
     set,
-    subscribe(listener) {
+    subscribe(listener: Listener) {
       listeners.add(listener);
       return () => {
         listeners.delete(listener);
@@ -59,65 +59,20 @@ export function makeStore<State>(
   }
 }
 
-interface SelectionCache<Selected> {
-  readonly getServerSnapshot: () => Selected;
-  readonly getSnapshot: () => Selected;
-}
-
-function makeSelectionCache<State, Selected>(
-  store: Store<State>,
-  selector: (state: State) => Selected,
-  isEqual: (previous: Selected, next: Selected) => boolean,
-): SelectionCache<Selected> {
-  let hasSelection = false;
-  let previousSnapshot: State;
-  let previousSelection: Selected;
-
-  const select = (snapshot: State) => {
-    if (hasSelection && Object.is(previousSnapshot, snapshot)) {
-      return previousSelection;
-    }
-
-    const nextSelection = selector(snapshot);
-    if (hasSelection && isEqual(previousSelection, nextSelection)) {
-      previousSnapshot = snapshot;
-      return previousSelection;
-    }
-
-    hasSelection = true;
-    previousSnapshot = snapshot;
-    previousSelection = nextSelection;
-    return nextSelection;
-  };
-
-  return {
-    getServerSnapshot: () => select(store.getServerSnapshot()),
-    getSnapshot: () => select(store.getSnapshot()),
-  };
-}
-
 /**
- * Selects one store slice using React's concurrent-safe external-store bridge.
+ * Selects one store slice using React's maintained external-store selector.
  * Equal selections retain their identity and do not rerender the consumer.
  */
 export function useStoreSelector<State, Selected>(
   store: Store<State>,
   selector: (state: State) => Selected,
   options: SelectorOptions<Selected> = {},
-): Selected {
-  const isEqual = options.isEqual ?? Object.is;
-  const selection = useMemo(
-    () => makeSelectionCache(store, selector, isEqual),
-    [isEqual, selector, store],
-  );
-  const subscribe = useCallback(
-    (listener: Listener) => store.subscribe(listener),
-    [store],
-  );
-
-  return useSyncExternalStore(
-    subscribe,
-    selection.getSnapshot,
-    selection.getServerSnapshot,
+) {
+  return useSyncExternalStoreWithSelector(
+    store.subscribe,
+    store.getSnapshot,
+    store.getServerSnapshot,
+    selector,
+    options.isEqual,
   );
 }

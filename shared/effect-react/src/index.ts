@@ -1,17 +1,10 @@
 export {
-  AsyncComponentFactoryError,
-  Component,
-  make as makeComponent,
-  mount as mountComponent,
-  type ComponentFactory,
-  type MountOptions,
-} from "./component";
-export {
-  Hook,
-  make as makeHook,
-  type Hook as ReactHook,
-  type HookFactory,
-} from "./hook";
+  AsyncComponentStateError,
+  createComponent,
+  type ComponentDefinition,
+  type ComponentState,
+  type StateHook,
+} from "./create-component";
 export {
   makeStore,
   type SelectorOptions,

@@ -1,4 +1,4 @@
-import { memo, useState } from "react";
+import { useState } from "react";
 import { renderToString } from "react-dom/server";
 import { act, render, screen } from "@testing-library/react";
 import { describe, expect, test } from "vitest";
@@ -10,11 +10,11 @@ describe("store selectors", () => {
     const store = makeStore({ count: 0, text: "initial" });
     let renders = 0;
 
-    const Count = memo(function Count() {
+    function Count() {
       renders += 1;
       const count = useStoreSelector(store, (state) => state.count);
       return <span>{count}</span>;
-    });
+    }
 
     render(<Count />);
     expect(renders).toBe(1);
@@ -60,7 +60,7 @@ describe("store selectors", () => {
     const store = makeStore({ count: 0 });
     let renders = 0;
 
-    const Parity = memo(function Parity() {
+    function Parity() {
       renders += 1;
       const selection = useStoreSelector(
         store,
@@ -70,7 +70,7 @@ describe("store selectors", () => {
         },
       );
       return <span>{String(selection.even)}</span>;
-    });
+    }
 
     render(<Parity />);
     act(() => {
@@ -82,6 +82,29 @@ describe("store selectors", () => {
       store.set({ count: 3 });
     });
     expect(renders).toBe(2);
+  });
+
+  test("retains equal selection identity across parent renders", () => {
+    const store = makeStore({ count: 2 });
+    const selections = new Array<{ even: boolean }>();
+
+    function Parity({ label }: { label: string }) {
+      const selection = useStoreSelector(
+        store,
+        (state) => ({ even: state.count % 2 === 0 }),
+        {
+          isEqual: (previous, next) => previous.even === next.even,
+        },
+      );
+      selections.push(selection);
+      return <span>{label}</span>;
+    }
+
+    const view = render(<Parity label="first" />);
+    view.rerender(<Parity label="second" />);
+
+    expect(selections).toHaveLength(2);
+    expect(selections[1]).toBe(selections[0]);
   });
 
   test("does not notify when the store identity is unchanged", () => {
