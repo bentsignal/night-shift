@@ -9,6 +9,7 @@
  */
 
 import type * as domain from "../domain.js";
+import type * as experimentalConfect from "../experimentalConfect.js";
 import type * as health from "../health.js";
 import type * as hosts from "../hosts.js";
 import type * as orchestration from "../orchestration.js";
@@ -23,6 +24,7 @@ import type {
 
 declare const fullApi: ApiFromModules<{
   domain: typeof domain;
+  experimentalConfect: typeof experimentalConfect;
   health: typeof health;
   hosts: typeof hosts;
   orchestration: typeof orchestration;

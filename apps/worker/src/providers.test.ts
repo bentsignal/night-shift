@@ -5,7 +5,7 @@ import { Effect } from "effect";
 import { afterEach, describe, expect, it } from "vitest";
 
 import { HostCredentialStore } from "./credential-store.ts";
-import { productionModelResolver } from "./providers.ts";
+import { openAiReasoning, productionModelResolver } from "./providers.ts";
 
 const temporaryDirectories: string[] = [];
 
@@ -18,6 +18,10 @@ afterEach(async () => {
 });
 
 describe("productionModelResolver", () => {
+  it("normalizes provider-neutral minimal reasoning for Codex Responses", () => {
+    expect(openAiReasoning("minimal")).toBe("low");
+  });
+
   it("fails with a typed missing credential instead of falling back providers", async () => {
     const store = await credentialStore();
     const resolver = productionModelResolver({ credentials: store });

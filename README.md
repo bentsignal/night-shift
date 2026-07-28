@@ -5,9 +5,12 @@ A personal control plane for agentic coding work. Convex owns durable orchestrat
 The first vertical slice includes:
 
 - A TanStack Start operations console for queueing and controlling runs
-- A Convex service with explicit run, host, attempt, milestone, and command state
+- A Convex service with explicit run, host, attempt, milestone, and command state,
+  with durable admission executed as an Effect through Confect
 - A TypeScript worker with host registration, health, fenced leases, sparse checkpoints, pause/resume/cancel, and deterministic validation
 - A bounded Effect AI harness with typed tools, provider Layers, and sparse turn checkpoints
+- An experimental `@code/effect-react` package with selector stores and Effect-built,
+  dependency-checked component and hook factories
 - Viable CLI, Electron, and Expo client scaffolds
 
 ## Run locally

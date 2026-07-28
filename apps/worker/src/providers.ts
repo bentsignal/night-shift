@@ -188,10 +188,14 @@ function codexHeaders(accountId: string) {
     );
 }
 
-function openAiReasoning(
+export function openAiReasoning(
   reasoning: ReasoningLevel,
 ): "none" | "minimal" | "low" | "medium" | "high" {
   if (reasoning === "off") return "none";
+  // Codex subscription models do not accept the Responses API's `minimal`
+  // value. Keep the product-level option provider-neutral and lower it to the
+  // nearest supported effort at this transport boundary.
+  if (reasoning === "minimal") return "low";
   if (reasoning === "xhigh" || reasoning === "max") return "high";
   return reasoning;
 }
