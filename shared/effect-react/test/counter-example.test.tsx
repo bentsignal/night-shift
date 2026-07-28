@@ -7,6 +7,11 @@ describe("CounterExample", () => {
   test("connects provider state to the created component", () => {
     render(<CounterExample />);
 
+    expect(
+      screen.getByRole("heading", { name: "Counter panel" }),
+    ).toBeInTheDocument();
+    expect(screen.getByText("Nested counter")).toBeInTheDocument();
+
     const counter = screen.getByRole("button", { name: "Count: 0" });
     act(() => {
       counter.click();

@@ -1,3 +1,4 @@
+import type { ReactNode } from "react";
 import { useSyncExternalStore } from "react";
 
 import { createStore } from "@night-shift/effect-react";
@@ -28,10 +29,17 @@ export interface ControlPlaneState extends ControlPlaneSnapshot {
   commandRun: (runId: string, command: RunCommand) => Promise<void>;
 }
 
-export const controlPlane = createStore({
-  name: "ControlPlane",
-  state: useControlPlaneState,
-});
+export const controlPlane = createStore("ControlPlane")<ControlPlaneState>();
 
-export const ControlPlaneProvider = controlPlane.Store;
 export const useControlPlane = controlPlane.useStore;
+
+export function ControlPlaneProvider({
+  children,
+  client,
+}: {
+  children?: ReactNode;
+  client: ControlPlaneClient;
+}) {
+  const state = useControlPlaneState({ client });
+  return <controlPlane.Store value={state}>{children}</controlPlane.Store>;
+}

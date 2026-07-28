@@ -1,8 +1,16 @@
 import type { ComponentType } from "react";
 import { Context, Effect } from "effect";
 
+import type { CounterState } from "../example/counter";
 import type { ComponentEffect, StoreRequirement } from "../src";
-import { createComponent, createStore } from "../src";
+import {
+  CounterButton,
+  CounterExample,
+  CounterPanel,
+  CounterRow,
+  ProvidedCounterPanel,
+} from "../example/counter";
+import { createComponent, createStore, requireComponent } from "../src";
 
 type Equal<Left, Right> =
   (<Value>() => Value extends Left ? 1 : 2) extends <
@@ -12,6 +20,43 @@ type Equal<Left, Right> =
     : false;
 
 type Expect<Value extends true> = Value;
+
+declare const dynamicStoreName: string;
+// @ts-expect-error store identity must be one string literal
+createStore(dynamicStoreName);
+
+declare const unionStoreName: "First" | "Second";
+// @ts-expect-error one declaration cannot represent multiple service identities
+createStore(unionStoreName);
+
+type CounterRequirement = StoreRequirement<"Counter", CounterState>;
+type _CounterButtonRequirement = Expect<
+  Equal<
+    Effect.Effect.Context<ComponentEffect<typeof CounterButton>>,
+    CounterRequirement
+  >
+>;
+type _CounterRowRequirement = Expect<
+  Equal<
+    Effect.Effect.Context<ComponentEffect<typeof CounterRow>>,
+    CounterRequirement
+  >
+>;
+type _CounterPanelRequirement = Expect<
+  Equal<
+    Effect.Effect.Context<ComponentEffect<typeof CounterPanel>>,
+    CounterRequirement
+  >
+>;
+type _ProvidedCounterPanelRequirement = Expect<
+  Equal<
+    Effect.Effect.Context<ComponentEffect<typeof ProvidedCounterPanel>>,
+    never
+  >
+>;
+type _CounterExampleRequirement = Expect<
+  Equal<Effect.Effect.Context<ComponentEffect<typeof CounterExample>>, never>
+>;
 
 class NumberService extends Context.Tag("NumberService")<
   NumberService,
@@ -90,22 +135,29 @@ createComponent({
   component: () => "business logic leaked into the view",
 });
 
-const typedStore = createStore({
-  name: "TypedCounter",
-  state: () => ({ count: 0 }),
-});
+interface TypedCounterState {
+  readonly count: number;
+}
+
+const typedStore = createStore("TypedCounter")<TypedCounterState>();
+const otherTypedStore = createStore("OtherTypedCounter")<TypedCounterState>();
 
 typedStore.service satisfies Context.Tag<
-  StoreRequirement<"TypedCounter">,
+  StoreRequirement<"TypedCounter", TypedCounterState>,
   typeof typedStore.useStore
 >;
 
 const _StoreConsumer = createComponent({
   state: Effect.gen(function* () {
     const useTypedStore = yield* typedStore.service;
+    const useOtherTypedStore = yield* otherTypedStore.service;
+    const offset = yield* NumberService;
     return () =>
       Effect.succeed({
-        count: useTypedStore((state) => state.count),
+        count:
+          useTypedStore((state) => state.count) +
+          useOtherTypedStore((state) => state.count) +
+          offset,
       });
   }),
   component: ({ state }) => {
@@ -118,6 +170,61 @@ type StoreConsumerEffect = ComponentEffect<typeof _StoreConsumer>;
 type _StoreRequirement = Expect<
   Equal<
     Effect.Effect.Context<StoreConsumerEffect>,
-    StoreRequirement<"TypedCounter">
+    | NumberService
+    | StoreRequirement<"OtherTypedCounter", TypedCounterState>
+    | StoreRequirement<"TypedCounter", TypedCounterState>
+  >
+>;
+
+const _NestedConsumer = createComponent({
+  state: Effect.gen(function* () {
+    const StoreConsumer = yield* requireComponent(_StoreConsumer);
+    return () => Effect.succeed({ StoreConsumer });
+  }),
+  component: ({ state }) => {
+    state.StoreConsumer satisfies ComponentType;
+    return null;
+  },
+});
+
+type NestedConsumerEffect = ComponentEffect<typeof _NestedConsumer>;
+type _NestedRequirement = Expect<
+  Equal<
+    Effect.Effect.Context<NestedConsumerEffect>,
+    | NumberService
+    | StoreRequirement<"OtherTypedCounter", TypedCounterState>
+    | StoreRequirement<"TypedCounter", TypedCounterState>
+  >
+>;
+
+const _ProvidedConsumer = typedStore.provide({
+  component: _NestedConsumer,
+  implementation: () => ({ count: 0 }),
+});
+
+type ProvidedConsumerEffect = ComponentEffect<typeof _ProvidedConsumer>;
+type _ProvidedRequirement = Expect<
+  Equal<
+    Effect.Effect.Context<ProvidedConsumerEffect>,
+    NumberService | StoreRequirement<"OtherTypedCounter", TypedCounterState>
+  >
+>;
+
+const _OuterConsumer = createComponent({
+  state: Effect.gen(function* () {
+    const ProvidedConsumer = yield* requireComponent(_ProvidedConsumer);
+    return () => Effect.succeed({ ProvidedConsumer });
+  }),
+  component: ({ state }) => {
+    state.ProvidedConsumer satisfies ComponentType;
+    return null;
+  },
+});
+
+type OuterConsumerEffect = ComponentEffect<typeof _OuterConsumer>;
+type _OuterRequirement = Expect<
+  Equal<
+    Effect.Effect.Context<OuterConsumerEffect>,
+    NumberService | StoreRequirement<"OtherTypedCounter", TypedCounterState>
   >
 >;

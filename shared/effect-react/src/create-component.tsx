@@ -25,6 +25,12 @@ export type ComponentEffect<Component> =
     ? Effect.Effect<RenderResult, Error, Requirements>
     : never;
 
+export function requireComponent<Props, Error, Requirements>(
+  component: EffectComponent<Props, Error, Requirements>,
+) {
+  return Effect.context<Requirements>().pipe(Effect.as(component));
+}
+
 export type StateHook<Props, State, Error> = (
   props: Props,
 ) => Effect.Effect<State, Error>;

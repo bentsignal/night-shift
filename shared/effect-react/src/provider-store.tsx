@@ -1,28 +1,24 @@
-import type { ReactNode } from "react";
+import type { ComponentType, ReactNode } from "react";
 import { createContext, use, useLayoutEffect, useState } from "react";
 import { Context } from "effect";
 
+import type { EffectComponent } from "./create-component";
 import type { ReadableStore, SelectorOptions } from "./store";
 import { ServiceContextProvider, useServiceContext } from "./service-context";
 import { makeStore, useStoreSelector } from "./store";
 
-type StoreProps<Props extends object> = Props & {
+type StoreProps<State extends object> = {
   readonly children?: ReactNode;
+  readonly value: State;
 };
 
 export declare const StoreRequirementTypeId: unique symbol;
 
-export interface StoreRequirement<Name extends string> {
-  readonly [StoreRequirementTypeId]: Name;
-}
-
-export interface StoreDefinition<
-  Name extends string,
-  Props extends object,
-  State extends object,
-> {
-  readonly name: Name;
-  readonly state: (props: Props) => State;
+export interface StoreRequirement<Name extends string, State extends object> {
+  readonly [StoreRequirementTypeId]: {
+    readonly name: Name;
+    readonly state: (state: State) => State;
+  };
 }
 
 export type StoreSelector<State> = <Selected>(
@@ -30,61 +26,92 @@ export type StoreSelector<State> = <Selected>(
   options?: SelectorOptions<Selected>,
 ) => Selected;
 
-const storeNames = new Set<string>();
+type IsUnion<Value, Original = Value> = Value extends Original
+  ? [Original] extends [Value]
+    ? false
+    : true
+  : never;
 
-export function createStore<
-  const Name extends string,
-  Props extends object,
-  State extends object,
->(definition: StoreDefinition<Name, Props, State>) {
-  if (storeNames.has(definition.name)) {
-    throw new Error(
-      `Effect React store names must be unique. "${definition.name}" is already registered.`,
-    );
-  }
-  storeNames.add(definition.name);
+type StoreName<Name extends string> = string extends Name
+  ? never
+  : true extends IsUnion<Name>
+    ? never
+    : Name;
 
-  const missingProvider = () => {
-    throw new Error("useStore must be used within its Store");
+/**
+ * Declares one injectable store contract.
+ *
+ * The literal name is its Effect service identity, so reusing a name means
+ * reusing the same State contract.
+ */
+export function createStore<const Name extends string>(name: StoreName<Name>) {
+  return function defineStore<State extends object>() {
+    const missingProvider = () => {
+      throw new Error("useStore must be used within its Store");
+    };
+    const missingStore = {
+      getServerSnapshot: missingProvider,
+      getSnapshot: missingProvider,
+      subscribe: () => () => undefined,
+    } satisfies ReadableStore<State>;
+    const StoreContext = createContext<ReadableStore<State>>(missingStore);
+    const service = Context.GenericTag<
+      StoreRequirement<Name, State>,
+      StoreSelector<State>
+    >(`@night-shift/effect-react/store/${name}`);
+
+    function Store({ children, value }: StoreProps<State>) {
+      const [store] = useState(() => makeStore(value));
+      const parentServices = useServiceContext();
+      const [services] = useState(() =>
+        Context.add(parentServices, service, useStore),
+      );
+
+      useLayoutEffect(() => {
+        store.set(value);
+      }, [store, value]);
+
+      return (
+        <ServiceContextProvider services={services}>
+          <StoreContext value={store}>{children}</StoreContext>
+        </ServiceContextProvider>
+      );
+    }
+
+    function useStore<Selected>(
+      selector: (state: State) => Selected,
+      options: SelectorOptions<Selected> = {},
+    ) {
+      const store = use(StoreContext);
+      return useStoreSelector(store, selector, options);
+    }
+
+    function provide<ComponentProps extends object, Error, Requirements>({
+      component,
+      implementation: useImplementation,
+    }: {
+      readonly component: EffectComponent<ComponentProps, Error, Requirements>;
+      readonly implementation: (props: ComponentProps) => State;
+    }) {
+      const Component = component as ComponentType<ComponentProps>;
+
+      function ProvidedStore(props: ComponentProps) {
+        const value = useImplementation(props);
+        return (
+          <Store value={value}>
+            <Component {...props} />
+          </Store>
+        );
+      }
+
+      ProvidedStore.displayName = `Provide${name}`;
+      return ProvidedStore as unknown as EffectComponent<
+        ComponentProps,
+        Error,
+        Exclude<Requirements, StoreRequirement<Name, State>>
+      >;
+    }
+
+    return { provide, service, Store, useStore };
   };
-  const missingStore = {
-    getServerSnapshot: missingProvider,
-    getSnapshot: missingProvider,
-    subscribe: () => () => undefined,
-  } satisfies ReadableStore<State>;
-  const StoreContext = createContext<ReadableStore<State>>(missingStore);
-  const service = Context.GenericTag<
-    StoreRequirement<Name>,
-    StoreSelector<State>
-  >(`@night-shift/effect-react/store/${definition.name}`);
-
-  function Store(props: StoreProps<Props>) {
-    const { children, ...storeProps } = props;
-    const state = definition.state(storeProps as Props);
-    const [store] = useState(() => makeStore(state));
-    const parentServices = useServiceContext();
-    const [services] = useState(() =>
-      Context.add(parentServices, service, useStore),
-    );
-
-    useLayoutEffect(() => {
-      store.set(state);
-    }, [state, store]);
-
-    return (
-      <ServiceContextProvider services={services}>
-        <StoreContext value={store}>{children}</StoreContext>
-      </ServiceContextProvider>
-    );
-  }
-
-  function useStore<Selected>(
-    selector: (state: State) => Selected,
-    options: SelectorOptions<Selected> = {},
-  ) {
-    const store = use(StoreContext);
-    return useStoreSelector(store, selector, options);
-  }
-
-  return { service, Store, useStore };
 }

@@ -1,3 +1,4 @@
+import type { Dispatch, ReactNode, SetStateAction } from "react";
 import { useState } from "react";
 import { renderToString } from "react-dom/server";
 import { act, render, screen } from "@testing-library/react";
@@ -7,32 +8,31 @@ import { describe, expect, test } from "vitest";
 import { createComponent, createStore } from "../src";
 
 describe("provider stores", () => {
-  test("rejects duplicate service identities", () => {
-    createStore({
-      name: "UniqueStoreIdentity",
-      state: () => ({ count: 0 }),
-    });
+  test("gives same-shaped stores distinct service identities", () => {
+    const first = createStore("FirstIdentity")<{ count: number }>();
+    const second = createStore("SecondIdentity")<{ count: number }>();
 
-    expect(() =>
-      createStore({
-        name: "UniqueStoreIdentity",
-        state: () => ({ label: "wrong service" }),
-      }),
-    ).toThrow(
-      'Effect React store names must be unique. "UniqueStoreIdentity" is already registered.',
-    );
+    expect(first.service.key).not.toBe(second.service.key);
   });
 
   test("rerenders consumers only when their selected state changes", () => {
-    const example = createStore({
-      name: "SelectiveRerenders",
-      state: function useSelectiveRerendersStore() {
-        const [count, setCount] = useState(0);
-        const [text, setText] = useState("initial");
-        return { count, setCount, setText, text };
-      },
-    });
+    const example = createStore("SelectiveRerenders")<{
+      count: number;
+      setCount: Dispatch<SetStateAction<number>>;
+      setText: Dispatch<SetStateAction<string>>;
+      text: string;
+    }>();
     let countRenders = 0;
+
+    function ExampleStore({ children }: { children?: ReactNode }) {
+      const [count, setCount] = useState(0);
+      const [text, setText] = useState("initial");
+      return (
+        <example.Store value={{ count, setCount, setText, text }}>
+          {children}
+        </example.Store>
+      );
+    }
 
     function Count() {
       countRenders += 1;
@@ -56,10 +56,10 @@ describe("provider stores", () => {
     }
 
     render(
-      <example.Store>
+      <ExampleStore>
         <Count />
         <Actions />
-      </example.Store>,
+      </ExampleStore>,
     );
 
     act(() => {
@@ -75,10 +75,7 @@ describe("provider stores", () => {
   });
 
   test("isolates nested provider state", () => {
-    const example = createStore({
-      name: "NestedProviders",
-      state: ({ value }: { value: string }) => ({ value }),
-    });
+    const example = createStore("NestedProviders")<{ value: string }>();
 
     function Value({ label }: { label: string }) {
       const value = example.useStore((state) => state.value);
@@ -86,9 +83,9 @@ describe("provider stores", () => {
     }
 
     render(
-      <example.Store value="outer">
+      <example.Store value={{ value: "outer" }}>
         <Value label="outer" />
-        <example.Store value="inner">
+        <example.Store value={{ value: "inner" }}>
           <Value label="inner" />
         </example.Store>
       </example.Store>,
@@ -99,10 +96,7 @@ describe("provider stores", () => {
   });
 
   test("publishes provider prop changes", () => {
-    const example = createStore({
-      name: "ProviderProps",
-      state: ({ value }: { value: string }) => ({ value }),
-    });
+    const example = createStore("ProviderProps")<{ value: string }>();
 
     function Value() {
       const value = example.useStore((state) => state.value);
@@ -110,12 +104,12 @@ describe("provider stores", () => {
     }
 
     const view = render(
-      <example.Store value="first">
+      <example.Store value={{ value: "first" }}>
         <Value />
       </example.Store>,
     );
     view.rerender(
-      <example.Store value="second">
+      <example.Store value={{ value: "second" }}>
         <Value />
       </example.Store>,
     );
@@ -124,10 +118,7 @@ describe("provider stores", () => {
   });
 
   test("fails clearly outside its provider", () => {
-    const example = createStore({
-      name: "MissingProvider",
-      state: () => ({ count: 0 }),
-    });
+    const example = createStore("MissingProvider")<{ count: number }>();
 
     function Count() {
       return <span>{example.useStore((state) => state.count)}</span>;
@@ -139,10 +130,7 @@ describe("provider stores", () => {
   });
 
   test("renders the initial provider snapshot on the server", () => {
-    const example = createStore({
-      name: "ServerSnapshot",
-      state: ({ count }: { count: number }) => ({ count }),
-    });
+    const example = createStore("ServerSnapshot")<{ count: number }>();
 
     function Count() {
       return <span>{example.useStore((state) => state.count)}</span>;
@@ -150,7 +138,7 @@ describe("provider stores", () => {
 
     expect(
       renderToString(
-        <example.Store count={7}>
+        <example.Store value={{ count: 7 }}>
           <Count />
         </example.Store>,
       ),
@@ -158,13 +146,10 @@ describe("provider stores", () => {
   });
 
   test("provides its generated Effect service to descendant components", () => {
-    const example = createStore({
-      name: "EffectCounter",
-      state: function useEffectCounterStore() {
-        const [count, setCount] = useState(0);
-        return { count, setCount };
-      },
-    });
+    const example = createStore("EffectCounter")<{
+      count: number;
+      setCount: Dispatch<SetStateAction<number>>;
+    }>();
     const Counter = createComponent({
       state: Effect.gen(function* () {
         const useCounter = yield* example.service;
@@ -184,11 +169,15 @@ describe("provider stores", () => {
       ),
     });
 
-    render(
-      <example.Store>
-        <Counter />
-      </example.Store>,
-    );
+    const ProvidedCounter = example.provide({
+      component: Counter,
+      implementation: function useEffectCounterStore() {
+        const [count, setCount] = useState(0);
+        return { count, setCount };
+      },
+    });
+
+    render(<ProvidedCounter />);
 
     act(() => {
       screen.getByRole("button", { name: "0" }).click();
