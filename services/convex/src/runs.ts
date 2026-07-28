@@ -1,42 +1,49 @@
-import { ConvexError, v } from "convex/values";
+import { v } from "convex/values";
+import * as Effect from "effect/Effect";
 
-import { mutation, query } from "./_generated/server";
+import { query } from "./_generated/server";
+import {
+  ExperimentalDatabaseReader,
+  experimentalDatabaseSchema,
+  ExperimentalDatabaseWriter,
+  registerExperimentalConfectFunction,
+  submitSpec,
+} from "./experimentalConfect";
 
-export const submit = mutation({
-  args: {
-    ownerId: v.string(),
-    submitKey: v.string(),
-    prompt: v.string(),
-    projectId: v.optional(v.string()),
-    requiredCapabilities: v.optional(v.array(v.string())),
-    runtime: v.optional(
-      v.object({
-        provider: v.string(),
-        model: v.string(),
-        reasoningLevel: v.optional(v.string()),
-      }),
-    ),
-  },
-  handler: async (ctx, args) => {
-    const existing = await ctx.db
-      .query("runs")
-      .withIndex("by_owner_submit_key", (q) =>
+export const submit = registerExperimentalConfectFunction(
+  experimentalDatabaseSchema,
+  submitSpec,
+  Effect.fn(function* (args) {
+    const reader = yield* ExperimentalDatabaseReader;
+    const writer = yield* ExperimentalDatabaseWriter;
+    const requiredCapabilities = [
+      ...new Set(args.requiredCapabilities ?? []),
+    ].sort();
+    const matches = yield* reader
+      .table("runs")
+      .index("by_owner_submit_key", (q) =>
         q.eq("ownerId", args.ownerId).eq("submitKey", args.submitKey),
       )
-      .unique();
+      .take(2)
+      .pipe(Effect.orDie);
 
-    if (existing) {
+    if (matches.length > 1) {
+      return yield* Effect.dieMessage(
+        "runs:submit expected ownerId and submitKey to identify one run",
+      );
+    }
+
+    const existing = matches[0];
+    if (existing !== undefined) {
       if (
         existing.prompt !== args.prompt ||
         existing.projectId !== args.projectId ||
         JSON.stringify(existing.requiredCapabilities) !==
-          JSON.stringify(
-            [...new Set(args.requiredCapabilities ?? [])].sort(),
-          ) ||
+          JSON.stringify(requiredCapabilities) ||
         JSON.stringify(existing.runtime) !== JSON.stringify(args.runtime)
       ) {
-        throw new ConvexError({
-          code: "IDEMPOTENCY_CONFLICT",
+        return yield* Effect.fail({
+          code: "IDEMPOTENCY_CONFLICT" as const,
           message: "submitKey was already used for different work",
         });
       }
@@ -44,26 +51,27 @@ export const submit = mutation({
     }
 
     const now = Date.now();
-    const runId = await ctx.db.insert("runs", {
-      ownerId: args.ownerId,
-      submitKey: args.submitKey,
-      prompt: args.prompt,
-      projectId: args.projectId,
-      requiredCapabilities: [
-        ...new Set(args.requiredCapabilities ?? []),
-      ].sort(),
-      runtime: args.runtime,
-      status: "queued",
-      validationStatus: "pending",
-      fencingGeneration: 0,
-      controlGeneration: 0,
-      createdAt: now,
-      updatedAt: now,
-    });
+    const runId = yield* writer
+      .table("runs")
+      .insert({
+        ownerId: args.ownerId,
+        submitKey: args.submitKey,
+        prompt: args.prompt,
+        projectId: args.projectId,
+        requiredCapabilities,
+        runtime: args.runtime,
+        status: "queued",
+        validationStatus: "pending",
+        fencingGeneration: 0,
+        controlGeneration: 0,
+        createdAt: now,
+        updatedAt: now,
+      })
+      .pipe(Effect.orDie);
 
     return { created: true, runId };
-  },
-});
+  }),
+);
 
 export const get = query({
   args: { ownerId: v.string(), runId: v.id("runs") },
