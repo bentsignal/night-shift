@@ -2,7 +2,7 @@ import type { Dispatch, SetStateAction } from "react";
 import { useEffect, useState } from "react";
 import { Effect } from "effect";
 
-import { createComponent, createStore, requireComponent } from "../src";
+import { createComponent, createStore } from "../src";
 
 export interface CounterState {
   readonly count: number;
@@ -42,7 +42,7 @@ export const CounterButton = createComponent({
 
 export const CounterRow = createComponent({
   state: Effect.gen(function* () {
-    const Button = yield* requireComponent(CounterButton);
+    const Button = yield* CounterButton;
     return () => Effect.succeed({ Button });
   }),
 
@@ -56,7 +56,7 @@ export const CounterRow = createComponent({
 
 export const CounterPanel = createComponent({
   state: Effect.gen(function* () {
-    const Row = yield* requireComponent(CounterRow);
+    const Row = yield* CounterRow;
     return () => Effect.succeed({ Row });
   }),
 
@@ -78,7 +78,7 @@ export const ProvidedCounterPanel = counter.provide({
 
 export const CounterExample = createComponent({
   state: Effect.gen(function* () {
-    const Panel = yield* requireComponent(ProvidedCounterPanel);
+    const Panel = yield* ProvidedCounterPanel;
     return () => Effect.succeed({ Panel });
   }),
 
@@ -88,3 +88,11 @@ export const CounterExample = createComponent({
     </main>
   ),
 });
+
+export function NormalComponent() {
+  return (
+    <div>
+      <CounterExample />
+    </div>
+  );
+}

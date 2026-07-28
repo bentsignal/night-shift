@@ -5,7 +5,6 @@ export {
   type ComponentEffect,
   type ComponentState,
   type EffectComponent,
-  requireComponent,
   type StateHook,
 } from "./create-component";
 export {

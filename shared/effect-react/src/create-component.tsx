@@ -1,5 +1,5 @@
 import type { ReactElement } from "react";
-import { Cause, Effect, Exit, Option } from "effect";
+import { Cause, Effect, Effectable, Exit, Option } from "effect";
 
 import { provideServiceContext, useServiceContext } from "./service-context";
 
@@ -7,7 +7,15 @@ type RenderResult = ReactElement | null;
 
 export declare const EffectComponentTypeId: unique symbol;
 
-export interface EffectComponent<Props, Error, Requirements> {
+export interface EffectComponent<
+  Props,
+  Error,
+  Requirements,
+> extends Effect.Effect<
+  EffectComponent<Props, Error, Requirements>,
+  never,
+  Requirements
+> {
   (props: Props): RenderResult;
   readonly [EffectComponentTypeId]: Effect.Effect<
     RenderResult,
@@ -24,12 +32,6 @@ export type ComponentEffect<Component> =
   >
     ? Effect.Effect<RenderResult, Error, Requirements>
     : never;
-
-export function requireComponent<Props, Error, Requirements>(
-  component: EffectComponent<Props, Error, Requirements>,
-) {
-  return Effect.context<Requirements>().pipe(Effect.as(component));
-}
 
 export type StateHook<Props, State, Error> = (
   props: Props,
@@ -102,11 +104,22 @@ export function createComponent<
   };
   CreatedComponent.displayName =
     definition.displayName ?? definition.component.name ?? "EffectComponent";
-  return CreatedComponent as unknown as EffectComponent<
+  return makeEffectComponent<Props, Error, Requirements>(CreatedComponent);
+}
+
+export function makeEffectComponent<Props, Error, Requirements>(
+  component: (props: Props) => RenderResult,
+) {
+  const effectComponent = component as EffectComponent<
     Props,
     Error,
     Requirements
   >;
+  Object.assign(effectComponent, Effectable.CommitPrototype, {
+    commit: () =>
+      Effect.context<Requirements>().pipe(Effect.as(effectComponent)),
+  });
+  return effectComponent;
 }
 
 function EvaluatedState<Props, State, Error>({

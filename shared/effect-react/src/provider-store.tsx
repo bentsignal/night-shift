@@ -4,6 +4,7 @@ import { Context } from "effect";
 
 import type { EffectComponent } from "./create-component";
 import type { ReadableStore, SelectorOptions } from "./store";
+import { makeEffectComponent } from "./create-component";
 import { ServiceContextProvider, useServiceContext } from "./service-context";
 import { makeStore, useStoreSelector } from "./store";
 
@@ -105,11 +106,11 @@ export function createStore<const Name extends string>(name: StoreName<Name>) {
       }
 
       ProvidedStore.displayName = `Provide${name}`;
-      return ProvidedStore as unknown as EffectComponent<
+      return makeEffectComponent<
         ComponentProps,
         Error,
         Exclude<Requirements, StoreRequirement<Name, State>>
-      >;
+      >(ProvidedStore);
     }
 
     return { provide, service, Store, useStore };

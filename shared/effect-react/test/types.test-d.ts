@@ -10,7 +10,7 @@ import {
   CounterRow,
   ProvidedCounterPanel,
 } from "../example/counter";
-import { createComponent, createStore, requireComponent } from "../src";
+import { createComponent, createStore } from "../src";
 
 type Equal<Left, Right> =
   (<Value>() => Value extends Left ? 1 : 2) extends <
@@ -178,7 +178,7 @@ type _StoreRequirement = Expect<
 
 const _NestedConsumer = createComponent({
   state: Effect.gen(function* () {
-    const StoreConsumer = yield* requireComponent(_StoreConsumer);
+    const StoreConsumer = yield* _StoreConsumer;
     return () => Effect.succeed({ StoreConsumer });
   }),
   component: ({ state }) => {
@@ -212,7 +212,7 @@ type _ProvidedRequirement = Expect<
 
 const _OuterConsumer = createComponent({
   state: Effect.gen(function* () {
-    const ProvidedConsumer = yield* requireComponent(_ProvidedConsumer);
+    const ProvidedConsumer = yield* _ProvidedConsumer;
     return () => Effect.succeed({ ProvidedConsumer });
   }),
   component: ({ state }) => {
