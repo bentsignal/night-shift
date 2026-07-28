@@ -1,11 +1,11 @@
 import { act, render, screen } from "@testing-library/react";
 import { describe, expect, test } from "vitest";
 
-import { EffectLab } from "./effect-lab";
+import { EffectLabRoute } from "./effect-lab-route";
 
 describe("Effect lab", () => {
   test("crosses a normal React route boundary and resolves the midpoint store", () => {
-    const view = render(<EffectLab />);
+    const view = render(<EffectLabRoute />);
 
     expect(view.container.firstElementChild).toHaveAttribute(
       "data-boundary",
@@ -17,7 +17,7 @@ describe("Effect lab", () => {
   });
 
   test("updates shared Effect store state through ordinary JSX children", () => {
-    render(<EffectLab />);
+    render(<EffectLabRoute />);
 
     act(() => {
       screen.getByRole("button", { name: "Increase count" }).click();
