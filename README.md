@@ -59,11 +59,11 @@ pnpm dev:web
 Use `pnpm dev:web-only` when Convex is already running separately. Both web
 commands load the local Convex URL automatically.
 
-`pnpm dev:lab` starts the isolated Effect React compiler lab at
-`http://localhost:3010`. The lab composes Effect components as ordinary JSX,
-injects a selector store midway through the tree, and displays the build-time
-requirement graph produced by the Vite analyzer. The analyzer runs in memory;
-it does not add generated source files to the app.
+`pnpm dev:lab` starts the isolated Effect React compiler lab through Portless at
+`https://effect-lab.night-shift.local`. The lab composes Effect components as
+ordinary JSX, injects a selector store midway through the tree, and displays the
+build-time requirement graph produced by the Vite analyzer. The analyzer runs
+in memory; it does not add generated source files to the app.
 
 ## Validate
 

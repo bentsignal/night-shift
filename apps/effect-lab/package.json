@@ -6,7 +6,8 @@
     "prebuild": "pnpm --filter @night-shift/effect-react-compiler build",
     "build": "vite build",
     "predev": "pnpm --filter @night-shift/effect-react-compiler build",
-    "dev": "vite dev --host",
+    "dev": "node ../../scripts/dev-effect-lab.mjs",
+    "dev:app": "vite dev",
     "format": "prettier --check . --ignore-path ../../.gitignore",
     "format:fix": "prettier --write . --ignore-path ../../.gitignore",
     "lint": "eslint",
@@ -39,11 +40,16 @@
     "babel-plugin-react-compiler": "^1.0.0",
     "eslint": "catalog:",
     "jsdom": "^27.4.0",
+    "portless": "catalog:",
     "prettier": "catalog:",
     "typescript": "catalog:",
     "vite": "catalog:",
     "vite-tsconfig-paths": "^5.1.4",
     "vitest": "^4.0.17"
   },
-  "prettier": "@night-shift/prettier-config"
+  "prettier": "@night-shift/prettier-config",
+  "portless": {
+    "name": "effect-lab.night-shift",
+    "script": "dev:app"
+  }
 }

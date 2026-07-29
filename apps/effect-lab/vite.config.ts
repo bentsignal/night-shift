@@ -8,8 +8,7 @@ import { effectReact } from "@night-shift/effect-react-compiler";
 
 export default defineConfig({
   server: {
-    host: true,
-    port: process.env.PORT ? Number(process.env.PORT) : 3010,
+    host: "127.0.0.1",
   },
   plugins: [
     effectReact({ scanRoots: ["src"] }),

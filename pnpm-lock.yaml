@@ -24,6 +24,9 @@ catalogs:
     eslint:
       specifier: ^9.38.0
       version: 9.39.5
+    portless:
+      specifier: ^0.13.0
+      version: 0.13.1
     prettier:
       specifier: ^3.6.2
       version: 3.9.6
@@ -132,7 +135,7 @@ importers:
         version: 1.170.0(react-dom@19.2.3(react@19.2.3))(react@19.2.3)
       '@tanstack/react-start':
         specifier: 1.168.0
-        version: 1.168.0(crossws@0.4.10(srvx@0.12.4))(esbuild@0.27.0)(react-dom@19.2.3(react@19.2.3))(react@19.2.3)(rollup@4.62.3)(vite@7.1.12(@types/node@22.20.1)(jiti@2.7.0)(lightningcss@1.33.0)(terser@5.49.0)(yaml@2.9.0))
+        version: 1.168.0(crossws@0.4.10(srvx@0.10.1))(esbuild@0.27.0)(react-dom@19.2.3(react@19.2.3))(react@19.2.3)(rollup@4.62.3)(vite@7.1.12(@types/node@22.20.1)(jiti@2.7.0)(lightningcss@1.33.0)(terser@5.49.0)(yaml@2.9.0))
       effect:
         specifier: ^3.22.0
         version: 3.22.0
@@ -185,6 +188,9 @@ importers:
       jsdom:
         specifier: ^27.4.0
         version: 27.4.0
+      portless:
+        specifier: 'catalog:'
+        version: 0.13.1
       prettier:
         specifier: 'catalog:'
         version: 3.9.6
@@ -281,7 +287,7 @@ importers:
         version: 1.170.0(react-dom@19.2.3(react@19.2.3))(react@19.2.3)
       '@tanstack/react-start':
         specifier: 1.168.0
-        version: 1.168.0(crossws@0.4.10(srvx@0.10.1))(esbuild@0.27.0)(react-dom@19.2.3(react@19.2.3))(react@19.2.3)(rollup@4.62.3)(vite@7.1.12(@types/node@22.20.1)(jiti@2.7.0)(lightningcss@1.33.0)(terser@5.49.0)(yaml@2.9.0))
+        version: 1.168.0(crossws@0.4.10(srvx@0.12.4))(esbuild@0.27.0)(react-dom@19.2.3(react@19.2.3))(react@19.2.3)(rollup@4.62.3)(vite@7.1.12(@types/node@22.20.1)(jiti@2.7.0)(lightningcss@1.33.0)(terser@5.49.0)(yaml@2.9.0))
       convex:
         specifier: 'catalog:'
         version: 1.39.1(react@19.2.3)
@@ -5640,6 +5646,12 @@ packages:
     resolution: {integrity: sha512-NCrCHhWmnQklfH4MtJMRjZ2a8c80qXeMlQMv2uVp9ISJMTt562SbGd6n2oq0PaPgKm7Z6pL9E2UlLIhC+SHL3w==}
     engines: {node: '>=4.0.0'}
 
+  portless@0.13.1:
+    resolution: {integrity: sha512-1B+8Xd4tB1gOIkRHOUEi/LCOp8PIxUsL3ACBX5G2UkKw25TSRNUqAlQcBGxweJgdXb9DPQFX5utKLRUzPFhMnA==}
+    engines: {node: '>=24'}
+    os: [darwin, linux, win32]
+    hasBin: true
+
   possible-typed-array-names@1.1.0:
     resolution: {integrity: sha512-/+5VFTchJDoVj3bhoqi6UeymcD00DAwb1nJwamzPvHEszJ4FpF6SNNbUbOS8yI56qHzdV8eK0qEfOSiodkTdxg==}
     engines: {node: '>= 0.4'}
@@ -9283,9 +9295,7 @@ snapshots:
       metro-runtime: 0.84.4
     transitivePeerDependencies:
       - '@babel/core'
-      - bufferutil
       - supports-color
-      - utf-8-validate
 
   '@react-native/normalize-colors@0.85.3': {}
 
@@ -11543,12 +11553,12 @@ snapshots:
     optionalDependencies:
       crossws: 0.4.10(srvx@0.12.4)
 
-  h3@2.0.1-rc.26(crossws@0.4.10(srvx@0.12.4)):
+  h3@2.0.1-rc.26(crossws@0.4.10(srvx@0.10.1)):
     dependencies:
       rou3: 0.9.1
       srvx: 0.12.4
     optionalDependencies:
-      crossws: 0.4.10(srvx@0.12.4)
+      crossws: 0.4.10(srvx@0.10.1)
 
   has-bigints@1.1.0: {}
 
@@ -12324,7 +12334,7 @@ snapshots:
       consola: 3.4.2
       crossws: 0.4.10(srvx@0.10.1)
       db0: 0.3.4
-      h3: 2.0.1-rc.26(crossws@0.4.10(srvx@0.12.4))
+      h3: 2.0.1-rc.26(crossws@0.4.10(srvx@0.10.1))
       jiti: 2.7.0
       nf3: 0.3.22
       ofetch: 2.0.0-alpha.3
@@ -12605,6 +12615,8 @@ snapshots:
       xmlbuilder: 15.1.1
 
   pngjs@3.4.0: {}
+
+  portless@0.13.1: {}
 
   possible-typed-array-names@1.1.0: {}
 

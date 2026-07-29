@@ -11,6 +11,7 @@ catalog:
   "@types/react-dom": ~19.2.3
   convex: 1.39.1
   eslint: ^9.38.0
+  portless: ^0.13.0
   prettier: ^3.6.2
   react: 19.2.3
   react-dom: 19.2.3
