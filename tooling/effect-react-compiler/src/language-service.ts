@@ -21,49 +21,69 @@ export function createEffectReactLanguageService({
     host: languageServiceHost,
     typescript,
   });
-  const loweredHost = Object.create(
-    languageServiceHost,
-  ) as ts.LanguageServiceHost;
-  loweredHost.getScriptSnapshot = (fileName) => {
-    const lowered = loweredProject.get(fileName);
-    return lowered
-      ? typescript.ScriptSnapshot.fromString(lowered.source)
-      : languageServiceHost.getScriptSnapshot(fileName);
-  };
+  const loweredHost = new Proxy(languageServiceHost, {
+    get(target, property) {
+      if (property === "setCompilerHost" || property === "updateFromProject") {
+        return undefined;
+      }
+      if (property === "getScriptSnapshot") {
+        return (fileName: string) => {
+          const lowered = loweredProject.get(fileName);
+          return lowered
+            ? typescript.ScriptSnapshot.fromString(lowered.source)
+            : target.getScriptSnapshot(fileName);
+        };
+      }
+
+      const value = Reflect.get(target, property, target) as unknown;
+      return typeof value === "function" ? value.bind(target) : value;
+    },
+  });
   const loweredService = typescript.createLanguageService(
     loweredHost,
     typescript.createDocumentRegistry(),
   );
-  const proxy = Object.create(languageService) as ts.LanguageService;
+  const overrides = {
+    getQuickInfoAtPosition(fileName, position, maximumLength) {
+      const lowered = loweredProject.get(fileName);
+      const quickInfo = loweredService.getQuickInfoAtPosition(
+        fileName,
+        lowered
+          ? originalToLoweredPosition(position, lowered.insertions)
+          : position,
+        maximumLength,
+      );
+      return quickInfo && lowered
+        ? {
+            ...quickInfo,
+            textSpan: mapTextSpanToOriginal(
+              quickInfo.textSpan,
+              lowered.insertions,
+            ),
+          }
+        : quickInfo;
+    },
+    getSemanticDiagnostics(fileName) {
+      return loweredService.getSemanticDiagnostics(fileName).map((diagnostic) =>
+        mapDiagnosticToOriginal({
+          diagnostic,
+          loweredProject,
+          originalProgram: languageService.getProgram(),
+        }),
+      );
+    },
+  } satisfies Partial<ts.LanguageService>;
+  const proxy = new Proxy(languageService, {
+    get(target, property) {
+      const override = Reflect.get(overrides, property, overrides) as unknown;
+      if (override !== undefined) {
+        return override;
+      }
 
-  proxy.getProgram = () => loweredService.getProgram();
-  proxy.getQuickInfoAtPosition = (fileName, position, maximumLength) => {
-    const lowered = loweredProject.get(fileName);
-    const quickInfo = loweredService.getQuickInfoAtPosition(
-      fileName,
-      lowered
-        ? originalToLoweredPosition(position, lowered.insertions)
-        : position,
-      maximumLength,
-    );
-    return quickInfo && lowered
-      ? {
-          ...quickInfo,
-          textSpan: mapTextSpanToOriginal(
-            quickInfo.textSpan,
-            lowered.insertions,
-          ),
-        }
-      : quickInfo;
-  };
-  proxy.getSemanticDiagnostics = (fileName) =>
-    loweredService.getSemanticDiagnostics(fileName).map((diagnostic) =>
-      mapDiagnosticToOriginal({
-        diagnostic,
-        loweredProject,
-        originalProgram: languageService.getProgram(),
-      }),
-    );
+      const value = Reflect.get(target, property, target) as unknown;
+      return typeof value === "function" ? value.bind(target) : value;
+    },
+  });
 
   return proxy;
 }
