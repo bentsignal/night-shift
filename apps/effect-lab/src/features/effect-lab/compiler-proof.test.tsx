@@ -16,7 +16,7 @@ const StateValue = memo(function StateValue({
   value,
 }: {
   readonly onRender: () => void;
-  readonly value: object;
+  readonly value: unknown;
 }) {
   onRender();
   return <span data-value={String(value)}>state</span>;
@@ -27,7 +27,7 @@ const ComponentValue = memo(function ComponentValue({
   value,
 }: {
   readonly onRender: () => void;
-  readonly value: object;
+  readonly value: unknown;
 }) {
   onRender();
   return <span data-value={String(value)}>component</span>;
@@ -37,18 +37,16 @@ const ComponentValue = memo(function ComponentValue({
  * This fixture intentionally contains no React Compiler directives.
  *
  * The Effect React compiler must identify both callbacks as React functions
- * before Babel runs. React Compiler then keeps these two allocation sites
- * stable when only `revision` changes.
+ * before Babel runs. React Compiler then keeps the state update closure and
+ * component value allocation stable when only `revision` changes.
  */
 const CompilerProof = createComponent({
   displayName: "CompilerProof",
   state: Effect.succeed((props: ProbeProps) => {
     const [revision, setRevision] = useState(0);
-    const stateValue = { source: "state" };
 
     return Effect.succeed({
       revision,
-      stateValue,
       props,
       update: () => setRevision((current) => current + 1),
     });
@@ -58,10 +56,7 @@ const CompilerProof = createComponent({
 
     return (
       <section>
-        <StateValue
-          onRender={state.props.onStateValue}
-          value={state.stateValue}
-        />
+        <StateValue onRender={state.props.onStateValue} value={state.update} />
         <ComponentValue
           onRender={state.props.onComponentValue}
           value={componentValue}

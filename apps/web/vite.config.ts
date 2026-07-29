@@ -5,12 +5,15 @@ import { nitro } from "nitro/vite";
 import { defineConfig } from "vite";
 import tsconfigPaths from "vite-tsconfig-paths";
 
+import { effectReact } from "@night-shift/effect-react-compiler";
+
 export default defineConfig({
   server: {
     host: true,
     port: process.env.PORT ? Number(process.env.PORT) : 3000,
   },
   plugins: [
+    effectReact({ scanRoots: ["src"] }),
     tailwindcss(),
     tsconfigPaths(),
     tanstackStart({

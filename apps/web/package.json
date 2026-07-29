@@ -3,14 +3,17 @@
   "private": true,
   "type": "module",
   "scripts": {
+    "prebuild": "pnpm --filter @night-shift/effect-react-compiler build",
     "build": "vite build",
+    "predev": "pnpm --filter @night-shift/effect-react-compiler build",
     "dev": "node ../../scripts/dev-web.mjs",
     "format": "prettier --check . --ignore-path ../../.gitignore --ignore-path .prettierignore",
     "format:fix": "prettier --write . --ignore-path ../../.gitignore --ignore-path .prettierignore",
     "lint": "eslint",
     "start": "vite preview",
     "test": "vitest run --passWithNoTests",
-    "typecheck": "tsc --noEmit"
+    "pretypecheck": "pnpm --filter @night-shift/effect-react-compiler build && vite build",
+    "typecheck": "effect-react-tsc -p tsconfig.json"
   },
   "dependencies": {
     "@night-shift/config": "workspace:*",
@@ -26,6 +29,7 @@
     "react-dom": "catalog:"
   },
   "devDependencies": {
+    "@night-shift/effect-react-compiler": "workspace:*",
     "@night-shift/eslint-config": "workspace:*",
     "@night-shift/prettier-config": "workspace:*",
     "@night-shift/tailwind-config": "workspace:*",
