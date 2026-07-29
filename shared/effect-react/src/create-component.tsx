@@ -22,7 +22,34 @@ export interface EffectComponent<
     Error,
     Requirements
   >;
+  readonly __effectReactRequirements: <
+    const Components extends readonly unknown[],
+  >(
+    ...components: Components
+  ) => EffectComponent<
+    Props,
+    Error | ComponentError<Components[number]>,
+    Requirements | ComponentRequirements<Components[number]>
+  >;
 }
+
+type ComponentError<Component> =
+  Component extends EffectComponent<
+    infer _Props,
+    infer Error,
+    infer _Requirements
+  >
+    ? Error
+    : never;
+
+type ComponentRequirements<Component> =
+  Component extends EffectComponent<
+    infer _Props,
+    infer _Error,
+    infer Requirements
+  >
+    ? Requirements
+    : never;
 
 export type ComponentEffect<Component> =
   Component extends EffectComponent<
@@ -118,6 +145,7 @@ export function makeEffectComponent<Props, Error, Requirements>(
   Object.assign(effectComponent, Effectable.CommitPrototype, {
     commit: () =>
       Effect.context<Requirements>().pipe(Effect.as(effectComponent)),
+    __effectReactRequirements: () => effectComponent,
   });
   return effectComponent;
 }

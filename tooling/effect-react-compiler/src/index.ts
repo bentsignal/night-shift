@@ -6,6 +6,14 @@ export {
   effectReactCompiler,
   formatEffectReactDiagnostics,
 } from "./vite.js";
+export {
+  lowerEffectReactSources,
+  loweredToOriginalPosition,
+  originalToLoweredPosition,
+  type LoweredEffectReactSource,
+  type SourceInsertion,
+} from "./lowering.js";
+export { createEffectReactLanguageService } from "./language-service.js";
 export type { EffectReactCompilerPluginOptions } from "./vite.js";
 export type {
   AnalyzeEffectReactOptions,

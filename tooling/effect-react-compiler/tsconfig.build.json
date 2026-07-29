@@ -11,5 +11,5 @@
     "sourceMap": true
   },
   "include": ["src"],
-  "exclude": ["test", "node_modules", "dist"]
+  "exclude": ["test", "node_modules", "dist", "src/typescript-plugin.cts"]
 }

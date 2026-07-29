@@ -1,0 +1,231 @@
+import path from "node:path";
+import type ts from "typescript";
+
+import type { LoweredEffectReactSource, SourceInsertion } from "./lowering.js";
+import {
+  loweredToOriginalPosition,
+  lowerEffectReactSources,
+  originalToLoweredPosition,
+} from "./lowering.js";
+
+export function createEffectReactLanguageService({
+  languageService,
+  languageServiceHost,
+  typescript,
+}: {
+  readonly languageService: ts.LanguageService;
+  readonly languageServiceHost: ts.LanguageServiceHost;
+  readonly typescript: typeof ts;
+}) {
+  const loweredProject = createLoweredProject({
+    host: languageServiceHost,
+    typescript,
+  });
+  const loweredHost = Object.create(
+    languageServiceHost,
+  ) as ts.LanguageServiceHost;
+  loweredHost.getScriptSnapshot = (fileName) => {
+    const lowered = loweredProject.get(fileName);
+    return lowered
+      ? typescript.ScriptSnapshot.fromString(lowered.source)
+      : languageServiceHost.getScriptSnapshot(fileName);
+  };
+  const loweredService = typescript.createLanguageService(
+    loweredHost,
+    typescript.createDocumentRegistry(),
+  );
+  const proxy = Object.create(languageService) as ts.LanguageService;
+
+  proxy.getProgram = () => loweredService.getProgram();
+  proxy.getQuickInfoAtPosition = (fileName, position, maximumLength) => {
+    const lowered = loweredProject.get(fileName);
+    const quickInfo = loweredService.getQuickInfoAtPosition(
+      fileName,
+      lowered
+        ? originalToLoweredPosition(position, lowered.insertions)
+        : position,
+      maximumLength,
+    );
+    return quickInfo && lowered
+      ? {
+          ...quickInfo,
+          textSpan: mapTextSpanToOriginal(
+            quickInfo.textSpan,
+            lowered.insertions,
+          ),
+        }
+      : quickInfo;
+  };
+  proxy.getSemanticDiagnostics = (fileName) =>
+    loweredService.getSemanticDiagnostics(fileName).map((diagnostic) =>
+      mapDiagnosticToOriginal({
+        diagnostic,
+        loweredProject,
+        originalProgram: languageService.getProgram(),
+      }),
+    );
+
+  return proxy;
+}
+
+function createLoweredProject({
+  host,
+  typescript,
+}: {
+  readonly host: ts.LanguageServiceHost;
+  readonly typescript: typeof ts;
+}) {
+  let cacheKey = "";
+  let lowered = new Map<string, LoweredEffectReactSource>();
+
+  const refresh = () => {
+    const fileNames = host
+      .getScriptFileNames()
+      .filter((fileName) => isEffectReactSource(fileName));
+    const nextCacheKey =
+      host.getProjectVersion?.() ??
+      fileNames
+        .map((fileName) => `${fileName}:${host.getScriptVersion(fileName)}`)
+        .join("|");
+    if (nextCacheKey === cacheKey) {
+      return;
+    }
+
+    cacheKey = nextCacheKey;
+    lowered = lowerEffectReactSources(
+      fileNames.flatMap((fileName) => {
+        const snapshot = host.getScriptSnapshot(fileName);
+        return snapshot
+          ? [
+              {
+                fileName,
+                source: snapshot.getText(0, snapshot.getLength()),
+              },
+            ]
+          : [];
+      }),
+    );
+  };
+
+  return {
+    get(fileName: string) {
+      refresh();
+      return lowered.get(path.resolve(fileName));
+    },
+    getOriginalSourceFile(fileName: string) {
+      const snapshot = host.getScriptSnapshot(fileName);
+      if (!snapshot) {
+        return undefined;
+      }
+      return typescript.createSourceFile(
+        fileName,
+        snapshot.getText(0, snapshot.getLength()),
+        typescript.ScriptTarget.Latest,
+        true,
+        fileName.endsWith("x")
+          ? typescript.ScriptKind.TSX
+          : typescript.ScriptKind.TS,
+      );
+    },
+  };
+}
+
+function mapDiagnosticToOriginal({
+  diagnostic,
+  loweredProject,
+  originalProgram,
+}: {
+  readonly diagnostic: ts.Diagnostic;
+  readonly loweredProject: ReturnType<typeof createLoweredProject>;
+  readonly originalProgram: ts.Program | undefined;
+}) {
+  if (!diagnostic.file) {
+    return diagnostic;
+  }
+
+  const lowered = loweredProject.get(diagnostic.file.fileName);
+  if (!lowered) {
+    return diagnostic;
+  }
+
+  const start =
+    diagnostic.start === undefined
+      ? undefined
+      : loweredToOriginalPosition(diagnostic.start, lowered.insertions);
+  const end =
+    diagnostic.start === undefined
+      ? undefined
+      : loweredToOriginalPosition(
+          diagnostic.start + (diagnostic.length ?? 0),
+          lowered.insertions,
+        );
+  const file =
+    originalProgram?.getSourceFile(diagnostic.file.fileName) ??
+    loweredProject.getOriginalSourceFile(diagnostic.file.fileName);
+
+  return {
+    ...diagnostic,
+    file,
+    length:
+      start === undefined || end === undefined
+        ? diagnostic.length
+        : end - start,
+    relatedInformation: diagnostic.relatedInformation?.map(
+      (relatedDiagnostic) =>
+        mapRelatedDiagnosticToOriginal({
+          diagnostic: relatedDiagnostic,
+          loweredProject,
+          originalProgram,
+        }),
+    ),
+    start,
+  };
+}
+
+function mapRelatedDiagnosticToOriginal({
+  diagnostic,
+  loweredProject,
+  originalProgram,
+}: {
+  readonly diagnostic: ts.DiagnosticRelatedInformation;
+  readonly loweredProject: ReturnType<typeof createLoweredProject>;
+  readonly originalProgram: ts.Program | undefined;
+}) {
+  if (!diagnostic.file) {
+    return diagnostic;
+  }
+  const lowered = loweredProject.get(diagnostic.file.fileName);
+  if (!lowered || diagnostic.start === undefined) {
+    return diagnostic;
+  }
+
+  const start = loweredToOriginalPosition(diagnostic.start, lowered.insertions);
+  const end = loweredToOriginalPosition(
+    diagnostic.start + (diagnostic.length ?? 0),
+    lowered.insertions,
+  );
+  return {
+    ...diagnostic,
+    file:
+      originalProgram?.getSourceFile(diagnostic.file.fileName) ??
+      loweredProject.getOriginalSourceFile(diagnostic.file.fileName),
+    length: end - start,
+    start,
+  };
+}
+
+function mapTextSpanToOriginal(
+  textSpan: ts.TextSpan,
+  insertions: readonly SourceInsertion[],
+) {
+  const start = loweredToOriginalPosition(textSpan.start, insertions);
+  const end = loweredToOriginalPosition(
+    textSpan.start + textSpan.length,
+    insertions,
+  );
+  return { length: end - start, start };
+}
+
+function isEffectReactSource(fileName: string) {
+  return /\.[jt]sx?$/u.test(fileName) && !fileName.endsWith(".d.ts");
+}

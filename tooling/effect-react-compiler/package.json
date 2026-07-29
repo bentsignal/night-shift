@@ -3,10 +3,12 @@
   "private": true,
   "type": "module",
   "types": "./dist/index.d.ts",
+  "main": "./dist/typescript-plugin.cjs",
   "exports": {
     ".": {
       "types": "./dist/index.d.ts",
-      "import": "./dist/index.js"
+      "import": "./dist/index.js",
+      "require": "./dist/typescript-plugin.cjs"
     },
     "./vite": {
       "types": "./dist/vite.d.ts",
@@ -16,8 +18,11 @@
       "types": "./src/virtual.d.ts"
     }
   },
+  "bin": {
+    "effect-react-tsc": "./dist/check.js"
+  },
   "scripts": {
-    "build": "tsc -p tsconfig.build.json",
+    "build": "tsc -p tsconfig.build.json && esbuild src/typescript-plugin.cts --bundle --platform=node --format=cjs --external:typescript --outfile=dist/typescript-plugin.cjs",
     "format": "prettier --check . --ignore-path ../../.gitignore",
     "format:fix": "prettier --write . --ignore-path ../../.gitignore",
     "lint": "eslint",
@@ -29,6 +34,7 @@
     "@night-shift/prettier-config": "workspace:*",
     "@night-shift/tsconfig": "workspace:*",
     "@types/node": "catalog:",
+    "esbuild": "^0.25.12",
     "eslint": "catalog:",
     "prettier": "catalog:",
     "typescript": "catalog:",

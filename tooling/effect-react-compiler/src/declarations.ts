@@ -78,13 +78,14 @@ export function readComponentDefinition({
 
   const state = findPropertyInitializer(definition, "state");
   const component = findPropertyInitializer(definition, "component");
+  const jsxChildReferences = component
+    ? collectJsxReferences({ expression: component, fileName, sourceFile })
+    : [];
   const childReferences = [
     ...(state
       ? collectYieldedComponents({ expression: state, fileName, sourceFile })
       : []),
-    ...(component
-      ? collectJsxReferences({ expression: component, fileName, sourceFile })
-      : []),
+    ...jsxChildReferences,
   ];
   const serviceReferences = state
     ? collectYieldedServices({ expression: state, fileName, sourceFile })
@@ -93,6 +94,8 @@ export function readComponentDefinition({
   return {
     childReferences,
     fileName,
+    initializerEnd: expression.end,
+    jsxChildReferences,
     kind: "component",
     location: locationOf(sourceFile, expression),
     providedStoreReference: undefined,
@@ -131,6 +134,8 @@ export function readProvidedDefinition({
   return {
     childReferences: [makeReference({ fileName, name: component, sourceFile })],
     fileName,
+    initializerEnd: expression.end,
+    jsxChildReferences: [],
     kind: "provided",
     location: locationOf(sourceFile, expression),
     providedStoreReference: makeReference({

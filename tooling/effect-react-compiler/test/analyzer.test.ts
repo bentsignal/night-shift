@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 
-import { analyzeEffectReact } from "../src";
+import { analyzeEffectReact, lowerEffectReactSources } from "../src";
 
 describe("analyzeEffectReact", () => {
   it("propagates nested JSX requirements and subtracts a root provider", () => {
@@ -237,6 +237,38 @@ describe("analyzeEffectReact", () => {
         (diagnostic) => diagnostic.code === "unresolved-analysis-reference",
       ),
     ).toBe(false);
+  });
+});
+
+describe("lowerEffectReactSources", () => {
+  it("makes ordinary JSX children participate in native component inference", () => {
+    const [lowered] = lowerEffectReactSources([
+      {
+        fileName: "/project/example.tsx",
+        source: `
+          import { createComponent } from "@night-shift/effect-react";
+          import { Effect } from "effect";
+
+          const Child = createComponent({
+            state: Effect.succeed(() => Effect.succeed({})),
+            component: () => null,
+          });
+          const Parent = createComponent({
+            state: Effect.succeed(() => Effect.succeed({})),
+            component: () => <Child />,
+          });
+        `,
+      },
+    ]).values();
+
+    expect(lowered?.insertions).toEqual([
+      expect.objectContaining({
+        text: ".__effectReactRequirements(Child)",
+      }),
+    ]);
+    expect(lowered?.source).toContain(
+      "component: () => <Child />,\n          }).__effectReactRequirements(Child);",
+    );
   });
 });
 

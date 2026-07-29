@@ -15,7 +15,7 @@
     "pretest": "pnpm --filter @night-shift/effect-react-compiler build",
     "test": "vitest run",
     "pretypecheck": "pnpm --filter @night-shift/effect-react-compiler build && vite build",
-    "typecheck": "tsc --noEmit"
+    "typecheck": "effect-react-tsc -p tsconfig.json"
   },
   "dependencies": {
     "@night-shift/effect-react": "workspace:*",

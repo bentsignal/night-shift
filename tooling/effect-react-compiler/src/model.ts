@@ -23,7 +23,9 @@ export type StoreDeclaration = {
 export type ComponentDeclaration = {
   readonly childReferences: readonly SymbolReference[];
   readonly fileName: string;
+  readonly initializerEnd: number;
   readonly kind: "component" | "provided";
+  readonly jsxChildReferences: readonly SymbolReference[];
   readonly location: SourceLocation;
   readonly name: string;
   readonly providedStoreReference: SymbolReference | undefined;

@@ -8,6 +8,7 @@ import type {
   EffectReactRoot,
 } from "./types.js";
 import { analyzeEffectReact } from "./analyzer.js";
+import { lowerEffectReactSources } from "./lowering.js";
 
 export const effectReactAnalysisModuleId = "virtual:effect-react-analysis";
 const resolvedAnalysisModuleId = `\0${effectReactAnalysisModuleId}`;
@@ -75,7 +76,23 @@ export function effectReactCompiler(
     transform(source, id) {
       const fileName = stripViteQuery(id);
       if (isAnalyzableSource(fileName)) {
-        sources.set(path.resolve(fileName), source);
+        const resolvedFileName = path.resolve(fileName);
+        if (!sources.has(resolvedFileName)) {
+          return null;
+        }
+        sources.set(resolvedFileName, source);
+        const lowered = lowerEffectReactSources(
+          [...sources].map(([sourceFileName, sourceText]) => ({
+            fileName: sourceFileName,
+            source: sourceText,
+          })),
+        ).get(resolvedFileName);
+        if (lowered && lowered.insertions.length > 0) {
+          return {
+            code: lowered.source,
+            map: null,
+          };
+        }
       }
       return null;
     },
