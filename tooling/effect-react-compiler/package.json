@@ -30,10 +30,13 @@
     "typecheck": "tsc --noEmit"
   },
   "devDependencies": {
+    "@babel/core": "^7.29.0",
     "@night-shift/eslint-config": "workspace:*",
     "@night-shift/prettier-config": "workspace:*",
     "@night-shift/tsconfig": "workspace:*",
+    "@types/babel__core": "^7.20.5",
     "@types/node": "catalog:",
+    "babel-plugin-react-compiler": "^1.0.0",
     "esbuild": "^0.25.12",
     "eslint": "catalog:",
     "prettier": "catalog:",

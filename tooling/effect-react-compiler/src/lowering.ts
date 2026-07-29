@@ -2,6 +2,7 @@ import type { SourceModel } from "./model.js";
 import type { EffectReactSource } from "./types.js";
 import { normalizeFileName } from "./ast.js";
 import { resolveComponent } from "./graph.js";
+import { collectReactCompilerInsertions } from "./react-compiler.js";
 import { buildSourceModel } from "./source-model.js";
 
 export interface SourceInsertion {
@@ -87,7 +88,9 @@ function collectInsertions({
   readonly model: SourceModel;
   readonly models: ReadonlyMap<string, SourceModel>;
 }) {
-  const insertions = Array<SourceInsertion>();
+  const insertions = Array<SourceInsertion>(
+    ...collectReactCompilerInsertions(model),
+  );
 
   for (const declaration of model.components.values()) {
     if (declaration.kind !== "component") {
