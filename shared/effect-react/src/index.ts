@@ -5,13 +5,11 @@ export {
   type ComponentEffect,
   type ComponentState,
   type EffectComponent,
-  type StateHook,
 } from "./create-component";
 export {
   createStore,
   type StoreProvider,
   type StoreRequirement,
-  type StoreSelector,
 } from "./provider-store";
 export {
   makeStore,

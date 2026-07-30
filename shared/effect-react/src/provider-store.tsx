@@ -1,10 +1,10 @@
 import type { ReactNode } from "react";
-import { createContext, use, useLayoutEffect, useState } from "react";
+import { useLayoutEffect, useState } from "react";
 import { Context } from "effect";
 
-import type { ReadableStore, SelectorOptions } from "./store";
+import type { ReadableStore } from "./store";
 import { ServiceContextProvider, useServiceContext } from "./service-context";
-import { makeStore, useStoreSelector } from "./store";
+import { makeStore } from "./store";
 
 type StoreProps<State extends object> = {
   readonly children?: ReactNode;
@@ -21,11 +21,6 @@ export interface StoreRequirement<Name extends string, State extends object> {
     readonly state: (state: State) => State;
   };
 }
-
-export type StoreSelector<State> = <Selected>(
-  selector: (state: State) => Selected,
-  options?: SelectorOptions<Selected>,
-) => Selected;
 
 export interface StoreProvider<Name extends string, State extends object> {
   (props: StoreProps<State>): ReactNode;
@@ -60,18 +55,9 @@ type StoreName<Name extends string> = string extends Name
  */
 export function createStore<const Name extends string>(name: StoreName<Name>) {
   return function defineStore<State extends object>() {
-    const missingProvider = () => {
-      throw new Error(`Store "${name}" has no implementation`);
-    };
-    const missingStore = {
-      getServerSnapshot: missingProvider,
-      getSnapshot: missingProvider,
-      subscribe: () => () => undefined,
-    } satisfies ReadableStore<State>;
-    const StoreContext = createContext<ReadableStore<State>>(missingStore);
     const service = Context.GenericTag<
       StoreRequirement<Name, State>,
-      StoreSelector<State>
+      ReadableStore<State>
     >(`@night-shift/effect-react/store/${name}`);
 
     function Store({
@@ -85,7 +71,7 @@ export function createStore<const Name extends string>(name: StoreName<Name>) {
       const [store] = useState(() => makeStore(value));
       const parentServices = useServiceContext();
       const [services] = useState(() =>
-        Context.add(parentServices, service, useStore),
+        Context.add(parentServices, service, store),
       );
 
       useLayoutEffect(() => {
@@ -94,17 +80,9 @@ export function createStore<const Name extends string>(name: StoreName<Name>) {
 
       return (
         <ServiceContextProvider services={services}>
-          <StoreContext value={store}>{children}</StoreContext>
+          {children}
         </ServiceContextProvider>
       );
-    }
-
-    function useStore<Selected>(
-      selector: (state: State) => Selected,
-      options: SelectorOptions<Selected> = {},
-    ) {
-      const store = use(StoreContext);
-      return useStoreSelector(store, selector, options);
     }
 
     Object.assign(Store, {

@@ -1,20 +1,31 @@
+import { useState } from "react";
 import { act, render, screen } from "@testing-library/react";
 import { describe, expect, test } from "vitest";
 
-import { CounterExample } from "../example/counter";
+import type { CounterState } from "../example/counter";
+import { counter, CounterExample } from "../example/counter";
 
 describe("CounterExample", () => {
   test("connects provider state to the created component", () => {
-    render(<CounterExample />);
+    function useCounterImplementation() {
+      const [count, setCount] = useState(0);
+      return { count, setCount } satisfies CounterState;
+    }
+
+    render(
+      <counter.Store implements={useCounterImplementation}>
+        <CounterExample />
+      </counter.Store>,
+    );
 
     expect(
       screen.getByRole("heading", { name: "Counter panel" }),
     ).toBeInTheDocument();
     expect(screen.getByText("Nested counter")).toBeInTheDocument();
 
-    const counter = screen.getByRole("button", { name: "Count: 0" });
+    const counterButton = screen.getByRole("button", { name: "Count: 0" });
     act(() => {
-      counter.click();
+      counterButton.click();
     });
 
     expect(

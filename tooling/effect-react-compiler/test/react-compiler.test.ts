@@ -6,26 +6,27 @@ import { describe, expect, it } from "vitest";
 import { lowerEffectReactSources } from "../src";
 
 describe("React Compiler lowering", () => {
-  it("compiles component views, returned state hooks, and provider hooks", async () => {
+  it("compiles component state, UI, and provider hooks", async () => {
     const source = `
       import { useState } from "react";
       import { Effect } from "effect";
       import {
         createComponent,
         createStore,
+        useStoreSelector,
       } from "@night-shift/effect-react";
 
       const counter = createStore("Counter")<{ count: number }>();
 
       const CounterValue = createComponent({
-        state: Effect.gen(function* () {
-          const useCounter = yield* counter.service;
-          return function useCounterValue() {
-            const count = useCounter((store) => store.count);
-            return Effect.succeed({ count });
-          };
+        deps: Effect.gen(function* () {
+          const store = yield* counter.service;
+          return { store };
         }),
-        component: ({ state }) => <output>{state.count}</output>,
+        state: ({ deps }) => Effect.succeed({
+          count: useStoreSelector(deps.store, (state) => state.count),
+        }),
+        UI: ({ state }) => <output>{state.count}</output>,
       });
 
       function useCounterImplementation() {
@@ -34,8 +35,8 @@ describe("React Compiler lowering", () => {
       }
 
       const CounterPanel = createComponent({
-        state: Effect.succeed(() => Effect.succeed({})),
-        component: () => (
+        state: () => Effect.succeed({}),
+        UI: () => (
           <counter.Store implements={useCounterImplementation}>
             <CounterValue />
           </counter.Store>
@@ -53,7 +54,7 @@ describe("React Compiler lowering", () => {
       "implements={counter.Store.__effectReactImplementation(useCounterImplementation())}",
     );
     expect(result.code).toContain('from "react/compiler-runtime"');
-    expect(result.code.match(/\b_c\(/gu)).toHaveLength(5);
+    expect(result.code.match(/\b_c\(/gu)).toHaveLength(4);
     expect(
       result.events.filter((event) => event.kind === "CompileSuccess"),
     ).toHaveLength(5);
@@ -65,38 +66,34 @@ describe("React Compiler lowering", () => {
     ).toBe(false);
   });
 
-  it("compiles named hooks returned by external Effect state programs", async () => {
+  it("compiles a named state callback without hook naming conventions", async () => {
     const source = `
       import { useState } from "react";
-      import { Effect as Fx } from "effect";
+      import { Effect } from "effect";
+      import { createComponent } from "@night-shift/effect-react";
 
-      export const formState = Fx.gen(function* () {
-        const useNavigation = yield* Navigation;
-        return function useFormState() {
-          const navigate = useNavigation();
-          const [submitting] = useState(false);
-          return Fx.succeed({ navigate, submitting });
-        };
-      });
+      function formState({ deps }) {
+        const [submitting] = useState(false);
+        return Effect.succeed({ navigate: deps.navigate, submitting });
+      }
 
-      export const unrelated = Other.gen(function* () {
-        return function useUnrelatedCallback() {
-          return {};
-        };
+      export const Form = createComponent({
+        deps: Effect.succeed({ navigate: () => {} }),
+        state: formState,
+        UI: ({ state }) => <output>{String(state.submitting)}</output>,
       });
     `;
-    const result = await compile(source, "/project/form-state.ts");
+    const result = await compile(source, "/project/form-state.tsx");
 
-    expect(result.lowered).toContain('function useFormState() {\n"use memo";');
-    expect(result.lowered).not.toContain(
-      'function useUnrelatedCallback() {\n"use memo";',
+    expect(result.lowered).toContain(
+      'function formState({ deps }) {\n"use memo";',
     );
     expect(result.code).toContain("_c(");
     expect(
       result.events.some(
         (event) =>
           event.kind === "CompileSuccess" &&
-          event.fnName === "useFormState" &&
+          event.fnName === "formState" &&
           event.memoSlots > 0,
       ),
     ).toBe(true);

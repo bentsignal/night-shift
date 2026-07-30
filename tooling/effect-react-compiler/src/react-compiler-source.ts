@@ -35,7 +35,6 @@ export function collectModuleCallbacks(sourceFile: ts.SourceFile) {
 export function collectCompilerImports(sourceFile: ts.SourceFile) {
   const apiNamespaces = new Set<string>();
   const componentFactories = new Set(["createComponent"]);
-  const effectNamespaces = new Set<string>();
 
   for (const statement of sourceFile.statements) {
     if (
@@ -48,10 +47,6 @@ export function collectCompilerImports(sourceFile: ts.SourceFile) {
 
     const moduleName = statement.moduleSpecifier.text;
     const bindings = statement.importClause.namedBindings;
-    if (moduleName === "effect") {
-      collectEffectBindings(bindings, effectNamespaces);
-      continue;
-    }
     if (moduleName === effectReactModule) {
       collectEffectReactBindings({
         apiNamespaces,
@@ -61,7 +56,7 @@ export function collectCompilerImports(sourceFile: ts.SourceFile) {
     }
   }
 
-  return { apiNamespaces, componentFactories, effectNamespaces };
+  return { apiNamespaces, componentFactories };
 }
 
 export function findPropertyExpression(
@@ -121,39 +116,10 @@ export function findStoreImplementation(element: ts.JsxOpeningLikeElement) {
   return undefined;
 }
 
-export function isEffectGenCall(
-  expression: ts.CallExpression,
-  effectNamespaces: ReadonlySet<string>,
-) {
-  return (
-    ts.isPropertyAccessExpression(expression.expression) &&
-    ts.isIdentifier(expression.expression.expression) &&
-    effectNamespaces.has(expression.expression.expression.text) &&
-    expression.expression.name.text === "gen"
-  );
-}
-
 export function propertyName(name: ts.PropertyName | undefined) {
   return name && (ts.isIdentifier(name) || ts.isStringLiteralLike(name))
     ? name.text
     : undefined;
-}
-
-function collectEffectBindings(
-  bindings: ts.NamedImportBindings | undefined,
-  effectNamespaces: Set<string>,
-) {
-  if (bindings && ts.isNamespaceImport(bindings)) {
-    effectNamespaces.add(bindings.name.text);
-  }
-  if (!bindings || !ts.isNamedImports(bindings)) {
-    return;
-  }
-  for (const element of bindings.elements) {
-    if ((element.propertyName?.text ?? element.name.text) === "Effect") {
-      effectNamespaces.add(element.name.text);
-    }
-  }
 }
 
 function collectEffectReactBindings({

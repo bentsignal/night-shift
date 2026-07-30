@@ -9,8 +9,9 @@
     "format": "prettier --check . --ignore-path ../../.gitignore",
     "format:fix": "prettier --write . --ignore-path ../../.gitignore",
     "lint": "eslint",
+    "pretypecheck": "pnpm --filter @night-shift/effect-react-compiler build",
     "test": "vitest run",
-    "typecheck": "tsc --noEmit"
+    "typecheck": "effect-react-tsc --project tsconfig.json"
   },
   "dependencies": {
     "effect": "^3.22.0",
@@ -18,6 +19,7 @@
   },
   "devDependencies": {
     "@night-shift/eslint-config": "workspace:*",
+    "@night-shift/effect-react-compiler": "workspace:*",
     "@night-shift/prettier-config": "workspace:*",
     "@night-shift/tsconfig": "workspace:*",
     "@testing-library/jest-dom": "^6.9.1",

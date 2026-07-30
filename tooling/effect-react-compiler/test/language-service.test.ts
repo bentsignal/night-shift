@@ -6,29 +6,63 @@ import { describe, expect, it } from "vitest";
 import { createEffectReactLanguageService } from "../src";
 
 const repositoryRoot = path.resolve(import.meta.dirname, "../../..");
-const projectRoot = path.join(repositoryRoot, "apps/effect-lab");
-const configFileName = path.join(projectRoot, "tsconfig.json");
-const counterFileName = path.join(
-  projectRoot,
+const labProjectRoot = path.join(repositoryRoot, "apps/effect-lab");
+const labConfigFileName = path.join(labProjectRoot, "tsconfig.json");
+const labCounterFileName = path.join(
+  labProjectRoot,
   "src/features/effect-lab/counter.tsx",
+);
+const sharedProjectRoot = path.join(repositoryRoot, "shared/effect-react");
+const sharedConfigFileName = path.join(sharedProjectRoot, "tsconfig.json");
+const sharedCounterFileName = path.join(
+  sharedProjectRoot,
+  "example/counter.tsx",
 );
 
 describe("createEffectReactLanguageService", () => {
   it("shows required and provider-discharged components in quick info", () => {
-    const service = createService();
-    const source = fs.readFileSync(counterFileName, "utf8");
+    const service = createService({
+      configFileName: labConfigFileName,
+      projectRoot: labProjectRoot,
+    });
+    const source = fs.readFileSync(labCounterFileName, "utf8");
 
     expect(() => service.getCompilerOptionsDiagnostics()).not.toThrow();
-    expect(quickInfoOf(service, source, "CounterReadout")).toContain(
-      'StoreRequirement<"LabCounter", CounterState>',
-    );
-    expect(quickInfoOf(service, source, "CounterInstrument")).toContain(
-      "never>",
-    );
-  });
+    expect(
+      quickInfoOf(service, source, labCounterFileName, "CounterReadout"),
+    ).toContain('StoreRequirement<"LabCounter", CounterState>');
+    expect(
+      quickInfoOf(service, source, labCounterFileName, "CounterInstrument"),
+    ).toContain("never>");
+  }, 15_000);
+
+  it("bubbles shared-example requirements through every JSX parent", () => {
+    const service = createService({
+      configFileName: sharedConfigFileName,
+      projectRoot: sharedProjectRoot,
+    });
+    const source = fs.readFileSync(sharedCounterFileName, "utf8");
+
+    for (const name of [
+      "CounterButton",
+      "CounterRow",
+      "CounterPanel",
+      "CounterExample",
+    ]) {
+      expect(
+        quickInfoOf(service, source, sharedCounterFileName, name),
+      ).toContain('StoreRequirement<"Counter", CounterState>');
+    }
+  }, 15_000);
 });
 
-function createService() {
+function createService({
+  configFileName,
+  projectRoot,
+}: {
+  configFileName: string;
+  projectRoot: string;
+}) {
   const config = ts.readConfigFile(configFileName, ts.sys.readFile);
   const parsed = ts.parseJsonConfigFileContent(
     config.config,
@@ -106,9 +140,10 @@ function createService() {
 function quickInfoOf(
   service: ts.LanguageService,
   source: string,
+  fileName: string,
   name: string,
 ) {
   const position = source.indexOf(`const ${name}`) + "const ".length;
-  const quickInfo = service.getQuickInfoAtPosition(counterFileName, position);
+  const quickInfo = service.getQuickInfoAtPosition(fileName, position);
   return ts.displayPartsToString(quickInfo?.displayParts);
 }

@@ -2,6 +2,8 @@ import reactPlugin from "eslint-plugin-react";
 import reactHooks from "eslint-plugin-react-hooks";
 import { defineConfig } from "eslint/config";
 
+import { effectReactProcessor } from "./effect-react-processor";
+
 export const reactConfig = defineConfig(
   {
     files: ["**/*.{ts,tsx}"],
@@ -10,4 +12,8 @@ export const reactConfig = defineConfig(
     settings: { react: { version: "detect" } },
   },
   reactHooks.configs.flat["recommended-latest"],
+  {
+    files: ["**/*.{ts,tsx}"],
+    processor: effectReactProcessor,
+  },
 );

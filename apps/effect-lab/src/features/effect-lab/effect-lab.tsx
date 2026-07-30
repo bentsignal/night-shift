@@ -7,8 +7,8 @@ import { RuntimeTrace } from "./runtime-trace";
 
 export const WorkspaceFrame = createComponent({
   displayName: "WorkspaceFrame",
-  state: Effect.succeed(() => Effect.succeed({})),
-  component: () => (
+  state: () => Effect.succeed({}),
+  UI: () => (
     <main className="workspace">
       <CounterInstrument />
       <RuntimeTrace />
@@ -18,8 +18,8 @@ export const WorkspaceFrame = createComponent({
 
 export const EffectLab = createComponent({
   displayName: "EffectLab",
-  state: Effect.succeed(() => Effect.succeed({})),
-  component: () => (
+  state: () => Effect.succeed({}),
+  UI: () => (
     <div className="lab-shell">
       <header className="topbar">
         <div className="wordmark">

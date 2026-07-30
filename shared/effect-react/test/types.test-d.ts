@@ -2,9 +2,9 @@ import type { ComponentType } from "react";
 import { Context, Effect } from "effect";
 
 import type { CounterState } from "../example/counter";
-import type { ComponentEffect, StoreRequirement, StoreSelector } from "../src";
+import type { ComponentEffect, ReadableStore, StoreRequirement } from "../src";
 import { CounterButton, CounterExample } from "../example/counter";
-import { createComponent, createStore } from "../src";
+import { createComponent, createStore, useStoreSelector } from "../src";
 
 type Equal<Left, Right> =
   (<Value>() => Value extends Left ? 1 : 2) extends <
@@ -31,7 +31,10 @@ type _CounterButtonRequirement = Expect<
   >
 >;
 type _CounterExampleRequirement = Expect<
-  Equal<Effect.Effect.Context<ComponentEffect<typeof CounterExample>>, never>
+  Equal<
+    Effect.Effect.Context<ComponentEffect<typeof CounterExample>>,
+    CounterRequirement
+  >
 >;
 
 class NumberService extends Context.Tag("NumberService")<
@@ -41,15 +44,16 @@ class NumberService extends Context.Tag("NumberService")<
 
 class TextService extends Context.Tag("TextService")<TextService, string>() {}
 
-const requiredState = Effect.gen(function* () {
+const requiredDeps = Effect.gen(function* () {
   const number = yield* NumberService;
   const text = yield* TextService;
-  return () => Effect.succeed({ label: `${text}:${number}` });
+  return { number, text };
 });
 
 const Required = createComponent({
-  state: requiredState,
-  component: ({ props, state }) => {
+  deps: requiredDeps,
+  state: ({ deps }) => Effect.succeed({ label: `${deps.text}:${deps.number}` }),
+  UI: ({ props, state }) => {
     props satisfies Record<string, never>;
     state.label satisfies string;
     return null;
@@ -64,11 +68,12 @@ type _RequiredServices = Expect<
 >;
 
 const Ready = createComponent({
-  state: requiredState.pipe(
+  deps: requiredDeps.pipe(
     Effect.provideService(NumberService, 1),
     Effect.provideService(TextService, "ready"),
   ),
-  component: ({ state }) => {
+  state: ({ deps }) => Effect.succeed({ label: `${deps.text}:${deps.number}` }),
+  UI: ({ state }) => {
     state.label satisfies string;
     return null;
   },
@@ -79,10 +84,9 @@ type ReadyEffect = ComponentEffect<typeof Ready>;
 type _ReadyServices = Expect<Equal<Effect.Effect.Context<ReadyEffect>, never>>;
 
 const Failed = createComponent({
-  state: Effect.fail("typed-failure" as const).pipe(
-    Effect.as(() => Effect.succeed({ ready: false })),
-  ),
-  component: ({ state }) => {
+  deps: Effect.fail("typed-failure" as const),
+  state: () => Effect.succeed({ ready: false }),
+  UI: ({ state }) => {
     state.ready satisfies boolean;
     return null;
   },
@@ -95,8 +99,8 @@ const Failed = createComponent({
 Failed satisfies ComponentType;
 
 const StateFailed = createComponent({
-  state: Effect.succeed(() => Effect.fail("state-failure" as const)),
-  component: () => null,
+  state: () => Effect.fail("state-failure" as const),
+  UI: () => null,
   onFailure: (error) => {
     error satisfies "state-failure";
     return null;
@@ -106,9 +110,9 @@ const StateFailed = createComponent({
 StateFailed satisfies ComponentType;
 
 createComponent({
-  state: Effect.succeed(() => Effect.succeed({ ready: true })),
+  state: () => Effect.succeed({ ready: true }),
   // @ts-expect-error views render JSX or null, not arbitrary React nodes
-  component: () => "business logic leaked into the view",
+  UI: () => "business logic leaked into the view",
 });
 
 interface TypedCounterState {
@@ -120,7 +124,7 @@ const otherTypedStore = createStore("OtherTypedCounter")<TypedCounterState>();
 
 typedStore.service satisfies Context.Tag<
   StoreRequirement<"TypedCounter", TypedCounterState>,
-  StoreSelector<TypedCounterState>
+  ReadableStore<TypedCounterState>
 >;
 // @ts-expect-error selectors are obtained by yielding the Effect service
 const _RemovedUseStore = typedStore.useStore;
@@ -128,19 +132,20 @@ const _RemovedUseStore = typedStore.useStore;
 const _RemovedProvide = typedStore.provide;
 
 const _StoreConsumer = createComponent({
-  state: Effect.gen(function* () {
-    const useTypedStore = yield* typedStore.service;
-    const useOtherTypedStore = yield* otherTypedStore.service;
+  deps: Effect.gen(function* () {
+    const typedStoreHandle = yield* typedStore.service;
+    const otherTypedStoreHandle = yield* otherTypedStore.service;
     const offset = yield* NumberService;
-    return () =>
-      Effect.succeed({
-        count:
-          useTypedStore((state) => state.count) +
-          useOtherTypedStore((state) => state.count) +
-          offset,
-      });
+    return { offset, otherTypedStoreHandle, typedStoreHandle };
   }),
-  component: ({ state }) => {
+  state: ({ deps }) =>
+    Effect.succeed({
+      count:
+        useStoreSelector(deps.typedStoreHandle, (state) => state.count) +
+        useStoreSelector(deps.otherTypedStoreHandle, (state) => state.count) +
+        deps.offset,
+    }),
+  UI: ({ state }) => {
     state.count satisfies number;
     return null;
   },
@@ -157,11 +162,12 @@ type _StoreRequirement = Expect<
 >;
 
 const _NestedConsumer = createComponent({
-  state: Effect.gen(function* () {
+  deps: Effect.gen(function* () {
     const StoreConsumer = yield* _StoreConsumer;
-    return () => Effect.succeed({ StoreConsumer });
+    return { StoreConsumer };
   }),
-  component: ({ state }) => {
+  state: ({ deps }) => Effect.succeed({ StoreConsumer: deps.StoreConsumer }),
+  UI: ({ state }) => {
     state.StoreConsumer satisfies ComponentType;
     return null;
   },
@@ -178,8 +184,8 @@ type _NestedRequirement = Expect<
 >;
 
 const _ProviderBoundary = createComponent({
-  state: Effect.succeed(() => Effect.succeed({})),
-  component: () => null,
+  state: () => Effect.succeed({}),
+  UI: () => null,
 });
 const _ProvidedConsumer = _ProviderBoundary.__effectReactProvidedRequirements(
   [typedStore.Store],
@@ -195,11 +201,13 @@ type _ProvidedRequirement = Expect<
 >;
 
 const _OuterConsumer = createComponent({
-  state: Effect.gen(function* () {
+  deps: Effect.gen(function* () {
     const ProvidedConsumer = yield* _ProvidedConsumer;
-    return () => Effect.succeed({ ProvidedConsumer });
+    return { ProvidedConsumer };
   }),
-  component: ({ state }) => {
+  state: ({ deps }) =>
+    Effect.succeed({ ProvidedConsumer: deps.ProvidedConsumer }),
+  UI: ({ state }) => {
     state.ProvidedConsumer satisfies ComponentType;
     return null;
   },

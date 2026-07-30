@@ -5,14 +5,12 @@ import { visit } from "./ast.js";
 import {
   annotateComponent,
   annotateExpression,
-  annotateReturnedHooks,
   createAnnotationContext,
 } from "./react-compiler-annotations.js";
 import {
   collectCompilerImports,
   findStoreImplementation,
   isComponentFactoryCall,
-  isEffectGenCall,
 } from "./react-compiler-source.js";
 
 export function collectReactCompilerInsertions(model: SourceModel) {
@@ -30,16 +28,6 @@ export function collectReactCompilerInsertions(model: SourceModel) {
 
     if (!ts.isCallExpression(node)) {
       return;
-    }
-
-    if (isEffectGenCall(node, imports.effectNamespaces)) {
-      const generator = node.arguments[0];
-      if (
-        generator &&
-        (ts.isArrowFunction(generator) || ts.isFunctionExpression(generator))
-      ) {
-        annotateReturnedHooks(context, generator, true);
-      }
     }
 
     if (

@@ -5,7 +5,7 @@ import { act, render, screen } from "@testing-library/react";
 import { Effect } from "effect";
 import { describe, expect, test } from "vitest";
 
-import { createComponent, createStore } from "../src";
+import { createComponent, createStore, useStoreSelector } from "../src";
 
 describe("provider stores", () => {
   test("gives same-shaped stores distinct service identities", () => {
@@ -31,27 +31,28 @@ describe("provider stores", () => {
     }
 
     const Count = createComponent({
-      state: Effect.gen(function* () {
-        const useExample = yield* example.service;
-        return function useCount() {
-          const count = useExample((state) => state.count);
-          countRenders += 1;
-          return Effect.succeed({ count });
-        };
+      deps: Effect.gen(function* () {
+        const store = yield* example.service;
+        return { store };
       }),
-      component: ({ state }) => <span>{state.count}</span>,
+      state: ({ deps }) => {
+        const count = useStoreSelector(deps.store, (state) => state.count);
+        countRenders += 1;
+        return Effect.succeed({ count });
+      },
+      UI: ({ state }) => <span>{state.count}</span>,
     });
     const Actions = createComponent({
-      state: Effect.gen(function* () {
-        const useExample = yield* example.service;
-        return function useActions() {
-          return Effect.succeed({
-            setCount: useExample((state) => state.setCount),
-            setText: useExample((state) => state.setText),
-          });
-        };
+      deps: Effect.gen(function* () {
+        const store = yield* example.service;
+        return { store };
       }),
-      component: ({ state }) => (
+      state: ({ deps }) =>
+        Effect.succeed({
+          setCount: useStoreSelector(deps.store, (state) => state.setCount),
+          setText: useStoreSelector(deps.store, (state) => state.setText),
+        }),
+      UI: ({ state }) => (
         <>
           <button type="button" onClick={() => state.setText("changed")}>
             Change text
@@ -85,15 +86,22 @@ describe("provider stores", () => {
   test("isolates nested provider state", () => {
     const example = createStore("NestedProviders")<{ value: string }>();
     const Value = createComponent({
-      state: Effect.gen(function* () {
-        const useExample = yield* example.service;
-        return ({ label }: { label: string }) =>
-          Effect.succeed({
-            label,
-            value: useExample((state) => state.value),
-          });
+      deps: Effect.gen(function* () {
+        const store = yield* example.service;
+        return { store };
       }),
-      component: ({ state }) => <span>{`${state.label}: ${state.value}`}</span>,
+      state: ({
+        deps,
+        props,
+      }: {
+        deps: { store: Effect.Effect.Success<typeof example.service> };
+        props: { label: string };
+      }) =>
+        Effect.succeed({
+          label: props.label,
+          value: useStoreSelector(deps.store, (state) => state.value),
+        }),
+      UI: ({ state }) => <span>{`${state.label}: ${state.value}`}</span>,
     });
     const useOuter = () => ({ value: "outer" });
     const useInner = () => ({ value: "inner" });
@@ -114,14 +122,15 @@ describe("provider stores", () => {
   test("publishes implementation changes", () => {
     const example = createStore("ProviderProps")<{ value: string }>();
     const Value = createComponent({
-      state: Effect.gen(function* () {
-        const useExample = yield* example.service;
-        return () =>
-          Effect.succeed({
-            value: useExample((state) => state.value),
-          });
+      deps: Effect.gen(function* () {
+        const store = yield* example.service;
+        return { store };
       }),
-      component: ({ state }) => <span>{state.value}</span>,
+      state: ({ deps }) =>
+        Effect.succeed({
+          value: useStoreSelector(deps.store, (state) => state.value),
+        }),
+      UI: ({ state }) => <span>{state.value}</span>,
     });
     const useFirst = () => ({ value: "first" });
     const useSecond = () => ({ value: "second" });
@@ -143,12 +152,15 @@ describe("provider stores", () => {
   test("fails clearly outside its provider", () => {
     const example = createStore("MissingProvider")<{ count: number }>();
     const Count = createComponent({
-      state: Effect.gen(function* () {
-        const useExample = yield* example.service;
-        return () =>
-          Effect.succeed({ count: useExample((state) => state.count) });
+      deps: Effect.gen(function* () {
+        const store = yield* example.service;
+        return { store };
       }),
-      component: ({ state }) => <span>{state.count}</span>,
+      state: ({ deps }) =>
+        Effect.succeed({
+          count: useStoreSelector(deps.store, (state) => state.count),
+        }),
+      UI: ({ state }) => <span>{state.count}</span>,
     });
 
     expect(() => render(<Count />)).toThrow("Service not found");
@@ -157,12 +169,15 @@ describe("provider stores", () => {
   test("renders the initial implementation snapshot on the server", () => {
     const example = createStore("ServerSnapshot")<{ count: number }>();
     const Count = createComponent({
-      state: Effect.gen(function* () {
-        const useExample = yield* example.service;
-        return () =>
-          Effect.succeed({ count: useExample((state) => state.count) });
+      deps: Effect.gen(function* () {
+        const store = yield* example.service;
+        return { store };
       }),
-      component: ({ state }) => <span>{state.count}</span>,
+      state: ({ deps }) =>
+        Effect.succeed({
+          count: useStoreSelector(deps.store, (state) => state.count),
+        }),
+      UI: ({ state }) => <span>{state.count}</span>,
     });
     const useImplementation = () => ({ count: 7 });
 
@@ -181,18 +196,22 @@ describe("provider stores", () => {
       setCount: Dispatch<SetStateAction<number>>;
     }>();
     const Counter = createComponent({
-      state: Effect.gen(function* () {
-        const useCounter = yield* example.service;
-        return function useCounterState() {
-          const count = useCounter((state) => state.count);
-          const setCount = useCounter((state) => state.setCount);
-          return Effect.succeed({
-            count,
-            increment: () => setCount((current) => current + 1),
-          });
-        };
+      deps: Effect.gen(function* () {
+        const store = yield* example.service;
+        return { store };
       }),
-      component: ({ state }) => (
+      state: ({ deps }) => {
+        const count = useStoreSelector(deps.store, (state) => state.count);
+        const setCount = useStoreSelector(
+          deps.store,
+          (state) => state.setCount,
+        );
+        return Effect.succeed({
+          count,
+          increment: () => setCount((current) => current + 1),
+        });
+      },
+      UI: ({ state }) => (
         <button type="button" onClick={state.increment}>
           {state.count}
         </button>

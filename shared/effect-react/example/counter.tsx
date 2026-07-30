@@ -2,7 +2,7 @@ import type { Dispatch, SetStateAction } from "react";
 import { useEffect, useState } from "react";
 import { Effect } from "effect";
 
-import { createComponent, createStore } from "../src";
+import { createComponent, createStore, useStoreSelector } from "../src";
 
 export interface CounterState {
   readonly count: number;
@@ -11,7 +11,7 @@ export interface CounterState {
 
 export const counter = createStore("Counter")<CounterState>();
 
-function useCounterImplementation() {
+export function useCounterImplementation() {
   const [count, setCount] = useState(0);
   return { count, setCount };
 }
@@ -19,26 +19,26 @@ function useCounterImplementation() {
 export const CounterButton = createComponent({
   displayName: "CounterButton",
 
-  state: Effect.gen(function* () {
-    const useCounter = yield* counter.service;
-
-    return function useCounterButtonState() {
-      const count = useCounter((store) => store.count);
-      const setCount = useCounter((store) => store.setCount);
-
-      // eslint-disable-next-line no-restricted-syntax -- Effect components still support ordinary React hooks when they are the right tool.
-      useEffect(() => {
-        console.log("test effect");
-      }, []);
-
-      return Effect.succeed({
-        count,
-        increment: () => setCount((current) => current + 1),
-      });
-    };
+  deps: Effect.gen(function* () {
+    return { store: yield* counter.service };
   }),
 
-  component: ({ state }) => (
+  state: ({ deps }) => {
+    const count = useStoreSelector(deps.store, (state) => state.count);
+    const setCount = useStoreSelector(deps.store, (state) => state.setCount);
+
+    // eslint-disable-next-line no-restricted-syntax -- Effect components still support ordinary React hooks when they are the right tool.
+    useEffect(() => {
+      console.log("test effect");
+    }, []);
+
+    return Effect.succeed({
+      count,
+      increment: () => setCount((current) => current + 1),
+    });
+  },
+
+  UI: ({ state }) => (
     <button type="button" onClick={state.increment}>
       Count: {state.count}
     </button>
@@ -46,9 +46,9 @@ export const CounterButton = createComponent({
 });
 
 export const CounterRow = createComponent({
-  state: Effect.succeed(() => Effect.succeed({})),
+  state: () => Effect.succeed({}),
 
-  component: () => (
+  UI: () => (
     <div>
       <span>Nested counter</span>
       <CounterButton />
@@ -57,22 +57,22 @@ export const CounterRow = createComponent({
 });
 
 export const CounterPanel = createComponent({
-  state: Effect.succeed(() => Effect.succeed({})),
+  state: () => Effect.succeed({}),
 
-  component: () => (
-    <counter.Store implements={useCounterImplementation}>
-      <section>
-        <h2>Counter panel</h2>
-        <CounterRow />
-      </section>
-    </counter.Store>
+  UI: () => (
+    // <counter.Store implements={useCounterImplementation}>
+    <section>
+      <h2>Counter panel</h2>
+      <CounterRow />
+    </section>
+    // </counter.Store>
   ),
 });
 
 export const CounterExample = createComponent({
-  state: Effect.succeed(() => Effect.succeed({})),
+  state: () => Effect.succeed({}),
 
-  component: () => (
+  UI: () => (
     <main>
       <CounterPanel />
     </main>

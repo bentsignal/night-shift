@@ -10,41 +10,57 @@ import {
 } from "../src";
 
 describe("createComponent", () => {
-  test("passes props and state to the component", () => {
-    const state = vi.fn(() => Effect.succeed({ count: 42 }));
-    const component = vi.fn(
+  test("passes dependencies, props, and state through each phase", () => {
+    const deps = { suffix: "!" };
+    const state = vi.fn(
+      ({
+        deps: resolved,
+        props,
+      }: {
+        deps: typeof deps;
+        props: { label: string };
+      }) =>
+        Effect.succeed({
+          count: 42,
+          label: `${props.label}${resolved.suffix}`,
+        }),
+    );
+    const UI = vi.fn(
       ({
         props,
         state: componentState,
       }: {
         props: { label: string };
-        state: { count: number };
+        state: { count: number; label: string };
       }) => <span>{`${props.label}: ${componentState.count}`}</span>,
     );
     const Counter = createComponent({
-      state: Effect.succeed(state),
-      component,
+      deps: Effect.succeed(deps),
+      state,
+      UI,
     });
 
     render(<Counter label="Count" />);
 
     expect(screen.getByText("Count: 42")).toBeInTheDocument();
-    expect(state).toHaveBeenCalledWith({ label: "Count" });
-    expect(component).toHaveBeenCalledWith({
+    expect(state).toHaveBeenCalledWith({
+      deps,
       props: { label: "Count" },
-      state: { count: 42 },
+    });
+    expect(UI).toHaveBeenCalledWith({
+      props: { label: "Count" },
+      state: { count: 42, label: "Count!" },
     });
   });
 
   test("keeps store selection inside state", () => {
     const store = makeStore({ count: 7 });
     const Counter = createComponent({
-      state: Effect.succeed(() =>
+      state: () =>
         Effect.succeed({
           count: useStoreSelector(store, (snapshot) => snapshot.count),
         }),
-      ),
-      component: ({ state }) => <span>{state.count}</span>,
+      UI: ({ state }) => <span>{state.count}</span>,
     });
 
     render(<Counter />);
@@ -54,10 +70,9 @@ describe("createComponent", () => {
 
   test("renders typed state-construction failures explicitly", () => {
     const Failed = createComponent({
-      state: Effect.fail("missing-store" as const).pipe(
-        Effect.as(() => Effect.succeed({ ready: false })),
-      ),
-      component: ({ state }) => <span>{String(state.ready)}</span>,
+      deps: Effect.fail("missing-store" as const),
+      state: () => Effect.succeed({ ready: false }),
+      UI: ({ state }) => <span>{String(state.ready)}</span>,
       onFailure: (error) => <span>{error}</span>,
     });
 
@@ -68,10 +83,9 @@ describe("createComponent", () => {
 
   test("allows an explicit defect renderer", () => {
     const Defect = createComponent({
-      state: Effect.die("broken-state").pipe(
-        Effect.as(() => Effect.succeed({ ready: false })),
-      ),
-      component: ({ state }) => <span>{String(state.ready)}</span>,
+      deps: Effect.die("broken-state"),
+      state: () => Effect.succeed({ ready: false }),
+      UI: ({ state }) => <span>{String(state.ready)}</span>,
       onDefect: (defect) => <span>{String(defect)}</span>,
     });
 
@@ -81,13 +95,12 @@ describe("createComponent", () => {
   });
 
   test("rejects asynchronous state construction", () => {
-    const state = Effect.promise(
-      async () => () => Effect.succeed({ ready: true }),
-    );
+    const deps = Effect.promise(async () => ({ ready: true }));
 
     const Async = createComponent({
-      state,
-      component: () => null,
+      deps,
+      state: () => Effect.succeed({}),
+      UI: () => null,
     });
 
     expect(() => render(<Async />)).toThrow(AsyncComponentStateError);
@@ -95,8 +108,8 @@ describe("createComponent", () => {
 
   test("preserves typed failures through state evaluation", () => {
     const Failed = createComponent({
-      state: Effect.succeed(() => Effect.fail("state-failure" as const)),
-      component: () => <span>unreachable</span>,
+      state: () => Effect.fail("state-failure" as const),
+      UI: () => <span>unreachable</span>,
       onFailure: (error) => <span>{error}</span>,
     });
 

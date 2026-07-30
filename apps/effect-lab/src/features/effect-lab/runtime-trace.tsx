@@ -22,13 +22,12 @@ const nodes = root
 
 export const RuntimeTrace = createComponent({
   displayName: "RuntimeTrace",
-  state: Effect.succeed(() =>
+  state: () =>
     Effect.succeed({
       nodes,
       unresolved: root?.requirements.length ?? analysis.diagnostics.length,
     }),
-  ),
-  component: ({ state }) => (
+  UI: ({ state }) => (
     <aside aria-labelledby="trace-title" className="trace">
       <div className="trace-heading">
         <p className="eyebrow">runtime trace</p>

@@ -2,7 +2,8 @@
   "extends": "@night-shift/tsconfig/base.json",
   "compilerOptions": {
     "jsx": "react-jsx",
-    "lib": ["ES2022", "DOM"]
+    "lib": ["ES2022", "DOM"],
+    "plugins": [{ "name": "@night-shift/effect-react-compiler" }]
   },
   "include": ["example", "src", "test", "eslint.config.ts", "vitest.config.ts"]
 }

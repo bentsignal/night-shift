@@ -3,7 +3,7 @@ import { createFileRoute } from "@tanstack/react-router";
 import { Effect } from "effect";
 import { ArrowLeft } from "lucide-react";
 
-import { createComponent } from "@night-shift/effect-react";
+import { createComponent, useStoreSelector } from "@night-shift/effect-react";
 import { Button } from "@night-shift/ui-web/components/button";
 import {
   Card,
@@ -20,19 +20,24 @@ import { QuickLink } from "../features/quick-link/quick-link";
 
 const RunPage = createComponent({
   displayName: "RunPage",
-  state: Effect.gen(function* () {
-    const useControlPlane = yield* controlPlane.service;
-    return function useRunPageState({ runId }: { readonly runId: string }) {
-      return Effect.succeed({
-        authority: useControlPlane((state) => state.authority),
-        commandRun: useControlPlane((state) => state.commandRun),
-        run: useControlPlane((state) =>
-          state.runs.find((candidate) => candidate.id === runId),
-        ),
-      });
-    };
+  deps: Effect.gen(function* () {
+    return { store: yield* controlPlane.service };
   }),
-  component: ({ state }) => {
+  state: ({
+    deps,
+    props,
+  }: {
+    deps: { store: Effect.Effect.Success<typeof controlPlane.service> };
+    props: { runId: string };
+  }) =>
+    Effect.succeed({
+      authority: useStoreSelector(deps.store, (state) => state.authority),
+      commandRun: useStoreSelector(deps.store, (state) => state.commandRun),
+      run: useStoreSelector(deps.store, (state) =>
+        state.runs.find((candidate) => candidate.id === props.runId),
+      ),
+    }),
+  UI: ({ state }) => {
     const run = state.run;
     if (!run) {
       if (state.authority !== "connected") {

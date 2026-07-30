@@ -7,18 +7,20 @@ import { Card, CardFooter } from "@night-shift/ui-web/components/card";
 import { NewRunFormFields, QueueButton } from "./new-run-form-fields";
 import {
   createExecutionPreferencesStore,
-  newRunFormState,
+  newRunFormDeps,
   NewRunNavigation,
   NewRunPreferences,
+  useNewRunFormState,
 } from "./new-run-form-state";
 
 export const NewRunForm = createComponent({
   displayName: "NewRunForm",
-  state: newRunFormState.pipe(
+  deps: newRunFormDeps.pipe(
     Effect.provideService(NewRunPreferences, createExecutionPreferencesStore),
     Effect.provideService(NewRunNavigation, useNavigate),
   ),
-  component: ({ state }) => (
+  state: useNewRunFormState,
+  UI: ({ state }) => (
     <form action={(formData) => void state.submit(formData)}>
       <Card>
         <NewRunFormFields {...state} />

@@ -2,7 +2,11 @@ import type { Dispatch, SetStateAction } from "react";
 import { useState } from "react";
 import { Effect } from "effect";
 
-import { createComponent, createStore } from "@night-shift/effect-react";
+import {
+  createComponent,
+  createStore,
+  useStoreSelector,
+} from "@night-shift/effect-react";
 
 export interface CounterState {
   readonly count: number;
@@ -18,15 +22,16 @@ function useCounterImplementation() {
 
 export const CounterReadout = createComponent({
   displayName: "CounterReadout",
-  state: Effect.gen(function* () {
-    const useCounter = yield* counter.service;
-
-    return function useCounterReadout() {
-      const count = useCounter((store) => store.count);
-      return Effect.succeed({ count });
-    };
+  deps: Effect.gen(function* () {
+    return { store: yield* counter.service };
   }),
-  component: ({ state }) => (
+
+  state: ({ deps }) =>
+    Effect.succeed({
+      count: useStoreSelector(deps.store, (state) => state.count),
+    }),
+
+  UI: ({ state }) => (
     <output aria-live="polite" className="counter-value">
       {formatCount(state.count)}
     </output>
@@ -35,19 +40,20 @@ export const CounterReadout = createComponent({
 
 export const CounterControls = createComponent({
   displayName: "CounterControls",
-  state: Effect.gen(function* () {
-    const useCounter = yield* counter.service;
-
-    return function useCounterControls() {
-      const setCount = useCounter((store) => store.setCount);
-      return Effect.succeed({
-        decrement: () => setCount((current) => current - 1),
-        increment: () => setCount((current) => current + 1),
-        reset: () => setCount(0),
-      });
-    };
+  deps: Effect.gen(function* () {
+    return { store: yield* counter.service };
   }),
-  component: ({ state }) => (
+
+  state: ({ deps }) => {
+    const setCount = useStoreSelector(deps.store, (state) => state.setCount);
+    return Effect.succeed({
+      decrement: () => setCount((current) => current - 1),
+      increment: () => setCount((current) => current + 1),
+      reset: () => setCount(0),
+    });
+  },
+
+  UI: ({ state }) => (
     <div className="counter-controls">
       <button
         aria-label="Decrease count"
@@ -78,8 +84,8 @@ export const CounterControls = createComponent({
  */
 export const CounterInstrument = createComponent({
   displayName: "CounterInstrument",
-  state: Effect.succeed(() => Effect.succeed({})),
-  component: () => (
+  state: () => Effect.succeed({}),
+  UI: () => (
     <counter.Store implements={useCounterImplementation}>
       <section aria-labelledby="counter-title" className="instrument">
         <div className="instrument-heading">

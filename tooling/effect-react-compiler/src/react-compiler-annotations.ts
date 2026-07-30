@@ -3,7 +3,6 @@ import ts from "typescript";
 import { unwrapExpression } from "./ast.js";
 import {
   collectModuleCallbacks,
-  findPropertyExpression,
   propertyName,
 } from "./react-compiler-source.js";
 
@@ -34,12 +33,8 @@ export function annotateComponent(
   context: AnnotationContext,
   definition: ts.ObjectLiteralExpression,
 ) {
-  annotateNamedCallback(context, definition, "component");
-
-  const state = findPropertyExpression(definition, "state");
-  if (state) {
-    annotateStateHooks(context, state);
-  }
+  annotateNamedCallback(context, definition, "state");
+  annotateNamedCallback(context, definition, "UI");
 }
 
 export function annotateNamedCallback(
@@ -67,52 +62,6 @@ export function annotateNamedCallback(
       return;
     }
   }
-}
-
-export function annotateReturnedHooks(
-  context: AnnotationContext,
-  expression: ts.Node,
-  namedHooksOnly: boolean,
-) {
-  const walk = (node: ts.Node) => {
-    if (ts.isReturnStatement(node) && node.expression) {
-      const returned = unwrapExpression(node.expression);
-      if (ts.isArrowFunction(returned) || ts.isFunctionExpression(returned)) {
-        if (!namedHooksOnly || isHookName(returned.name?.text)) {
-          annotateFunction(context, returned);
-        }
-        return;
-      }
-      if (ts.isIdentifier(returned)) {
-        const callback = context.callbacks.get(returned.text);
-        if (callback && (!namedHooksOnly || isHookName(returned.text))) {
-          annotateFunction(context, callback);
-        }
-      }
-    }
-    ts.forEachChild(node, walk);
-  };
-
-  walk(expression);
-}
-
-function annotateStateHooks(
-  context: AnnotationContext,
-  expression: ts.Expression,
-) {
-  const state = unwrapExpression(expression);
-  if (
-    ts.isCallExpression(state) &&
-    ts.isPropertyAccessExpression(state.expression) &&
-    state.expression.name.text === "succeed"
-  ) {
-    const hook = state.arguments[0];
-    if (hook) {
-      annotateExpression(context, hook);
-    }
-  }
-
-  annotateReturnedHooks(context, state, false);
 }
 
 export function annotateExpression(
@@ -178,8 +127,4 @@ function hasMemoDirective(body: ts.Block) {
     }
   }
   return false;
-}
-
-function isHookName(name: string | undefined) {
-  return !!name && /^use[A-Z0-9]/u.test(name);
 }

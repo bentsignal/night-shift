@@ -73,16 +73,22 @@ function ConnectedControlPlane({ client }: { client: ControlPlaneClient }) {
 
 const ApplicationFrame = createComponent({
   displayName: "ApplicationFrame",
-  state: Effect.succeed(function useApplicationFrameState(_props: {
-    readonly children: ReactNode;
-    readonly implementation: ControlPlaneState;
-  }) {
+  state: () => {
     const pathname = useRouterState({
       select: (state) => state.location.pathname,
     });
     return Effect.succeed({ pathname });
-  }),
-  component: ({ props, state }) => (
+  },
+  UI: ({
+    props,
+    state,
+  }: {
+    props: {
+      readonly children: ReactNode;
+      readonly implementation: ControlPlaneState;
+    };
+    state: { pathname: string };
+  }) => (
     <controlPlane.Store implements={() => props.implementation}>
       <SidebarProvider
         defaultOpen

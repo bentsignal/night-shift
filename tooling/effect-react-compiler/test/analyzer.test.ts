@@ -17,21 +17,22 @@ describe("analyzeEffectReact", () => {
             }>();
 
             const Button = createComponent({
-              state: Effect.gen(function* () {
+              deps: Effect.gen(function* () {
                 yield* counter.service;
-                return () => Effect.succeed({});
+                return {};
               }),
-              component: () => <button />,
+              state: () => Effect.succeed({}),
+              UI: () => <button />,
             });
 
             const Row = createComponent({
-              state: Effect.succeed(() => Effect.succeed({})),
-              component: () => <Button />,
+              state: () => Effect.succeed({}),
+              UI: () => <Button />,
             });
 
             const Panel = createComponent({
-              state: Effect.succeed(() => Effect.succeed({})),
-              component: () => (
+              state: () => Effect.succeed({}),
+              UI: () => (
                 <counter.Store implements={() => ({ count: 0 })}>
                   <Row />
                 </counter.Store>
@@ -67,17 +68,18 @@ describe("analyzeEffectReact", () => {
             const theme = createStore("Theme")<{ dark: boolean }>();
 
             const Leaf = createComponent({
-              state: Effect.gen(function* () {
+              deps: Effect.gen(function* () {
                 yield* session.service;
                 yield* theme.service;
-                return () => Effect.succeed({});
+                return {};
               }),
-              component: () => <span />,
+              state: () => Effect.succeed({}),
+              UI: () => <span />,
             });
 
             const Panel = createComponent({
-              state: Effect.succeed(() => Effect.succeed({})),
-              component: () => (
+              state: () => Effect.succeed({}),
+              UI: () => (
                 <session.Store implements={() => ({ id: "one" })}>
                   <Leaf />
                 </session.Store>
@@ -114,26 +116,28 @@ describe("analyzeEffectReact", () => {
 
             const counter = createStore("Counter")<{ count: number }>();
             const CounterValue = createComponent({
-              state: Effect.gen(function* () {
+              deps: Effect.gen(function* () {
                 yield* counter.service;
-                return () => Effect.succeed({});
+                return {};
               }),
-              component: () => <output />,
+              state: () => Effect.succeed({}),
+              UI: () => <output />,
             });
             const DirectConsumer = createComponent({
-              state: Effect.gen(function* () {
+              deps: Effect.gen(function* () {
                 yield* counter.service;
-                return () => Effect.succeed({});
+                return {};
               }),
-              component: () => (
+              state: () => Effect.succeed({}),
+              UI: () => (
                 <counter.Store implements={() => ({ count: 0 })}>
                   <CounterValue />
                 </counter.Store>
               ),
             });
             const Mixed = createComponent({
-              state: Effect.succeed(() => Effect.succeed({})),
-              component: () => (
+              state: () => Effect.succeed({}),
+              UI: () => (
                 <>
                   <counter.Store implements={() => ({ count: 0 })}>
                     <CounterValue />
@@ -162,11 +166,12 @@ describe("analyzeEffectReact", () => {
 
             const auth = createStore("Auth")<{ userId: string }>();
             const Protected = createComponent({
-              state: Effect.gen(function* () {
+              deps: Effect.gen(function* () {
                 yield* auth.service;
-                return () => Effect.succeed({});
+                return {};
               }),
-              component: () => <main />,
+              state: () => Effect.succeed({}),
+              UI: () => <main />,
             });
 
             export const App = () => <Protected />;
@@ -195,15 +200,16 @@ describe("analyzeEffectReact", () => {
 
             const clock = createStore("Clock")<{ now: number }>();
             const A = createComponent({
-              state: Effect.gen(function* () {
+              deps: Effect.gen(function* () {
                 yield* clock.service;
-                return () => Effect.succeed({});
+                return {};
               }),
-              component: () => <B />,
+              state: () => Effect.succeed({}),
+              UI: () => <B />,
             });
             const B = createComponent({
-              state: Effect.succeed(() => Effect.succeed({})),
-              component: () => <A />,
+              state: () => Effect.succeed({}),
+              UI: () => <A />,
             });
           `,
         },
@@ -238,11 +244,12 @@ describe("analyzeEffectReact", () => {
             import { auth as authentication } from "./stores";
 
             export const Button = createComponent({
-              state: Effect.gen(function* () {
+              deps: Effect.gen(function* () {
                 yield* authentication.service;
-                return () => Effect.succeed({});
+                return {};
               }),
-              component: () => <button />,
+              state: () => Effect.succeed({}),
+              UI: () => <button />,
             });
           `,
         },
@@ -254,8 +261,8 @@ describe("analyzeEffectReact", () => {
             import { Button as Action } from "./button";
 
             export const Panel = createComponent({
-              state: Effect.succeed(() => Effect.succeed({})),
-              component: () => <Action />,
+              state: () => Effect.succeed({}),
+              UI: () => <Action />,
             });
           `,
         },
@@ -294,12 +301,12 @@ describe("lowerEffectReactSources", () => {
           import { Effect } from "effect";
 
           const Child = createComponent({
-            state: Effect.succeed(() => Effect.succeed({})),
-            component: () => null,
+            state: () => Effect.succeed({}),
+            UI: () => null,
           });
           const Parent = createComponent({
-            state: Effect.succeed(() => Effect.succeed({})),
-            component: () => <Child />,
+            state: () => Effect.succeed({}),
+            UI: () => <Child />,
           });
         `,
       },
@@ -326,15 +333,16 @@ describe("lowerEffectReactSources", () => {
 
           const counter = createStore("Counter")<{ count: number }>();
           const Child = createComponent({
-            state: Effect.gen(function* () {
+            deps: Effect.gen(function* () {
               yield* counter.service;
-              return () => Effect.succeed({});
+              return {};
             }),
-            component: () => null,
+              state: () => Effect.succeed({}),
+            UI: () => null,
           });
           const Parent = createComponent({
-            state: Effect.succeed(() => Effect.succeed({})),
-            component: () => (
+            state: () => Effect.succeed({}),
+            UI: () => (
               <counter.Store implements={() => ({ count: 0 })}>
                 <Child />
               </counter.Store>

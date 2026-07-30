@@ -2,7 +2,7 @@ import { createFileRoute } from "@tanstack/react-router";
 import { Effect } from "effect";
 import { Cpu, Server } from "lucide-react";
 
-import { createComponent } from "@night-shift/effect-react";
+import { createComponent, useStoreSelector } from "@night-shift/effect-react";
 import { Badge } from "@night-shift/ui-web/components/badge";
 import {
   Card,
@@ -19,15 +19,14 @@ import { Page } from "../features/control-plane/page";
 
 const HostsPage = createComponent({
   displayName: "HostsPage",
-  state: Effect.gen(function* () {
-    const useControlPlane = yield* controlPlane.service;
-    return function useHostsPageState() {
-      return Effect.succeed({
-        hosts: useControlPlane((state) => state.hosts),
-      });
-    };
+  deps: Effect.gen(function* () {
+    return { store: yield* controlPlane.service };
   }),
-  component: ({ state }) => (
+  state: ({ deps }) =>
+    Effect.succeed({
+      hosts: useStoreSelector(deps.store, (state) => state.hosts),
+    }),
+  UI: ({ state }) => (
     <Page
       description="Execution machines enrolled with the control plane."
       title="Hosts"

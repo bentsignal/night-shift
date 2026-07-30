@@ -42,7 +42,7 @@ const ComponentValue = memo(function ComponentValue({
  */
 const CompilerProof = createComponent({
   displayName: "CompilerProof",
-  state: Effect.succeed((props: ProbeProps) => {
+  state: ({ props }: { props: ProbeProps }) => {
     const [revision, setRevision] = useState(0);
 
     return Effect.succeed({
@@ -50,8 +50,8 @@ const CompilerProof = createComponent({
       props,
       update: () => setRevision((current) => current + 1),
     });
-  }),
-  component: ({ state }) => {
+  },
+  UI: ({ state }) => {
     const componentValue = { source: "component" };
 
     return (
@@ -70,7 +70,7 @@ const CompilerProof = createComponent({
 });
 
 describe("Effect React Compiler", () => {
-  test("memoizes authored state and component callbacks without directives", () => {
+  test("memoizes authored state and UI callbacks without directives", () => {
     const onComponentValue = vi.fn();
     const onStateValue = vi.fn();
 

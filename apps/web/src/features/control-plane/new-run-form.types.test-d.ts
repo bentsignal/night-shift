@@ -7,14 +7,15 @@ import type {
 import { createComponent } from "@night-shift/effect-react";
 
 import type { ControlPlaneState } from "../../control-plane/client";
-import { newRunFormState } from "./new-run-form-state";
+import { newRunFormDeps } from "./new-run-form-state";
 
 type Includes<Union, Member> = Member extends Union ? true : false;
 type Expect<Value extends true> = Value;
 
 const _NewRunFormRequirements = createComponent({
-  state: newRunFormState,
-  component: () => null,
+  deps: newRunFormDeps,
+  state: () => Effect.succeed({}),
+  UI: () => null,
 });
 
 type Requirements = Effect.Effect.Context<

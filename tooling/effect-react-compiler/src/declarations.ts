@@ -77,19 +77,19 @@ export function readComponentDefinition({
     return undefined;
   }
 
-  const state = findPropertyInitializer(definition, "state");
-  const component = findPropertyInitializer(definition, "component");
-  const jsxChildReferences = component
-    ? collectJsxReferences({ expression: component, fileName, sourceFile })
+  const deps = findPropertyInitializer(definition, "deps");
+  const UI = findPropertyInitializer(definition, "UI");
+  const jsxChildReferences = UI
+    ? collectJsxReferences({ expression: UI, fileName, sourceFile })
     : [];
   const childReferences = [
-    ...(state
-      ? collectYieldedComponents({ expression: state, fileName, sourceFile })
+    ...(deps
+      ? collectYieldedComponents({ expression: deps, fileName, sourceFile })
       : []),
     ...jsxChildReferences,
   ];
-  const serviceReferences = state
-    ? collectYieldedServices({ expression: state, fileName, sourceFile })
+  const serviceReferences = deps
+    ? collectYieldedServices({ expression: deps, fileName, sourceFile })
     : [];
 
   return {

@@ -2,6 +2,8 @@ import { act, render, renderHook, screen } from "@testing-library/react";
 import { Effect } from "effect";
 import { describe, expect, it, vi } from "vitest";
 
+import { makeStore } from "@night-shift/effect-react";
+
 import type { ControlPlaneState } from "../../control-plane/client";
 import type {
   ControlPlaneClient,
@@ -12,9 +14,10 @@ import { controlPlane, ControlPlaneProvider } from "../../control-plane/client";
 import { NewRunForm } from "./new-run-form";
 import {
   createExecutionPreferencesStore,
-  newRunFormState,
+  newRunFormDeps,
   NewRunNavigation,
   NewRunPreferences,
+  useNewRunFormState,
 } from "./new-run-form-state";
 
 const router = vi.hoisted(() => ({
@@ -41,7 +44,7 @@ function client(submitWork = vi.fn<ControlPlaneClient["submitWork"]>()) {
   } satisfies ControlPlaneClient;
 }
 
-function testControlPlane(
+function testControlPlaneStore(
   submitWork = vi.fn<ControlPlaneClient["submitWork"]>(),
 ) {
   const testClient = client(submitWork);
@@ -51,15 +54,11 @@ function testControlPlane(
     submitWork: testClient.submitWork,
   } satisfies ControlPlaneState;
 
-  return function useTestControlPlane<Selected>(
-    selector: (controlPlane: ControlPlaneState) => Selected,
-  ) {
-    return selector(state);
-  };
+  return makeStore(state);
 }
 
 describe("NewRunForm", () => {
-  it("exposes the state/component contract as the rendered form", () => {
+  it("exposes the state/UI contract as the rendered form", () => {
     render(
       <ControlPlaneProvider client={client()}>
         <NewRunForm />
@@ -75,11 +74,11 @@ describe("NewRunForm", () => {
     const submitWork = vi
       .fn<ControlPlaneClient["submitWork"]>()
       .mockResolvedValue("run_effect");
-    const useFormState = Effect.runSync(
-      newRunFormState.pipe(
+    const deps = Effect.runSync(
+      newRunFormDeps.pipe(
         Effect.provideService(
           controlPlane.service,
-          testControlPlane(submitWork),
+          testControlPlaneStore(submitWork),
         ),
         Effect.provideService(
           NewRunPreferences,
@@ -88,7 +87,9 @@ describe("NewRunForm", () => {
         Effect.provideService(NewRunNavigation, () => router.navigate),
       ),
     );
-    const { result } = renderHook(() => Effect.runSync(useFormState()));
+    const { result } = renderHook(() =>
+      Effect.runSync(useNewRunFormState({ deps })),
+    );
 
     act(() => {
       result.current.selectProvider("anthropic");

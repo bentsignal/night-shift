@@ -43,103 +43,113 @@ export const createExecutionPreferencesStore = () => {
   });
 };
 
-export const newRunFormState = Effect.gen(function* () {
-  const useControlPlane = yield* controlPlane.service;
+export const newRunFormDeps = Effect.gen(function* () {
+  const controlPlaneStore = yield* controlPlane.service;
   const createPreferences = yield* NewRunPreferences;
   const useNavigation = yield* NewRunNavigation;
 
-  return function useNewRunFormState() {
-    const navigate = useNavigation();
-    const [preferences] = useState(createPreferences);
-    const [submitting, setSubmitting] = useState(false);
-    const [error, setError] = useState<string>();
-    const hosts = useControlPlane((state) => state.hosts);
-    const submitWork = useControlPlane((state) => state.submitWork);
-    const provider = useStoreSelector(preferences, (state) => state.provider);
-    const model = useStoreSelector(preferences, (state) => state.model);
-    const reasoning = useStoreSelector(preferences, (state) => state.reasoning);
-    const activeProvider =
-      providerOptions.find((option) => option.id === provider) ??
-      providerOptions[0];
-    const capacity = getHostCapacity(hosts);
-
-    const selectProvider = (nextProvider: string) => {
-      preferences.update((current) => ({
-        ...current,
-        model:
-          providerOptions.find((option) => option.id === nextProvider)
-            ?.models[0]?.id ?? "",
-        provider: nextProvider,
-      }));
-    };
-
-    const selectModel = (nextModel: string) => {
-      preferences.update((current) => ({
-        ...current,
-        model: nextModel,
-      }));
-    };
-
-    const selectReasoning = (nextReasoning: string) => {
-      preferences.update((current) => ({
-        ...current,
-        reasoning: nextReasoning as ReasoningLevel,
-      }));
-    };
-
-    const submit = (formData: FormData) => {
-      setSubmitting(true);
-      setError(undefined);
-
-      return Effect.tryPromise({
-        try: async () => {
-          const runId = await submitWork({
-            prompt: String(formData.get("prompt") ?? ""),
-            project: String(formData.get("project") ?? ""),
-            ...preferences.getSnapshot(),
-          });
-          await navigate({ to: "/runs/$runId", params: { runId } });
-        },
-        catch: (cause) =>
-          cause instanceof Error ? cause : new Error("Unable to queue run"),
-      }).pipe(
-        Effect.catchAll((cause) =>
-          Effect.sync(() => {
-            setError(cause.message);
-          }),
-        ),
-        Effect.ensuring(
-          Effect.sync(() => {
-            setSubmitting(false);
-          }),
-        ),
-        Effect.runPromise,
-      );
-    };
-
-    return Effect.succeed({
-      capacityLabel:
-        capacity.available > 0
-          ? `${capacity.available} ${capacity.available === 1 ? "host" : "hosts"} ready`
-          : "No host ready — this run will wait in the queue",
-      error,
-      model,
-      modelOptions: activeProvider?.models ?? [],
-      provider,
-      providerOptions,
-      reasoning,
-      reasoningOptions,
-      selectModel,
-      selectProvider,
-      selectReasoning,
-      submit,
-      submitting,
-    });
-  };
+  return { controlPlaneStore, createPreferences, useNavigation };
 });
 
-type NewRunFormStateHook = Effect.Effect.Success<typeof newRunFormState>;
+export function useNewRunFormState({
+  deps,
+}: {
+  readonly deps: Effect.Effect.Success<typeof newRunFormDeps>;
+}) {
+  const navigate = deps.useNavigation();
+  const [preferences] = useState(deps.createPreferences);
+  const [submitting, setSubmitting] = useState(false);
+  const [error, setError] = useState<string>();
+  const hosts = useStoreSelector(
+    deps.controlPlaneStore,
+    (state) => state.hosts,
+  );
+  const submitWork = useStoreSelector(
+    deps.controlPlaneStore,
+    (state) => state.submitWork,
+  );
+  const provider = useStoreSelector(preferences, (state) => state.provider);
+  const model = useStoreSelector(preferences, (state) => state.model);
+  const reasoning = useStoreSelector(preferences, (state) => state.reasoning);
+  const activeProvider =
+    providerOptions.find((option) => option.id === provider) ??
+    providerOptions[0];
+  const capacity = getHostCapacity(hosts);
+
+  const selectProvider = (nextProvider: string) => {
+    preferences.update((current) => ({
+      ...current,
+      model:
+        providerOptions.find((option) => option.id === nextProvider)?.models[0]
+          ?.id ?? "",
+      provider: nextProvider,
+    }));
+  };
+
+  const selectModel = (nextModel: string) => {
+    preferences.update((current) => ({
+      ...current,
+      model: nextModel,
+    }));
+  };
+
+  const selectReasoning = (nextReasoning: string) => {
+    preferences.update((current) => ({
+      ...current,
+      reasoning: nextReasoning as ReasoningLevel,
+    }));
+  };
+
+  const submit = (formData: FormData) => {
+    setSubmitting(true);
+    setError(undefined);
+
+    return Effect.tryPromise({
+      try: async () => {
+        const runId = await submitWork({
+          prompt: String(formData.get("prompt") ?? ""),
+          project: String(formData.get("project") ?? ""),
+          ...preferences.getSnapshot(),
+        });
+        await navigate({ to: "/runs/$runId", params: { runId } });
+      },
+      catch: (cause) =>
+        cause instanceof Error ? cause : new Error("Unable to queue run"),
+    }).pipe(
+      Effect.catchAll((cause) =>
+        Effect.sync(() => {
+          setError(cause.message);
+        }),
+      ),
+      Effect.ensuring(
+        Effect.sync(() => {
+          setSubmitting(false);
+        }),
+      ),
+      Effect.runPromise,
+    );
+  };
+
+  return Effect.succeed({
+    capacityLabel:
+      capacity.available > 0
+        ? `${capacity.available} ${capacity.available === 1 ? "host" : "hosts"} ready`
+        : "No host ready — this run will wait in the queue",
+    error,
+    model,
+    modelOptions: activeProvider?.models ?? [],
+    provider,
+    providerOptions,
+    reasoning,
+    reasoningOptions,
+    selectModel,
+    selectProvider,
+    selectReasoning,
+    submit,
+    submitting,
+  });
+}
 
 export type NewRunFormState = Effect.Effect.Success<
-  ReturnType<NewRunFormStateHook>
+  ReturnType<typeof useNewRunFormState>
 >;

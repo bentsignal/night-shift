@@ -81,14 +81,57 @@ export type ComponentEffect<Component> =
     ? Effect.Effect<RenderResult, Error, Requirements>
     : never;
 
-export type StateHook<Props, State, Error> = (
-  props: Props,
-) => Effect.Effect<State, Error>;
+export type ComponentState<Props, Dependencies, State, Error> = (input: {
+  readonly deps: Dependencies;
+  readonly props: Props;
+}) => Effect.Effect<State, Error>;
 
-export type ComponentState<Props, State, Error, Requirements> = Effect.Effect<
-  StateHook<Props, State, Error>,
-  Error,
-  Requirements
+type ComponentInput<Props, State> = {
+  readonly props: Props;
+  readonly state: State;
+};
+
+type ComponentUI<Props, State> = (
+  input: ComponentInput<Props, State>,
+) => RenderResult;
+
+type ComponentErrors<DependenciesError, StateError> =
+  DependenciesError | StateError;
+
+type ComponentLifecycle<
+  Props,
+  Dependencies,
+  State,
+  DependenciesError,
+  StateError,
+> = {
+  readonly UI: ComponentUI<Props, State>;
+  readonly onDefect?: (defect: unknown) => RenderResult;
+  readonly state: ComponentState<Props, Dependencies, State, StateError>;
+} & FailureRenderer<ComponentErrors<DependenciesError, StateError>>;
+
+type DependencyInput<Dependencies, Error, Requirements> = [void] extends [
+  Dependencies,
+]
+  ? {
+      readonly deps?: never;
+    }
+  : {
+      readonly deps: Effect.Effect<Dependencies, Error, Requirements>;
+    };
+
+type RuntimeDefinition<
+  Props,
+  Dependencies,
+  State,
+  DependenciesError,
+  StateError,
+> = ComponentLifecycle<
+  Props,
+  Dependencies,
+  State,
+  DependenciesError,
+  StateError
 >;
 
 type FailureRenderer<Error> = [Error] extends [never]
@@ -99,23 +142,23 @@ type FailureRenderer<Error> = [Error] extends [never]
       readonly onFailure: (error: Error) => RenderResult;
     };
 
-export type ComponentDefinition<Props, State, Error, Requirements> = {
-  readonly component: (input: {
-    readonly props: Props;
-    readonly state: State;
-  }) => RenderResult;
-  readonly displayName?: string;
-  readonly onDefect?: (defect: unknown) => RenderResult;
-  readonly state: ComponentState<Props, State, Error, Requirements>;
-} & FailureRenderer<Error>;
-
-type RenderDefinition<Props, State, Error> = {
-  readonly component: (input: {
-    readonly props: Props;
-    readonly state: State;
-  }) => RenderResult;
-  readonly onDefect?: (defect: unknown) => RenderResult;
-} & FailureRenderer<Error>;
+export type ComponentDefinition<
+  Props,
+  Dependencies,
+  State,
+  DependenciesError,
+  StateError,
+  Requirements,
+> = ComponentLifecycle<
+  Props,
+  Dependencies,
+  State,
+  DependenciesError,
+  StateError
+> &
+  DependencyInput<Dependencies, DependenciesError, Requirements> & {
+    readonly displayName?: string;
+  };
 
 export class AsyncComponentStateError extends Error {
   override readonly name = "AsyncComponentStateError";
@@ -130,29 +173,53 @@ export class AsyncComponentStateError extends Error {
 
 export function createComponent<
   Props = Record<string, never>,
+  Dependencies = void,
   State = never,
-  Error = never,
+  DependenciesError = never,
+  StateError = never,
   Requirements = never,
->(definition: ComponentDefinition<Props, State, Error, Requirements>) {
+>(
+  definition: ComponentDefinition<
+    Props,
+    Dependencies,
+    State,
+    DependenciesError,
+    StateError,
+    Requirements
+  >,
+) {
   const CreatedComponent = (props: Props) => {
     const services = useServiceContext();
-    const factory = runState(provideServiceContext(definition.state, services));
+    const dependencies = runState(
+      provideServiceContext(
+        (definition.deps ?? Effect.void) as Effect.Effect<
+          Dependencies,
+          DependenciesError,
+          Requirements
+        >,
+        services,
+      ),
+    );
 
-    if (Exit.isFailure(factory)) {
-      return renderFailure(definition, factory.cause);
+    if (Exit.isFailure(dependencies)) {
+      return renderFailure(definition, dependencies.cause);
     }
 
     return (
       <EvaluatedState
+        deps={dependencies.value}
         definition={definition}
         props={props}
-        useState={factory.value}
       />
     );
   };
   CreatedComponent.displayName =
-    definition.displayName ?? definition.component.name ?? "EffectComponent";
-  return makeEffectComponent<Props, Error, Requirements>(CreatedComponent);
+    definition.displayName ?? definition.UI.name ?? "EffectComponent";
+  return makeEffectComponent<
+    Props,
+    ComponentErrors<DependenciesError, StateError>,
+    Requirements
+  >(CreatedComponent);
 }
 
 export function makeEffectComponent<Props, Error, Requirements>(
@@ -172,20 +239,37 @@ export function makeEffectComponent<Props, Error, Requirements>(
   return effectComponent;
 }
 
-function EvaluatedState<Props, State, Error>({
+function EvaluatedState<
+  Props,
+  Dependencies,
+  State,
+  DependenciesError,
+  StateError,
+>({
+  deps,
   definition,
   props,
-  useState,
 }: {
-  definition: RenderDefinition<Props, State, Error>;
+  deps: Dependencies;
+  definition: RuntimeDefinition<
+    Props,
+    Dependencies,
+    State,
+    DependenciesError,
+    StateError
+  >;
   props: Props;
-  useState: StateHook<Props, State, Error>;
 }) {
-  const state = runState(useState(props));
+  const state = runState(
+    definition.state({
+      deps,
+      props,
+    }),
+  );
   if (Exit.isFailure(state)) {
     return renderFailure(definition, state.cause);
   }
-  return definition.component({ props, state: state.value });
+  return definition.UI({ props, state: state.value });
 }
 
 function runState<Success, Error>(effect: Effect.Effect<Success, Error>) {

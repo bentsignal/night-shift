@@ -10,7 +10,7 @@ import {
   SquareTerminal,
 } from "lucide-react";
 
-import { createComponent } from "@night-shift/effect-react";
+import { createComponent, useStoreSelector } from "@night-shift/effect-react";
 import {
   Sidebar,
   SidebarContent,
@@ -40,34 +40,37 @@ const navigation = [
 
 export const AppSidebar = createComponent({
   displayName: "AppSidebar",
-  state: Effect.gen(function* () {
-    const useControlPlane = yield* controlPlane.service;
-
-    return function useAppSidebarState() {
-      const authorityState = useControlPlane((state) => state.authority);
-      const hosts = useControlPlane((state) => state.hosts);
-      const runs = useControlPlane((state) => state.runs);
-      const { isMobile, setOpenMobile } = useSidebar();
-      const pathname = useRouterState({
-        select: (state) => state.location.pathname,
-      });
-      const capacity = getHostCapacity(hosts);
-      const authority =
-        authorityState === "connected"
-          ? { label: "Authority online", tone: "text-success" }
-          : authorityState === "recovering"
-            ? { label: "Reconnecting", tone: "text-warning" }
-            : { label: "Authority offline", tone: "text-destructive" };
-
-      // eslint-disable-next-line no-restricted-syntax -- Route changes are an external navigation signal that must close the mobile drawer.
-      useEffect(() => {
-        if (isMobile) setOpenMobile(false);
-      }, [isMobile, pathname, setOpenMobile]);
-
-      return Effect.succeed({ authority, capacity, pathname, runs });
-    };
+  deps: Effect.gen(function* () {
+    return { store: yield* controlPlane.service };
   }),
-  component: ({ state }) => (
+
+  state: ({ deps }) => {
+    const authorityState = useStoreSelector(
+      deps.store,
+      (state) => state.authority,
+    );
+    const hosts = useStoreSelector(deps.store, (state) => state.hosts);
+    const runs = useStoreSelector(deps.store, (state) => state.runs);
+    const { isMobile, setOpenMobile } = useSidebar();
+    const pathname = useRouterState({
+      select: (state) => state.location.pathname,
+    });
+    const capacity = getHostCapacity(hosts);
+    const authority =
+      authorityState === "connected"
+        ? { label: "Authority online", tone: "text-success" }
+        : authorityState === "recovering"
+          ? { label: "Reconnecting", tone: "text-warning" }
+          : { label: "Authority offline", tone: "text-destructive" };
+
+    // eslint-disable-next-line no-restricted-syntax -- Route changes are an external navigation signal that must close the mobile drawer.
+    useEffect(() => {
+      if (isMobile) setOpenMobile(false);
+    }, [isMobile, pathname, setOpenMobile]);
+
+    return Effect.succeed({ authority, capacity, pathname, runs });
+  },
+  UI: ({ state }) => (
     <Sidebar collapsible="icon">
       <SidebarHeader className="border-sidebar-border border-b">
         <SidebarMenu>
