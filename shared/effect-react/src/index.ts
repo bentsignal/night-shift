@@ -9,6 +9,7 @@ export {
 } from "./create-component";
 export {
   createStore,
+  type StoreProvider,
   type StoreRequirement,
   type StoreSelector,
 } from "./provider-store";

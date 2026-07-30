@@ -18,7 +18,7 @@ export interface SourceLocation {
   readonly line: number;
 }
 
-export type AnalyzedComponentKind = "component" | "provided";
+export type AnalyzedComponentKind = "component";
 
 export interface AnalyzedComponent {
   readonly dependencies: readonly string[];

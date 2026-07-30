@@ -1,6 +1,7 @@
 import type { ReactElement } from "react";
 import { Cause, Effect, Effectable, Exit, Option } from "effect";
 
+import type { StoreProvider, StoreRequirement } from "./provider-store";
 import { provideServiceContext, useServiceContext } from "./service-context";
 
 type RenderResult = ReactElement | null;
@@ -31,6 +32,21 @@ export interface EffectComponent<
     Error | ComponentError<Components[number]>,
     Requirements | ComponentRequirements<Components[number]>
   >;
+  readonly __effectReactProvidedRequirements: <
+    const Providers extends readonly unknown[],
+    const Components extends readonly unknown[],
+  >(
+    providers: Providers,
+    ...components: Components
+  ) => EffectComponent<
+    Props,
+    Error | ComponentError<Components[number]>,
+    | Requirements
+    | Exclude<
+        ComponentRequirements<Components[number]>,
+        ProviderRequirements<Providers[number]>
+      >
+  >;
 }
 
 type ComponentError<Component> =
@@ -49,6 +65,11 @@ type ComponentRequirements<Component> =
     infer Requirements
   >
     ? Requirements
+    : never;
+
+type ProviderRequirements<Provider> =
+  Provider extends StoreProvider<infer Name, infer State>
+    ? StoreRequirement<Name, State>
     : never;
 
 export type ComponentEffect<Component> =
@@ -145,6 +166,7 @@ export function makeEffectComponent<Props, Error, Requirements>(
   Object.assign(effectComponent, Effectable.CommitPrototype, {
     commit: () =>
       Effect.context<Requirements>().pipe(Effect.as(effectComponent)),
+    __effectReactProvidedRequirements: () => effectComponent,
     __effectReactRequirements: () => effectComponent,
   });
   return effectComponent;

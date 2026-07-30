@@ -11,6 +11,11 @@ export interface CounterState {
 
 export const counter = createStore("Counter")<CounterState>();
 
+function useCounterImplementation() {
+  const [count, setCount] = useState(0);
+  return { count, setCount };
+}
+
 export const CounterButton = createComponent({
   displayName: "CounterButton",
 
@@ -41,50 +46,35 @@ export const CounterButton = createComponent({
 });
 
 export const CounterRow = createComponent({
-  state: Effect.gen(function* () {
-    const Button = yield* CounterButton;
-    return () => Effect.succeed({ Button });
-  }),
+  state: Effect.succeed(() => Effect.succeed({})),
 
-  component: ({ state }) => (
+  component: () => (
     <div>
       <span>Nested counter</span>
-      <state.Button />
+      <CounterButton />
     </div>
   ),
 });
 
 export const CounterPanel = createComponent({
-  state: Effect.gen(function* () {
-    const Row = yield* CounterRow;
-    return () => Effect.succeed({ Row });
-  }),
+  state: Effect.succeed(() => Effect.succeed({})),
 
-  component: ({ state }) => (
-    <section>
-      <h2>Counter panel</h2>
-      <state.Row />
-    </section>
+  component: () => (
+    <counter.Store implements={useCounterImplementation}>
+      <section>
+        <h2>Counter panel</h2>
+        <CounterRow />
+      </section>
+    </counter.Store>
   ),
 });
 
-export const ProvidedCounterPanel = counter.provide({
-  component: CounterPanel,
-  implementation: function useCounterImplementation() {
-    const [count, setCount] = useState(0);
-    return { count, setCount };
-  },
-});
-
 export const CounterExample = createComponent({
-  state: Effect.gen(function* () {
-    const Panel = yield* ProvidedCounterPanel;
-    return () => Effect.succeed({ Panel });
-  }),
+  state: Effect.succeed(() => Effect.succeed({})),
 
-  component: ({ state }) => (
+  component: () => (
     <main>
-      <state.Panel />
+      <CounterPanel />
     </main>
   ),
 });

@@ -1,7 +1,9 @@
 import type { ReactNode } from "react";
 import { useEffect, useState } from "react";
 import { Outlet, useRouterState } from "@tanstack/react-router";
+import { Effect } from "effect";
 
+import { createComponent } from "@night-shift/effect-react";
 import {
   SidebarInset,
   SidebarProvider,
@@ -9,8 +11,9 @@ import {
 } from "@night-shift/ui-web/components/sidebar";
 import { ThemeProvider } from "@night-shift/ui-web/theme-provider";
 
+import type { ControlPlaneState } from "../../control-plane/client";
 import type { ControlPlaneClient } from "../../control-plane/types";
-import { ControlPlaneProvider } from "../../control-plane/client";
+import { controlPlane, useControlPlaneState } from "../../control-plane/client";
 import { ConvexControlPlaneClient } from "../../control-plane/convex-client";
 import { demoControlPlaneClient } from "../../control-plane/demo-client";
 import { AppSidebar } from "./app-sidebar";
@@ -54,46 +57,57 @@ export function ControlPlaneShell() {
     );
   }
 
+  return <ConnectedControlPlane client={client} />;
+}
+
+function ConnectedControlPlane({ client }: { client: ControlPlaneClient }) {
+  const implementation = useControlPlaneState({ client });
   return (
-    <ControlPlaneProvider client={client}>
-      <ThemeProvider defaultTheme="dark">
-        <ApplicationFrame>
-          <Outlet />
-        </ApplicationFrame>
-      </ThemeProvider>
-    </ControlPlaneProvider>
+    <ThemeProvider defaultTheme="dark">
+      <ApplicationFrame implementation={implementation}>
+        <Outlet />
+      </ApplicationFrame>
+    </ThemeProvider>
   );
 }
 
-function ApplicationFrame({ children }: { children: ReactNode }) {
-  const pathname = useRouterState({
-    select: (state) => state.location.pathname,
-  });
-
-  return (
-    <SidebarProvider
-      defaultOpen
-      style={
-        {
-          "--sidebar-width": "17rem",
-          "--sidebar-width-icon": "3.5rem",
-        } as React.CSSProperties
-      }
-    >
-      <AppSidebar />
-      <SidebarInset className="bg-background h-svh min-w-0 overflow-hidden">
-        <header className="bg-background/95 supports-[backdrop-filter]:bg-background/80 flex h-14 shrink-0 items-center justify-between border-b px-4 backdrop-blur">
-          <div className="flex min-w-0 items-center gap-3">
-            <SidebarTrigger className="-ml-1" />
-            <div className="bg-border h-4 w-px" />
-            <span className="truncate text-sm font-medium">
-              {pageTitle(pathname)}
-            </span>
-          </div>
-          <ThemeToggle />
-        </header>
-        <div className="min-h-0 flex-1 overflow-y-auto">{children}</div>
-      </SidebarInset>
-    </SidebarProvider>
-  );
-}
+const ApplicationFrame = createComponent({
+  displayName: "ApplicationFrame",
+  state: Effect.succeed(function useApplicationFrameState(_props: {
+    readonly children: ReactNode;
+    readonly implementation: ControlPlaneState;
+  }) {
+    const pathname = useRouterState({
+      select: (state) => state.location.pathname,
+    });
+    return Effect.succeed({ pathname });
+  }),
+  component: ({ props, state }) => (
+    <controlPlane.Store implements={() => props.implementation}>
+      <SidebarProvider
+        defaultOpen
+        style={
+          {
+            "--sidebar-width": "17rem",
+            "--sidebar-width-icon": "3.5rem",
+          } as React.CSSProperties
+        }
+      >
+        <AppSidebar />
+        <SidebarInset className="bg-background h-svh min-w-0 overflow-hidden">
+          <header className="bg-background/95 supports-[backdrop-filter]:bg-background/80 flex h-14 shrink-0 items-center justify-between border-b px-4 backdrop-blur">
+            <div className="flex min-w-0 items-center gap-3">
+              <SidebarTrigger className="-ml-1" />
+              <div className="bg-border h-4 w-px" />
+              <span className="truncate text-sm font-medium">
+                {pageTitle(state.pathname)}
+              </span>
+            </div>
+            <ThemeToggle />
+          </header>
+          <div className="min-h-0 flex-1 overflow-y-auto">{props.children}</div>
+        </SidebarInset>
+      </SidebarProvider>
+    </controlPlane.Store>
+  ),
+});

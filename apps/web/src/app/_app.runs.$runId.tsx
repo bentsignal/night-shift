@@ -1,6 +1,9 @@
+import { createElement } from "react";
 import { createFileRoute } from "@tanstack/react-router";
+import { Effect } from "effect";
 import { ArrowLeft } from "lucide-react";
 
+import { createComponent } from "@night-shift/effect-react";
 import { Button } from "@night-shift/ui-web/components/button";
 import {
   Card,
@@ -10,60 +13,73 @@ import {
 } from "@night-shift/ui-web/components/card";
 import { Skeleton } from "@night-shift/ui-web/components/skeleton";
 
-import { useControlPlane } from "../control-plane/client";
+import { controlPlane } from "../control-plane/client";
 import { Page } from "../features/control-plane/page";
 import { RunDetail } from "../features/control-plane/run-detail";
 import { QuickLink } from "../features/quick-link/quick-link";
 
-export const Route = createFileRoute("/_app/runs/$runId")({
-  component: RunPage,
-});
+const RunPage = createComponent({
+  displayName: "RunPage",
+  state: Effect.gen(function* () {
+    const useControlPlane = yield* controlPlane.service;
+    return function useRunPageState({ runId }: { readonly runId: string }) {
+      return Effect.succeed({
+        authority: useControlPlane((state) => state.authority),
+        commandRun: useControlPlane((state) => state.commandRun),
+        run: useControlPlane((state) =>
+          state.runs.find((candidate) => candidate.id === runId),
+        ),
+      });
+    };
+  }),
+  component: ({ state }) => {
+    const run = state.run;
+    if (!run) {
+      if (state.authority !== "connected") {
+        return (
+          <div className="mx-auto grid w-full max-w-6xl gap-5 px-5 py-8 md:px-8 md:py-10 lg:grid-cols-[minmax(0,1fr)_19rem]">
+            <Skeleton className="h-72 w-full" />
+            <Skeleton className="h-64 w-full" />
+          </div>
+        );
+      }
 
-function RunPage() {
-  const { runId } = Route.useParams();
-  const authority = useControlPlane((state) => state.authority);
-  const commandRun = useControlPlane((state) => state.commandRun);
-  const run = useControlPlane((state) =>
-    state.runs.find((candidate) => candidate.id === runId),
-  );
-
-  if (!run) {
-    if (authority !== "connected") {
       return (
-        <div className="mx-auto grid w-full max-w-6xl gap-5 px-5 py-8 md:px-8 md:py-10 lg:grid-cols-[minmax(0,1fr)_19rem]">
-          <Skeleton className="h-72 w-full" />
-          <Skeleton className="h-64 w-full" />
-        </div>
+        <Page title="Run not found">
+          <Card className="border-dashed">
+            <CardHeader>
+              <CardTitle className="text-sm">
+                This run is not available.
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <Button asChild size="sm" variant="outline">
+                <QuickLink to="/runs">
+                  <ArrowLeft />
+                  Back to runs
+                </QuickLink>
+              </Button>
+            </CardContent>
+          </Card>
+        </Page>
       );
     }
 
     return (
-      <Page title="Run not found">
-        <Card className="border-dashed">
-          <CardHeader>
-            <CardTitle className="text-sm">
-              This run is not available.
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <Button asChild size="sm" variant="outline">
-              <QuickLink to="/runs">
-                <ArrowLeft />
-                Back to runs
-              </QuickLink>
-            </Button>
-          </CardContent>
-        </Card>
-      </Page>
+      <div className="mx-auto w-full max-w-6xl px-5 py-8 md:px-8 md:py-10">
+        <RunDetail
+          onCommand={(command) => state.commandRun(run.id, command)}
+          run={run}
+        />
+      </div>
     );
-  }
+  },
+});
 
-  return (
-    <div className="mx-auto w-full max-w-6xl px-5 py-8 md:px-8 md:py-10">
-      <RunDetail
-        onCommand={(command) => commandRun(run.id, command)}
-        run={run}
-      />
-    </div>
-  );
+export const Route = createFileRoute("/_app/runs/$runId")({
+  component: RunRoute,
+});
+
+function RunRoute() {
+  return createElement(RunPage, Route.useParams());
 }

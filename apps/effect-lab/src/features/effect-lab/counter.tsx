@@ -4,12 +4,17 @@ import { Effect } from "effect";
 
 import { createComponent, createStore } from "@night-shift/effect-react";
 
-interface CounterState {
+export interface CounterState {
   readonly count: number;
   readonly setCount: Dispatch<SetStateAction<number>>;
 }
 
 export const counter = createStore("LabCounter")<CounterState>();
+
+function useCounterImplementation() {
+  const [count, setCount] = useState(5);
+  return { count, setCount };
+}
 
 export const CounterReadout = createComponent({
   displayName: "CounterReadout",
@@ -75,38 +80,28 @@ export const CounterInstrument = createComponent({
   displayName: "CounterInstrument",
   state: Effect.succeed(() => Effect.succeed({})),
   component: () => (
-    <section aria-labelledby="counter-title" className="instrument">
-      <div className="instrument-heading">
-        <div>
-          <p className="eyebrow">live instrument</p>
-          <h1 id="counter-title">Counter / 01</h1>
+    <counter.Store implements={useCounterImplementation}>
+      <section aria-labelledby="counter-title" className="instrument">
+        <div className="instrument-heading">
+          <div>
+            <p className="eyebrow">live instrument</p>
+            <h1 id="counter-title">Counter / 01</h1>
+          </div>
+          <span className="pulse-label">
+            <i aria-hidden="true" />
+            connected
+          </span>
         </div>
-        <span className="pulse-label">
-          <i aria-hidden="true" />
-          connected
-        </span>
-      </div>
 
-      <div className="counter-stage">
-        <CounterReadout />
-        <span className="counter-unit">ticks</span>
-      </div>
+        <div className="counter-stage">
+          <CounterReadout />
+          <span className="counter-unit">ticks</span>
+        </div>
 
-      <CounterControls />
-    </section>
+        <CounterControls />
+      </section>
+    </counter.Store>
   ),
-});
-
-/**
- * The implementation enters halfway through the component tree. Below this
- * line the store exists; above it the Counter requirement is discharged.
- */
-export const ProvidedCounterInstrument = counter.provide({
-  component: CounterInstrument,
-  implementation: function useCounterImplementation() {
-    const [count, setCount] = useState(0);
-    return { count, setCount };
-  },
 });
 
 function formatCount(count: number) {

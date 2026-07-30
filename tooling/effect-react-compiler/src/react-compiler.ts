@@ -4,15 +4,15 @@ import type { SourceModel } from "./model.js";
 import { visit } from "./ast.js";
 import {
   annotateComponent,
-  annotateNamedCallback,
+  annotateExpression,
   annotateReturnedHooks,
   createAnnotationContext,
 } from "./react-compiler-annotations.js";
 import {
   collectCompilerImports,
+  findStoreImplementation,
   isComponentFactoryCall,
   isEffectGenCall,
-  isProviderCall,
 } from "./react-compiler-source.js";
 
 export function collectReactCompilerInsertions(model: SourceModel) {
@@ -20,6 +20,14 @@ export function collectReactCompilerInsertions(model: SourceModel) {
   const imports = collectCompilerImports(model.sourceFile);
 
   visit(model.sourceFile, (node) => {
+    if (ts.isJsxOpeningElement(node) || ts.isJsxSelfClosingElement(node)) {
+      const implementation = findStoreImplementation(node);
+      if (implementation) {
+        annotateExpression(context, implementation);
+      }
+      return;
+    }
+
     if (!ts.isCallExpression(node)) {
       return;
     }
@@ -46,13 +54,6 @@ export function collectReactCompilerInsertions(model: SourceModel) {
         annotateComponent(context, definition);
       }
       return;
-    }
-
-    if (isProviderCall(node)) {
-      const definition = node.arguments[0];
-      if (definition && ts.isObjectLiteralExpression(definition)) {
-        annotateNamedCallback(context, definition, "implementation");
-      }
     }
   });
 

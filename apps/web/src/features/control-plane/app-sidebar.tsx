@@ -1,5 +1,6 @@
 import { useEffect } from "react";
 import { useRouterState } from "@tanstack/react-router";
+import { Effect } from "effect";
 import {
   Bot,
   CircleDot,
@@ -9,6 +10,7 @@ import {
   SquareTerminal,
 } from "lucide-react";
 
+import { createComponent } from "@night-shift/effect-react";
 import {
   Sidebar,
   SidebarContent,
@@ -25,7 +27,7 @@ import {
   useSidebar,
 } from "@night-shift/ui-web/components/sidebar";
 
-import { useControlPlane } from "../../control-plane/client";
+import { controlPlane } from "../../control-plane/client";
 import { getHostCapacity } from "../../control-plane/view-model";
 import { QuickLink } from "../quick-link/quick-link";
 import { statusTone } from "./status-badge";
@@ -36,28 +38,36 @@ const navigation = [
   { label: "Hosts", to: "/hosts" as const, icon: Server },
 ];
 
-export function AppSidebar() {
-  const authorityState = useControlPlane((state) => state.authority);
-  const hosts = useControlPlane((state) => state.hosts);
-  const runs = useControlPlane((state) => state.runs);
-  const { isMobile, setOpenMobile } = useSidebar();
-  const pathname = useRouterState({
-    select: (state) => state.location.pathname,
-  });
-  const capacity = getHostCapacity(hosts);
-  const authority =
-    authorityState === "connected"
-      ? { label: "Authority online", tone: "text-success" }
-      : authorityState === "recovering"
-        ? { label: "Reconnecting", tone: "text-warning" }
-        : { label: "Authority offline", tone: "text-destructive" };
+export const AppSidebar = createComponent({
+  displayName: "AppSidebar",
+  state: Effect.gen(function* () {
+    const useControlPlane = yield* controlPlane.service;
 
-  // eslint-disable-next-line no-restricted-syntax -- Route changes are an external navigation signal that must close the mobile drawer.
-  useEffect(() => {
-    if (isMobile) setOpenMobile(false);
-  }, [isMobile, pathname, setOpenMobile]);
+    return function useAppSidebarState() {
+      const authorityState = useControlPlane((state) => state.authority);
+      const hosts = useControlPlane((state) => state.hosts);
+      const runs = useControlPlane((state) => state.runs);
+      const { isMobile, setOpenMobile } = useSidebar();
+      const pathname = useRouterState({
+        select: (state) => state.location.pathname,
+      });
+      const capacity = getHostCapacity(hosts);
+      const authority =
+        authorityState === "connected"
+          ? { label: "Authority online", tone: "text-success" }
+          : authorityState === "recovering"
+            ? { label: "Reconnecting", tone: "text-warning" }
+            : { label: "Authority offline", tone: "text-destructive" };
 
-  return (
+      // eslint-disable-next-line no-restricted-syntax -- Route changes are an external navigation signal that must close the mobile drawer.
+      useEffect(() => {
+        if (isMobile) setOpenMobile(false);
+      }, [isMobile, pathname, setOpenMobile]);
+
+      return Effect.succeed({ authority, capacity, pathname, runs });
+    };
+  }),
+  component: ({ state }) => (
     <Sidebar collapsible="icon">
       <SidebarHeader className="border-sidebar-border border-b">
         <SidebarMenu>
@@ -89,7 +99,7 @@ export function AppSidebar() {
                 <SidebarMenuItem key={item.to}>
                   <SidebarMenuButton
                     asChild
-                    isActive={pathname === item.to}
+                    isActive={state.pathname === item.to}
                     tooltip={item.label}
                   >
                     <QuickLink to={item.to}>
@@ -107,11 +117,11 @@ export function AppSidebar() {
           <SidebarGroupLabel>Recent runs</SidebarGroupLabel>
           <SidebarGroupContent className="min-h-0">
             <SidebarMenu>
-              {runs.slice(0, 12).map((run) => (
+              {state.runs.slice(0, 12).map((run) => (
                 <SidebarMenuItem key={run.id}>
                   <SidebarMenuButton
                     asChild
-                    isActive={pathname === `/runs/${run.id}`}
+                    isActive={state.pathname === `/runs/${run.id}`}
                     className="h-auto min-h-9 py-2"
                     tooltip={run.title}
                   >
@@ -122,7 +132,7 @@ export function AppSidebar() {
                   </SidebarMenuButton>
                 </SidebarMenuItem>
               ))}
-              <EmptyRecentRuns visible={runs.length === 0} />
+              <EmptyRecentRuns visible={state.runs.length === 0} />
             </SidebarMenu>
           </SidebarGroupContent>
         </SidebarGroup>
@@ -134,13 +144,13 @@ export function AppSidebar() {
             <SidebarMenuButton
               asChild
               className="cursor-default"
-              tooltip={`${capacity.available}/${capacity.total} hosts ready`}
+              tooltip={`${state.capacity.available}/${state.capacity.total} hosts ready`}
             >
               <div role="status">
-                <Bot className={authority.tone} />
-                <span className="truncate">{authority.label}</span>
+                <Bot className={state.authority.tone} />
+                <span className="truncate">{state.authority.label}</span>
                 <SidebarMenuBadge>
-                  {capacity.available}/{capacity.total}
+                  {state.capacity.available}/{state.capacity.total}
                 </SidebarMenuBadge>
               </div>
             </SidebarMenuButton>
@@ -149,8 +159,8 @@ export function AppSidebar() {
       </SidebarFooter>
       <SidebarRail />
     </Sidebar>
-  );
-}
+  ),
+});
 
 function EmptyRecentRuns({ visible }: { visible: boolean }) {
   if (!visible) return null;

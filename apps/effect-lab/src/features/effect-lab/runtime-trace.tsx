@@ -13,7 +13,7 @@ const nodes = root
   ? [
       { kind: "react", label: root.ownerName, note: "React root" },
       ...walkComponents(root.componentId).map((component) => ({
-        kind: component.kind === "provided" ? "provider" : "effect",
+        kind: component.providedRequirements.length > 0 ? "provider" : "effect",
         label: component.name,
         note: describeComponent(component),
       })),

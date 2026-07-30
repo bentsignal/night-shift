@@ -14,15 +14,15 @@ const counterFileName = path.join(
 );
 
 describe("createEffectReactLanguageService", () => {
-  it("shows bubbled and discharged requirements in actual TypeScript quick info", () => {
+  it("shows required and provider-discharged components in quick info", () => {
     const service = createService();
     const source = fs.readFileSync(counterFileName, "utf8");
 
     expect(() => service.getCompilerOptionsDiagnostics()).not.toThrow();
-    expect(quickInfoOf(service, source, "CounterInstrument")).toContain(
+    expect(quickInfoOf(service, source, "CounterReadout")).toContain(
       'StoreRequirement<"LabCounter", CounterState>',
     );
-    expect(quickInfoOf(service, source, "ProvidedCounterInstrument")).toContain(
+    expect(quickInfoOf(service, source, "CounterInstrument")).toContain(
       "never>",
     );
   });

@@ -1,6 +1,8 @@
 import { createFileRoute } from "@tanstack/react-router";
+import { Effect } from "effect";
 import { Cpu, Server } from "lucide-react";
 
+import { createComponent } from "@night-shift/effect-react";
 import { Badge } from "@night-shift/ui-web/components/badge";
 import {
   Card,
@@ -11,26 +13,33 @@ import {
 import { cn } from "@night-shift/ui-web/lib/utils";
 
 import type { Host } from "../control-plane/types";
-import { useControlPlane } from "../control-plane/client";
+import { controlPlane } from "../control-plane/client";
 import { formatMoment } from "../control-plane/view-model";
 import { Page } from "../features/control-plane/page";
 
-export const Route = createFileRoute("/_app/hosts")({
-  component: HostsPage,
-});
-
-function HostsPage() {
-  const hosts = useControlPlane((state) => state.hosts);
-
-  return (
+const HostsPage = createComponent({
+  displayName: "HostsPage",
+  state: Effect.gen(function* () {
+    const useControlPlane = yield* controlPlane.service;
+    return function useHostsPageState() {
+      return Effect.succeed({
+        hosts: useControlPlane((state) => state.hosts),
+      });
+    };
+  }),
+  component: ({ state }) => (
     <Page
       description="Execution machines enrolled with the control plane."
       title="Hosts"
     >
-      <HostsContent hosts={hosts} />
+      <HostsContent hosts={state.hosts} />
     </Page>
-  );
-}
+  ),
+});
+
+export const Route = createFileRoute("/_app/hosts")({
+  component: HostsPage,
+});
 
 function HostsContent({ hosts }: { hosts: Host[] }) {
   if (hosts.length === 0) {

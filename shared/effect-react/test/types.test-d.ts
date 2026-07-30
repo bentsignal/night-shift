@@ -2,14 +2,8 @@ import type { ComponentType } from "react";
 import { Context, Effect } from "effect";
 
 import type { CounterState } from "../example/counter";
-import type { ComponentEffect, StoreRequirement } from "../src";
-import {
-  CounterButton,
-  CounterExample,
-  CounterPanel,
-  CounterRow,
-  ProvidedCounterPanel,
-} from "../example/counter";
+import type { ComponentEffect, StoreRequirement, StoreSelector } from "../src";
+import { CounterButton, CounterExample } from "../example/counter";
 import { createComponent, createStore } from "../src";
 
 type Equal<Left, Right> =
@@ -34,24 +28,6 @@ type _CounterButtonRequirement = Expect<
   Equal<
     Effect.Effect.Context<ComponentEffect<typeof CounterButton>>,
     CounterRequirement
-  >
->;
-type _CounterRowRequirement = Expect<
-  Equal<
-    Effect.Effect.Context<ComponentEffect<typeof CounterRow>>,
-    CounterRequirement
-  >
->;
-type _CounterPanelRequirement = Expect<
-  Equal<
-    Effect.Effect.Context<ComponentEffect<typeof CounterPanel>>,
-    CounterRequirement
-  >
->;
-type _ProvidedCounterPanelRequirement = Expect<
-  Equal<
-    Effect.Effect.Context<ComponentEffect<typeof ProvidedCounterPanel>>,
-    never
   >
 >;
 type _CounterExampleRequirement = Expect<
@@ -144,8 +120,12 @@ const otherTypedStore = createStore("OtherTypedCounter")<TypedCounterState>();
 
 typedStore.service satisfies Context.Tag<
   StoreRequirement<"TypedCounter", TypedCounterState>,
-  typeof typedStore.useStore
+  StoreSelector<TypedCounterState>
 >;
+// @ts-expect-error selectors are obtained by yielding the Effect service
+const _RemovedUseStore = typedStore.useStore;
+// @ts-expect-error implementations enter through the Store component
+const _RemovedProvide = typedStore.provide;
 
 const _StoreConsumer = createComponent({
   state: Effect.gen(function* () {
@@ -197,10 +177,14 @@ type _NestedRequirement = Expect<
   >
 >;
 
-const _ProvidedConsumer = typedStore.provide({
-  component: _NestedConsumer,
-  implementation: () => ({ count: 0 }),
+const _ProviderBoundary = createComponent({
+  state: Effect.succeed(() => Effect.succeed({})),
+  component: () => null,
 });
+const _ProvidedConsumer = _ProviderBoundary.__effectReactProvidedRequirements(
+  [typedStore.Store],
+  _NestedConsumer,
+);
 
 type ProvidedConsumerEffect = ComponentEffect<typeof _ProvidedConsumer>;
 type _ProvidedRequirement = Expect<

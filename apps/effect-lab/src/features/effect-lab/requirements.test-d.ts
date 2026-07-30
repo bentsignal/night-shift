@@ -1,12 +1,12 @@
 import type { Effect } from "effect";
 
-import type { ComponentEffect } from "@night-shift/effect-react";
+import type {
+  ComponentEffect,
+  StoreRequirement,
+} from "@night-shift/effect-react";
 
-import {
-  CounterInstrument,
-  CounterReadout,
-  ProvidedCounterInstrument,
-} from "./counter";
+import type { CounterState } from "./counter";
+import { CounterInstrument, CounterReadout } from "./counter";
 
 type Equal<Left, Right> =
   (<Value>() => Value extends Left ? 1 : 2) extends <
@@ -20,12 +20,12 @@ type Requirements<Component> = Effect.Effect.Context<
   ComponentEffect<Component>
 >;
 
-type _CounterInstrumentBubblesChildRequirement = Expect<
+type _CounterReadoutRequiresTheCounter = Expect<
   Equal<
-    Requirements<typeof CounterInstrument>,
-    Requirements<typeof CounterReadout>
+    Requirements<typeof CounterReadout>,
+    StoreRequirement<"LabCounter", CounterState>
   >
 >;
-type _ProviderDischargesCounterRequirement = Expect<
-  Equal<Requirements<typeof ProvidedCounterInstrument>, never>
+type _CounterInstrumentDischargesChildRequirements = Expect<
+  Equal<Requirements<typeof CounterInstrument>, never>
 >;

@@ -16,7 +16,7 @@ export function buildComponentGraph({
       const id = symbolId(declaration.fileName, declaration.name);
       graph.set(id, {
         declaration,
-        dependencies: new Set(),
+        dependencies: [],
         directRequirements: new Set(),
         id,
         providedRequirements: new Set(),
@@ -27,7 +27,6 @@ export function buildComponentGraph({
   for (const component of graph.values()) {
     collectDirectRequirements({ component, diagnostics, models });
     collectDependencies({ component, diagnostics, models });
-    collectProvidedRequirements({ component, diagnostics, models });
   }
 
   return graph;
@@ -38,10 +37,7 @@ export function computeRequirements(
 ) {
   const requirements = new Map<string, Set<string>>();
   for (const component of graph.values()) {
-    requirements.set(
-      component.id,
-      subtract(component.directRequirements, component.providedRequirements),
-    );
+    requirements.set(component.id, new Set(component.directRequirements));
   }
 
   let changed = true;
@@ -51,12 +47,11 @@ export function computeRequirements(
     for (const component of graph.values()) {
       const next = new Set(component.directRequirements);
       for (const dependency of component.dependencies) {
-        for (const requirement of requirements.get(dependency) ?? []) {
-          next.add(requirement);
+        for (const requirement of requirements.get(dependency.id) ?? []) {
+          if (!dependency.providedRequirements.has(requirement)) {
+            next.add(requirement);
+          }
         }
-      }
-      for (const provided of component.providedRequirements) {
-        next.delete(provided);
       }
 
       const current = requirements.get(component.id);
@@ -89,7 +84,7 @@ export function findCycles(graph: ReadonlyMap<string, GraphComponent>) {
     state.set(id, "visiting");
     stack.push(id);
     for (const dependency of graph.get(id)?.dependencies ?? []) {
-      visitComponent(dependency);
+      visitComponent(dependency.id);
     }
     stack.pop();
     state.set(id, "done");
@@ -173,38 +168,25 @@ function collectDependencies({
   readonly models: ReadonlyMap<string, SourceModel>;
 }) {
   for (const reference of component.declaration.childReferences) {
-    const child = resolveComponent({ models, reference });
+    const child = resolveComponent({ models, reference: reference.component });
     if (child) {
-      component.dependencies.add(symbolId(child.fileName, child.name));
-    } else if (component.declaration.kind === "provided") {
-      diagnostics.push(
-        unresolvedReferenceDiagnostic(reference, "provided component"),
-      );
+      const providedRequirements = new Set<string>();
+      for (const providerReference of reference.providers) {
+        const store = resolveStore({ models, reference: providerReference });
+        if (store) {
+          providedRequirements.add(store.serviceName);
+          component.providedRequirements.add(store.serviceName);
+        } else {
+          diagnostics.push(
+            unresolvedReferenceDiagnostic(providerReference, "provider store"),
+          );
+        }
+      }
+      component.dependencies.push({
+        id: symbolId(child.fileName, child.name),
+        providedRequirements,
+      });
     }
-  }
-}
-
-function collectProvidedRequirements({
-  component,
-  diagnostics,
-  models,
-}: {
-  readonly component: GraphComponent;
-  readonly diagnostics: EffectReactDiagnostic[];
-  readonly models: ReadonlyMap<string, SourceModel>;
-}) {
-  const reference = component.declaration.providedStoreReference;
-  if (!reference) {
-    return;
-  }
-
-  const store = resolveStore({ models, reference });
-  if (store) {
-    component.providedRequirements.add(store.serviceName);
-  } else {
-    diagnostics.push(
-      unresolvedReferenceDiagnostic(reference, "provider store"),
-    );
   }
 }
 
@@ -296,10 +278,6 @@ function resolveDeclaration<Declaration>({
 
     return undefined;
   }
-}
-
-function subtract(source: ReadonlySet<string>, removed: ReadonlySet<string>) {
-  return new Set([...source].filter((value) => !removed.has(value)));
 }
 
 function setsEqual(left: ReadonlySet<string>, right: ReadonlySet<string>) {

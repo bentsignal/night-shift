@@ -11,7 +11,7 @@ describe("Effect lab", () => {
       "data-boundary",
       "react-route",
     );
-    expect(screen.getByText("+00")).toBeInTheDocument();
+    expect(screen.getByText("+05")).toBeInTheDocument();
     expect(screen.getByText("Unresolved requirements")).toBeInTheDocument();
     expect(screen.getByText("0")).toBeInTheDocument();
   });
@@ -23,12 +23,12 @@ describe("Effect lab", () => {
       screen.getByRole("button", { name: "Increase count" }).click();
       screen.getByRole("button", { name: "Increase count" }).click();
     });
-    expect(screen.getByText("+02")).toBeInTheDocument();
+    expect(screen.getByText("+07")).toBeInTheDocument();
 
     act(() => {
       screen.getByRole("button", { name: "Decrease count" }).click();
     });
-    expect(screen.getByText("+01")).toBeInTheDocument();
+    expect(screen.getByText("+06")).toBeInTheDocument();
 
     act(() => {
       screen.getByRole("button", { name: "reset" }).click();

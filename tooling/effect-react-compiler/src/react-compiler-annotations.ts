@@ -115,7 +115,7 @@ function annotateStateHooks(
   annotateReturnedHooks(context, state, false);
 }
 
-function annotateExpression(
+export function annotateExpression(
   context: AnnotationContext,
   expression: ts.Expression,
 ) {

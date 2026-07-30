@@ -31,16 +31,15 @@ describe("analyzeEffectReact", () => {
 
             const Panel = createComponent({
               state: Effect.succeed(() => Effect.succeed({})),
-              component: () => <Row />,
-            });
-
-            const ProvidedPanel = counter.provide({
-              component: Panel,
-              implementation: () => ({ count: 0 }),
+              component: () => (
+                <counter.Store implements={() => ({ count: 0 })}>
+                  <Row />
+                </counter.Store>
+              ),
             });
 
             export function Root() {
-              return <ProvidedPanel />;
+              return <Panel />;
             }
           `,
         },
@@ -49,8 +48,7 @@ describe("analyzeEffectReact", () => {
 
     expect(requirementsOf(analysis, "Button")).toEqual(["Counter"]);
     expect(requirementsOf(analysis, "Row")).toEqual(["Counter"]);
-    expect(requirementsOf(analysis, "Panel")).toEqual(["Counter"]);
-    expect(requirementsOf(analysis, "ProvidedPanel")).toEqual([]);
+    expect(requirementsOf(analysis, "Panel")).toEqual([]);
     expect(analysis.diagnostics).toEqual([]);
     expect(analysis.boundaries).toHaveLength(1);
     expect(analysis.boundaries[0]?.requirements).toEqual([]);
@@ -77,14 +75,13 @@ describe("analyzeEffectReact", () => {
               component: () => <span />,
             });
 
-            const SessionProvidedLeaf = session.provide({
-              component: Leaf,
-              implementation: () => ({ id: "one" }),
-            });
-
             const Panel = createComponent({
               state: Effect.succeed(() => Effect.succeed({})),
-              component: () => <SessionProvidedLeaf />,
+              component: () => (
+                <session.Store implements={() => ({ id: "one" })}>
+                  <Leaf />
+                </session.Store>
+              ),
             });
 
             function Root() {
@@ -96,15 +93,62 @@ describe("analyzeEffectReact", () => {
     });
 
     expect(requirementsOf(analysis, "Leaf")).toEqual(["Session", "Theme"]);
-    expect(requirementsOf(analysis, "SessionProvidedLeaf")).toEqual(["Theme"]);
     expect(requirementsOf(analysis, "Panel")).toEqual(["Theme"]);
     expect(analysis.diagnostics).toHaveLength(1);
     expect(analysis.diagnostics[0]).toMatchObject({
       code: "unresolved-root",
     });
     expect(analysis.diagnostics[0]?.message).toContain(
-      "Theme via Panel -> SessionProvidedLeaf -> Leaf",
+      "Theme via Panel -> Leaf",
     );
+  });
+
+  it("subtracts providers only from their JSX subtree", () => {
+    const analysis = analyzeEffectReact({
+      sources: [
+        {
+          fileName: "/project/scoped.tsx",
+          source: `
+            import { createComponent, createStore } from "@night-shift/effect-react";
+            import { Effect } from "effect";
+
+            const counter = createStore("Counter")<{ count: number }>();
+            const CounterValue = createComponent({
+              state: Effect.gen(function* () {
+                yield* counter.service;
+                return () => Effect.succeed({});
+              }),
+              component: () => <output />,
+            });
+            const DirectConsumer = createComponent({
+              state: Effect.gen(function* () {
+                yield* counter.service;
+                return () => Effect.succeed({});
+              }),
+              component: () => (
+                <counter.Store implements={() => ({ count: 0 })}>
+                  <CounterValue />
+                </counter.Store>
+              ),
+            });
+            const Mixed = createComponent({
+              state: Effect.succeed(() => Effect.succeed({})),
+              component: () => (
+                <>
+                  <counter.Store implements={() => ({ count: 0 })}>
+                    <CounterValue />
+                  </counter.Store>
+                  <CounterValue />
+                </>
+              ),
+            });
+          `,
+        },
+      ],
+    });
+
+    expect(requirementsOf(analysis, "DirectConsumer")).toEqual(["Counter"]);
+    expect(requirementsOf(analysis, "Mixed")).toEqual(["Counter"]);
   });
 
   it("rejects an unresolved ordinary React root", () => {
@@ -270,6 +314,39 @@ describe("lowerEffectReactSources", () => {
     );
     expect(lowered?.source).toContain("}).__effectReactRequirements(Child);");
     expect(lowered?.source).toContain('"use memo"');
+  });
+
+  it("lowers provider subtrees into requirement subtraction", () => {
+    const [lowered] = lowerEffectReactSources([
+      {
+        fileName: "/project/provider.tsx",
+        source: `
+          import { createComponent, createStore } from "@night-shift/effect-react";
+          import { Effect } from "effect";
+
+          const counter = createStore("Counter")<{ count: number }>();
+          const Child = createComponent({
+            state: Effect.gen(function* () {
+              yield* counter.service;
+              return () => Effect.succeed({});
+            }),
+            component: () => null,
+          });
+          const Parent = createComponent({
+            state: Effect.succeed(() => Effect.succeed({})),
+            component: () => (
+              <counter.Store implements={() => ({ count: 0 })}>
+                <Child />
+              </counter.Store>
+            ),
+          });
+        `,
+      },
+    ]).values();
+
+    expect(lowered?.source).toContain(
+      ".__effectReactProvidedRequirements([counter.Store], Child)",
+    );
   });
 });
 

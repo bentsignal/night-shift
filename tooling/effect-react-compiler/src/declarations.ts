@@ -1,6 +1,7 @@
 import ts from "typescript";
 
 import type {
+  ChildReference,
   ComponentDeclaration,
   OrdinaryJsxBoundary,
   SymbolReference,
@@ -98,52 +99,7 @@ export function readComponentDefinition({
     jsxChildReferences,
     kind: "component",
     location: locationOf(sourceFile, expression),
-    providedStoreReference: undefined,
     serviceReferences,
-  } satisfies Omit<ComponentDeclaration, "name">;
-}
-
-export function readProvidedDefinition({
-  expression,
-  fileName,
-  sourceFile,
-}: {
-  readonly expression: ts.Expression;
-  readonly fileName: string;
-  readonly sourceFile: ts.SourceFile;
-}) {
-  if (
-    !ts.isCallExpression(expression) ||
-    !ts.isPropertyAccessExpression(expression.expression) ||
-    expression.expression.name.text !== "provide" ||
-    !ts.isIdentifier(expression.expression.expression)
-  ) {
-    return undefined;
-  }
-
-  const definition = expression.arguments[0];
-  if (!definition || !ts.isObjectLiteralExpression(definition)) {
-    return undefined;
-  }
-
-  const component = findPropertyInitializer(definition, "component");
-  if (!component || !ts.isIdentifier(component)) {
-    return undefined;
-  }
-
-  return {
-    childReferences: [makeReference({ fileName, name: component, sourceFile })],
-    fileName,
-    initializerEnd: expression.end,
-    jsxChildReferences: [],
-    kind: "provided",
-    location: locationOf(sourceFile, expression),
-    providedStoreReference: makeReference({
-      fileName,
-      name: expression.expression.expression,
-      sourceFile,
-    }),
-    serviceReferences: [],
   } satisfies Omit<ComponentDeclaration, "name">;
 }
 
@@ -231,7 +187,7 @@ function collectYieldedComponents({
   readonly fileName: string;
   readonly sourceFile: ts.SourceFile;
 }) {
-  const references = Array<SymbolReference>();
+  const references = Array<ChildReference>();
 
   visit(expression, (node) => {
     if (
@@ -243,9 +199,14 @@ function collectYieldedComponents({
       return;
     }
 
-    references.push(
-      makeReference({ fileName, name: node.expression, sourceFile }),
-    );
+    references.push({
+      component: makeReference({
+        fileName,
+        name: node.expression,
+        sourceFile,
+      }),
+      providers: [],
+    });
   });
 
   return references;
@@ -260,18 +221,107 @@ function collectJsxReferences({
   readonly fileName: string;
   readonly sourceFile: ts.SourceFile;
 }) {
-  const references = Array<SymbolReference>();
+  const references = Array<ChildReference>();
 
-  visit(expression, (node) => {
-    const tagName = readJsxTagName(node);
-    if (!tagName || !startsWithUppercase(tagName.text)) {
+  function collect(node: ts.Node, providers: readonly SymbolReference[]) {
+    if (ts.isJsxElement(node)) {
+      const provider = readStoreProviderReference({
+        fileName,
+        node: node.openingElement,
+        sourceFile,
+      });
+      const activeProviders = provider ? [...providers, provider] : providers;
+      if (!provider) {
+        collectComponentReference({
+          fileName,
+          node: node.openingElement,
+          providers,
+          references,
+          sourceFile,
+        });
+      }
+      for (const child of node.children) {
+        collect(child, activeProviders);
+      }
       return;
     }
 
-    references.push(makeReference({ fileName, name: tagName, sourceFile }));
-  });
+    if (ts.isJsxSelfClosingElement(node)) {
+      if (
+        !readStoreProviderReference({
+          fileName,
+          node,
+          sourceFile,
+        })
+      ) {
+        collectComponentReference({
+          fileName,
+          node,
+          providers,
+          references,
+          sourceFile,
+        });
+      }
+      return;
+    }
+
+    ts.forEachChild(node, (child) => {
+      collect(child, providers);
+    });
+  }
+
+  collect(expression, []);
 
   return references;
+}
+
+function collectComponentReference({
+  fileName,
+  node,
+  providers,
+  references,
+  sourceFile,
+}: {
+  readonly fileName: string;
+  readonly node: ts.JsxOpeningLikeElement;
+  readonly providers: readonly SymbolReference[];
+  readonly references: ChildReference[];
+  readonly sourceFile: ts.SourceFile;
+}) {
+  const tagName = readJsxTagName(node);
+  if (!tagName || !startsWithUppercase(tagName.text)) {
+    return;
+  }
+
+  references.push({
+    component: makeReference({ fileName, name: tagName, sourceFile }),
+    providers,
+  });
+}
+
+function readStoreProviderReference({
+  fileName,
+  node,
+  sourceFile,
+}: {
+  readonly fileName: string;
+  readonly node: ts.JsxOpeningLikeElement;
+  readonly sourceFile: ts.SourceFile;
+}) {
+  const tagName = node.tagName;
+  if (
+    !ts.isPropertyAccessExpression(tagName) ||
+    tagName.name.text !== "Store" ||
+    !ts.isIdentifier(tagName.expression)
+  ) {
+    return undefined;
+  }
+
+  return makeReference({
+    fileName,
+    name: tagName.expression,
+    sourceFile,
+  });
 }
 
 function isApiCall({

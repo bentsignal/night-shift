@@ -28,17 +28,18 @@ describe("React Compiler lowering", () => {
         component: ({ state }) => <output>{state.count}</output>,
       });
 
+      function useCounterImplementation() {
+        const [count] = useState(0);
+        return { count };
+      }
+
       const CounterPanel = createComponent({
         state: Effect.succeed(() => Effect.succeed({})),
-        component: () => <CounterValue />,
-      });
-
-      const ProvidedCounter = counter.provide({
-        component: CounterPanel,
-        implementation: function useCounterImplementation() {
-          const [count] = useState(0);
-          return { count };
-        },
+        component: () => (
+          <counter.Store implements={useCounterImplementation}>
+            <CounterValue />
+          </counter.Store>
+        ),
       });
     `;
     const result = await compile(source, "/project/counter.tsx");
@@ -46,7 +47,10 @@ describe("React Compiler lowering", () => {
     expect(source).not.toContain('"use memo"');
     expect(result.lowered).toContain('"use memo"');
     expect(result.lowered).toContain(
-      ".__effectReactRequirements(CounterValue)",
+      ".__effectReactProvidedRequirements([counter.Store], CounterValue)",
+    );
+    expect(result.lowered).toContain(
+      "implements={counter.Store.__effectReactImplementation(useCounterImplementation())}",
     );
     expect(result.code).toContain('from "react/compiler-runtime"');
     expect(result.code.match(/\b_c\(/gu)).toHaveLength(5);

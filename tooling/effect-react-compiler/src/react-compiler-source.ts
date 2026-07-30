@@ -96,22 +96,29 @@ export function isComponentFactoryCall(
   );
 }
 
-export function isProviderCall(expression: ts.CallExpression) {
+export function findStoreImplementation(element: ts.JsxOpeningLikeElement) {
   if (
-    !ts.isPropertyAccessExpression(expression.expression) ||
-    expression.expression.name.text !== "provide" ||
-    !ts.isIdentifier(expression.expression.expression)
+    !ts.isPropertyAccessExpression(element.tagName) ||
+    element.tagName.name.text !== "Store" ||
+    !ts.isIdentifier(element.tagName.expression)
   ) {
-    return false;
+    return undefined;
   }
 
-  const definition = expression.arguments[0];
-  return (
-    !!definition &&
-    ts.isObjectLiteralExpression(definition) &&
-    !!findPropertyExpression(definition, "component") &&
-    !!findPropertyExpression(definition, "implementation")
-  );
+  for (const property of element.attributes.properties) {
+    if (
+      ts.isJsxAttribute(property) &&
+      ts.isIdentifier(property.name) &&
+      property.name.text === "implements" &&
+      property.initializer &&
+      ts.isJsxExpression(property.initializer) &&
+      property.initializer.expression
+    ) {
+      return property.initializer.expression;
+    }
+  }
+
+  return undefined;
 }
 
 export function isEffectGenCall(

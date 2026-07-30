@@ -1,19 +1,19 @@
-import type { ComponentType, ReactNode } from "react";
+import type { ReactNode } from "react";
 import { createContext, use, useLayoutEffect, useState } from "react";
 import { Context } from "effect";
 
-import type { EffectComponent } from "./create-component";
 import type { ReadableStore, SelectorOptions } from "./store";
-import { makeEffectComponent } from "./create-component";
 import { ServiceContextProvider, useServiceContext } from "./service-context";
 import { makeStore, useStoreSelector } from "./store";
 
 type StoreProps<State extends object> = {
   readonly children?: ReactNode;
-  readonly value: State;
+  readonly implements: (() => State) | StoreImplementation<State>;
 };
 
 export declare const StoreRequirementTypeId: unique symbol;
+export declare const StoreProviderTypeId: unique symbol;
+declare const StoreImplementationTypeId: unique symbol;
 
 export interface StoreRequirement<Name extends string, State extends object> {
   readonly [StoreRequirementTypeId]: {
@@ -26,6 +26,19 @@ export type StoreSelector<State> = <Selected>(
   selector: (state: State) => Selected,
   options?: SelectorOptions<Selected>,
 ) => Selected;
+
+export interface StoreProvider<Name extends string, State extends object> {
+  (props: StoreProps<State>): ReactNode;
+  /** @internal Used only by the in-memory Effect React transform. */
+  readonly __effectReactImplementation: (
+    state: State,
+  ) => StoreImplementation<State>;
+  readonly [StoreProviderTypeId]: StoreRequirement<Name, State>;
+}
+
+interface StoreImplementation<State extends object> {
+  readonly [StoreImplementationTypeId]: State;
+}
 
 type IsUnion<Value, Original = Value> = Value extends Original
   ? [Original] extends [Value]
@@ -48,7 +61,7 @@ type StoreName<Name extends string> = string extends Name
 export function createStore<const Name extends string>(name: StoreName<Name>) {
   return function defineStore<State extends object>() {
     const missingProvider = () => {
-      throw new Error("useStore must be used within its Store");
+      throw new Error(`Store "${name}" has no implementation`);
     };
     const missingStore = {
       getServerSnapshot: missingProvider,
@@ -61,7 +74,14 @@ export function createStore<const Name extends string>(name: StoreName<Name>) {
       StoreSelector<State>
     >(`@night-shift/effect-react/store/${name}`);
 
-    function Store({ children, value }: StoreProps<State>) {
+    function Store({
+      children,
+      implements: implementation,
+    }: StoreProps<State>) {
+      const value =
+        typeof implementation === "function"
+          ? implementation()
+          : (implementation as unknown as State);
       const [store] = useState(() => makeStore(value));
       const parentServices = useServiceContext();
       const [services] = useState(() =>
@@ -87,32 +107,14 @@ export function createStore<const Name extends string>(name: StoreName<Name>) {
       return useStoreSelector(store, selector, options);
     }
 
-    function provide<ComponentProps extends object, Error, Requirements>({
-      component,
-      implementation: useImplementation,
-    }: {
-      readonly component: EffectComponent<ComponentProps, Error, Requirements>;
-      readonly implementation: (props: ComponentProps) => State;
-    }) {
-      const Component = component as ComponentType<ComponentProps>;
+    Object.assign(Store, {
+      __effectReactImplementation: (state: State) => state,
+      displayName: `${name}Store`,
+    });
 
-      function ProvidedStore(props: ComponentProps) {
-        const value = useImplementation(props);
-        return (
-          <Store value={value}>
-            <Component {...props} />
-          </Store>
-        );
-      }
-
-      ProvidedStore.displayName = `Provide${name}`;
-      return makeEffectComponent<
-        ComponentProps,
-        Error,
-        Exclude<Requirements, StoreRequirement<Name, State>>
-      >(ProvidedStore);
-    }
-
-    return { provide, service, Store, useStore };
+    return {
+      service,
+      Store: Store as unknown as StoreProvider<Name, State>,
+    };
   };
 }

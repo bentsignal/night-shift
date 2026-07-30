@@ -10,7 +10,11 @@ import type {
   SubmitWorkInput,
 } from "./types";
 
-function useControlPlaneState({ client }: { client: ControlPlaneClient }) {
+export function useControlPlaneState({
+  client,
+}: {
+  client: ControlPlaneClient;
+}) {
   const snapshot = useSyncExternalStore(
     client.subscribe,
     client.getSnapshot,
@@ -31,8 +35,6 @@ export interface ControlPlaneState extends ControlPlaneSnapshot {
 
 export const controlPlane = createStore("ControlPlane")<ControlPlaneState>();
 
-export const useControlPlane = controlPlane.useStore;
-
 export function ControlPlaneProvider({
   children,
   client,
@@ -40,6 +42,11 @@ export function ControlPlaneProvider({
   children?: ReactNode;
   client: ControlPlaneClient;
 }) {
-  const state = useControlPlaneState({ client });
-  return <controlPlane.Store value={state}>{children}</controlPlane.Store>;
+  const implementation = useControlPlaneState({ client });
+
+  return (
+    <controlPlane.Store implements={() => implementation}>
+      {children}
+    </controlPlane.Store>
+  );
 }

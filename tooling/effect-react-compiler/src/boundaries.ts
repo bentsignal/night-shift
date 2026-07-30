@@ -197,7 +197,7 @@ function findRequirementPath({
     visited.add(current.id);
 
     const component = graph.get(current.id);
-    if (!component || component.providedRequirements.has(requirement)) {
+    if (!component) {
       continue;
     }
     if (component.directRequirements.has(requirement)) {
@@ -205,14 +205,17 @@ function findRequirementPath({
     }
 
     for (const dependency of component.dependencies) {
-      if (!requirements.get(dependency)?.has(requirement)) {
+      if (
+        dependency.providedRequirements.has(requirement) ||
+        !requirements.get(dependency.id)?.has(requirement)
+      ) {
         continue;
       }
       queue.push({
-        id: dependency,
+        id: dependency.id,
         path: [
           ...current.path,
-          graph.get(dependency)?.declaration.name ?? dependency,
+          graph.get(dependency.id)?.declaration.name ?? dependency.id,
         ],
       });
     }

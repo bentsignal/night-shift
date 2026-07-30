@@ -17,7 +17,6 @@ import {
 import {
   collectOrdinaryBoundaries,
   readComponentDefinition,
-  readProvidedDefinition,
   readStoreName,
 } from "./declarations.js";
 
@@ -114,23 +113,6 @@ export function buildSourceModel({
           start: initializer.getStart(sourceFile),
         });
         continue;
-      }
-
-      const providedDefinition = readProvidedDefinition({
-        expression: initializer,
-        fileName,
-        sourceFile,
-      });
-
-      if (providedDefinition) {
-        components.set(declaration.name.text, {
-          ...providedDefinition,
-          name: declaration.name.text,
-        });
-        declarationSpans.push({
-          end: initializer.end,
-          start: initializer.getStart(sourceFile),
-        });
       }
     }
   }

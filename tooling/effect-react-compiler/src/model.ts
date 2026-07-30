@@ -20,15 +20,19 @@ export type StoreDeclaration = {
   readonly serviceName: string;
 };
 
+export type ChildReference = {
+  readonly component: SymbolReference;
+  readonly providers: readonly SymbolReference[];
+};
+
 export type ComponentDeclaration = {
-  readonly childReferences: readonly SymbolReference[];
+  readonly childReferences: readonly ChildReference[];
   readonly fileName: string;
   readonly initializerEnd: number;
-  readonly kind: "component" | "provided";
-  readonly jsxChildReferences: readonly SymbolReference[];
+  readonly kind: "component";
+  readonly jsxChildReferences: readonly ChildReference[];
   readonly location: SourceLocation;
   readonly name: string;
-  readonly providedStoreReference: SymbolReference | undefined;
   readonly serviceReferences: readonly SymbolReference[];
 };
 
@@ -49,8 +53,13 @@ export type SourceModel = {
 
 export type GraphComponent = {
   readonly declaration: ComponentDeclaration;
-  readonly dependencies: Set<string>;
+  readonly dependencies: GraphDependency[];
   readonly directRequirements: Set<string>;
   readonly id: string;
   readonly providedRequirements: Set<string>;
+};
+
+export type GraphDependency = {
+  readonly id: string;
+  readonly providedRequirements: ReadonlySet<string>;
 };

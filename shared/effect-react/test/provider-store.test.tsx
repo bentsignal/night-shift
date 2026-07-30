@@ -1,4 +1,4 @@
-import type { Dispatch, ReactNode, SetStateAction } from "react";
+import type { Dispatch, SetStateAction } from "react";
 import { useState } from "react";
 import { renderToString } from "react-dom/server";
 import { act, render, screen } from "@testing-library/react";
@@ -24,42 +24,50 @@ describe("provider stores", () => {
     }>();
     let countRenders = 0;
 
-    function ExampleStore({ children }: { children?: ReactNode }) {
+    function useExampleImplementation() {
       const [count, setCount] = useState(0);
       const [text, setText] = useState("initial");
-      return (
-        <example.Store value={{ count, setCount, setText, text }}>
-          {children}
-        </example.Store>
-      );
+      return { count, setCount, setText, text };
     }
 
-    function Count() {
-      countRenders += 1;
-      const count = example.useStore((state) => state.count);
-      return <span>{count}</span>;
-    }
-
-    function Actions() {
-      const setCount = example.useStore((state) => state.setCount);
-      const setText = example.useStore((state) => state.setText);
-      return (
+    const Count = createComponent({
+      state: Effect.gen(function* () {
+        const useExample = yield* example.service;
+        return function useCount() {
+          const count = useExample((state) => state.count);
+          countRenders += 1;
+          return Effect.succeed({ count });
+        };
+      }),
+      component: ({ state }) => <span>{state.count}</span>,
+    });
+    const Actions = createComponent({
+      state: Effect.gen(function* () {
+        const useExample = yield* example.service;
+        return function useActions() {
+          return Effect.succeed({
+            setCount: useExample((state) => state.setCount),
+            setText: useExample((state) => state.setText),
+          });
+        };
+      }),
+      component: ({ state }) => (
         <>
-          <button type="button" onClick={() => setText("changed")}>
+          <button type="button" onClick={() => state.setText("changed")}>
             Change text
           </button>
-          <button type="button" onClick={() => setCount(1)}>
+          <button type="button" onClick={() => state.setCount(1)}>
             Change count
           </button>
         </>
-      );
-    }
+      ),
+    });
 
     render(
-      <ExampleStore>
+      <example.Store implements={useExampleImplementation}>
         <Count />
         <Actions />
-      </ExampleStore>,
+      </example.Store>,
     );
 
     act(() => {
@@ -76,16 +84,24 @@ describe("provider stores", () => {
 
   test("isolates nested provider state", () => {
     const example = createStore("NestedProviders")<{ value: string }>();
-
-    function Value({ label }: { label: string }) {
-      const value = example.useStore((state) => state.value);
-      return <span>{`${label}: ${value}`}</span>;
-    }
+    const Value = createComponent({
+      state: Effect.gen(function* () {
+        const useExample = yield* example.service;
+        return ({ label }: { label: string }) =>
+          Effect.succeed({
+            label,
+            value: useExample((state) => state.value),
+          });
+      }),
+      component: ({ state }) => <span>{`${state.label}: ${state.value}`}</span>,
+    });
+    const useOuter = () => ({ value: "outer" });
+    const useInner = () => ({ value: "inner" });
 
     render(
-      <example.Store value={{ value: "outer" }}>
+      <example.Store implements={useOuter}>
         <Value label="outer" />
-        <example.Store value={{ value: "inner" }}>
+        <example.Store implements={useInner}>
           <Value label="inner" />
         </example.Store>
       </example.Store>,
@@ -95,21 +111,28 @@ describe("provider stores", () => {
     expect(screen.getByText("inner: inner")).toBeInTheDocument();
   });
 
-  test("publishes provider prop changes", () => {
+  test("publishes implementation changes", () => {
     const example = createStore("ProviderProps")<{ value: string }>();
-
-    function Value() {
-      const value = example.useStore((state) => state.value);
-      return <span>{value}</span>;
-    }
+    const Value = createComponent({
+      state: Effect.gen(function* () {
+        const useExample = yield* example.service;
+        return () =>
+          Effect.succeed({
+            value: useExample((state) => state.value),
+          });
+      }),
+      component: ({ state }) => <span>{state.value}</span>,
+    });
+    const useFirst = () => ({ value: "first" });
+    const useSecond = () => ({ value: "second" });
 
     const view = render(
-      <example.Store value={{ value: "first" }}>
+      <example.Store implements={useFirst}>
         <Value />
       </example.Store>,
     );
     view.rerender(
-      <example.Store value={{ value: "second" }}>
+      <example.Store implements={useSecond}>
         <Value />
       </example.Store>,
     );
@@ -119,26 +142,33 @@ describe("provider stores", () => {
 
   test("fails clearly outside its provider", () => {
     const example = createStore("MissingProvider")<{ count: number }>();
+    const Count = createComponent({
+      state: Effect.gen(function* () {
+        const useExample = yield* example.service;
+        return () =>
+          Effect.succeed({ count: useExample((state) => state.count) });
+      }),
+      component: ({ state }) => <span>{state.count}</span>,
+    });
 
-    function Count() {
-      return <span>{example.useStore((state) => state.count)}</span>;
-    }
-
-    expect(() => render(<Count />)).toThrow(
-      "useStore must be used within its Store",
-    );
+    expect(() => render(<Count />)).toThrow("Service not found");
   });
 
-  test("renders the initial provider snapshot on the server", () => {
+  test("renders the initial implementation snapshot on the server", () => {
     const example = createStore("ServerSnapshot")<{ count: number }>();
-
-    function Count() {
-      return <span>{example.useStore((state) => state.count)}</span>;
-    }
+    const Count = createComponent({
+      state: Effect.gen(function* () {
+        const useExample = yield* example.service;
+        return () =>
+          Effect.succeed({ count: useExample((state) => state.count) });
+      }),
+      component: ({ state }) => <span>{state.count}</span>,
+    });
+    const useImplementation = () => ({ count: 7 });
 
     expect(
       renderToString(
-        <example.Store value={{ count: 7 }}>
+        <example.Store implements={useImplementation}>
           <Count />
         </example.Store>,
       ),
@@ -169,15 +199,16 @@ describe("provider stores", () => {
       ),
     });
 
-    const ProvidedCounter = example.provide({
-      component: Counter,
-      implementation: function useEffectCounterStore() {
-        const [count, setCount] = useState(0);
-        return { count, setCount };
-      },
-    });
+    function useEffectCounterImplementation() {
+      const [count, setCount] = useState(0);
+      return { count, setCount };
+    }
 
-    render(<ProvidedCounter />);
+    render(
+      <example.Store implements={useEffectCounterImplementation}>
+        <Counter />
+      </example.Store>,
+    );
 
     act(() => {
       screen.getByRole("button", { name: "0" }).click();

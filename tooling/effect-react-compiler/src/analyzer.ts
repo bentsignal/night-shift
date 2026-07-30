@@ -81,7 +81,9 @@ function toAnalyzedComponent({
   readonly requirements: ReadonlySet<string> | undefined;
 }) {
   return {
-    dependencies: sorted(component.dependencies),
+    dependencies: sorted(
+      component.dependencies.map((dependency) => dependency.id),
+    ),
     directRequirements: sorted(component.directRequirements),
     fileName: component.declaration.fileName,
     id: component.id,

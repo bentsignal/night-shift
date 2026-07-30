@@ -1,6 +1,8 @@
+import ts from "typescript";
+
 import type { SourceModel } from "./model.js";
 import type { EffectReactSource } from "./types.js";
-import { normalizeFileName } from "./ast.js";
+import { normalizeFileName, visit } from "./ast.js";
 import { resolveComponent } from "./graph.js";
 import { collectReactCompilerInsertions } from "./react-compiler.js";
 import { buildSourceModel } from "./source-model.js";
@@ -90,31 +92,101 @@ function collectInsertions({
 }) {
   const insertions = Array<SourceInsertion>(
     ...collectReactCompilerInsertions(model),
+    ...collectStoreImplementationInsertions(model),
   );
 
   for (const declaration of model.components.values()) {
-    if (declaration.kind !== "component") {
-      continue;
+    const groups = new Map<
+      string,
+      (typeof declaration.jsxChildReferences)[number][]
+    >();
+    for (const reference of declaration.jsxChildReferences) {
+      if (!resolveComponent({ models, reference: reference.component })) {
+        continue;
+      }
+      const key = reference.providers
+        .map((provider) => provider.name)
+        .join("\u0000");
+      const group = groups.get(key) ?? [];
+      group.push(reference);
+      groups.set(key, group);
+    }
+    const annotations = Array<string>();
+
+    for (const references of groups.values()) {
+      const children = [
+        ...new Set(references.map((reference) => reference.component.name)),
+      ];
+      const providers = [
+        ...new Set(
+          references.flatMap((reference) =>
+            reference.providers.map((provider) => provider.name),
+          ),
+        ),
+      ];
+
+      annotations.push(
+        providers.length === 0
+          ? `.__effectReactRequirements(${children.join(", ")})`
+          : `.__effectReactProvidedRequirements([${providers
+              .map((provider) => `${provider}.Store`)
+              .join(", ")}], ${children.join(", ")})`,
+      );
     }
 
-    const children = [
-      ...new Set(
-        declaration.jsxChildReferences
-          .filter((reference) => resolveComponent({ models, reference }))
-          .map((reference) => reference.name),
-      ),
-    ];
-    if (children.length === 0) {
-      continue;
+    if (annotations.length > 0) {
+      insertions.push({
+        position: declaration.initializerEnd,
+        text: annotations.join(""),
+      });
     }
-
-    insertions.push({
-      position: declaration.initializerEnd,
-      text: `.__effectReactRequirements(${children.join(", ")})`,
-    });
   }
 
   return insertions.sort((left, right) => left.position - right.position);
+}
+
+function collectStoreImplementationInsertions(model: SourceModel) {
+  const insertions = Array<SourceInsertion>();
+
+  visit(model.sourceFile, (node) => {
+    if (!ts.isJsxOpeningElement(node) && !ts.isJsxSelfClosingElement(node)) {
+      return;
+    }
+    if (
+      !ts.isPropertyAccessExpression(node.tagName) ||
+      node.tagName.name.text !== "Store" ||
+      !ts.isIdentifier(node.tagName.expression)
+    ) {
+      return;
+    }
+
+    for (const property of node.attributes.properties) {
+      if (
+        !ts.isJsxAttribute(property) ||
+        !ts.isIdentifier(property.name) ||
+        property.name.text !== "implements" ||
+        !property.initializer ||
+        !ts.isJsxExpression(property.initializer) ||
+        !property.initializer.expression ||
+        !ts.isIdentifier(property.initializer.expression) ||
+        !/^use[A-Z0-9]/u.test(property.initializer.expression.text)
+      ) {
+        continue;
+      }
+
+      const implementation = property.initializer.expression;
+      insertions.push({
+        position: implementation.getStart(model.sourceFile),
+        text: `${node.tagName.expression.text}.Store.__effectReactImplementation(`,
+      });
+      insertions.push({
+        position: implementation.end,
+        text: "())",
+      });
+    }
+  });
+
+  return insertions;
 }
 
 function applyInsertions(
