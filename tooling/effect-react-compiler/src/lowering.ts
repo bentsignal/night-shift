@@ -128,9 +128,9 @@ function collectInsertions({
       annotations.push(
         providers.length === 0
           ? `.__effectReactRequirements(${children.join(", ")})`
-          : `.__effectReactProvidedRequirements([${providers
-              .map((provider) => `${provider}.Store`)
-              .join(", ")}], ${children.join(", ")})`,
+          : `.__effectReactProvidedRequirements([${providers.join(
+              ", ",
+            )}], ${children.join(", ")})`,
       );
     }
 
@@ -152,9 +152,13 @@ function collectStoreImplementationInsertions(model: SourceModel) {
       return;
     }
     if (
-      !ts.isPropertyAccessExpression(node.tagName) ||
-      node.tagName.name.text !== "Store" ||
-      !ts.isIdentifier(node.tagName.expression)
+      !ts.isIdentifier(node.tagName) ||
+      !node.attributes.properties.some(
+        (property) =>
+          ts.isJsxAttribute(property) &&
+          ts.isIdentifier(property.name) &&
+          property.name.text === "implements",
+      )
     ) {
       return;
     }
@@ -176,7 +180,7 @@ function collectStoreImplementationInsertions(model: SourceModel) {
       const implementation = property.initializer.expression;
       insertions.push({
         position: implementation.getStart(model.sourceFile),
-        text: `${node.tagName.expression.text}.Store.__effectReactImplementation(`,
+        text: `${node.tagName.text}.__effectReactImplementation(`,
       });
       insertions.push({
         position: implementation.end,

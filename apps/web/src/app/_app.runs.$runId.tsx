@@ -13,19 +13,19 @@ import {
 } from "@night-shift/ui-web/components/card";
 import { Skeleton } from "@night-shift/ui-web/components/skeleton";
 
-import { controlPlane } from "../control-plane/client";
+import { ControlPlane } from "../control-plane/client";
 import { Page } from "../features/control-plane/page";
 import { RunDetail } from "../features/control-plane/run-detail";
 import { QuickLink } from "../features/quick-link/quick-link";
 
 const RunPage = createComponent({
   displayName: "RunPage",
-  deps: [controlPlane.store],
+  deps: [ControlPlane],
   state: ({
     deps: [store],
     props,
   }: {
-    deps: ResolvedDependencies<[typeof controlPlane.store]>;
+    deps: ResolvedDependencies<[typeof ControlPlane]>;
     props: { runId: string };
   }) => ({
     authority: useStore(store, (state) => state.authority),

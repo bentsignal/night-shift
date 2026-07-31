@@ -148,24 +148,24 @@ function collectStoreDependencies({
   readonly sourceFile: ts.SourceFile;
 }) {
   const references = Array<SymbolReference>();
+  const dependencies = unwrapExpression(expression);
+  if (!ts.isArrayLiteralExpression(dependencies)) {
+    return references;
+  }
 
-  visit(expression, (node) => {
-    if (
-      !ts.isPropertyAccessExpression(node) ||
-      node.name.text !== "store" ||
-      !ts.isIdentifier(node.expression)
-    ) {
-      return;
+  for (const element of dependencies.elements) {
+    const dependency = unwrapExpression(element);
+    if (!ts.isIdentifier(dependency)) {
+      continue;
     }
-
     references.push(
       makeReference({
         fileName,
-        name: node.expression,
+        name: dependency,
         sourceFile,
       }),
     );
-  });
+  }
 
   return references;
 }
@@ -267,19 +267,24 @@ function readStoreProviderReference({
   readonly sourceFile: ts.SourceFile;
 }) {
   const tagName = node.tagName;
-  if (
-    !ts.isPropertyAccessExpression(tagName) ||
-    tagName.name.text !== "Store" ||
-    !ts.isIdentifier(tagName.expression)
-  ) {
+  if (!ts.isIdentifier(tagName) || !hasImplementsAttribute(node)) {
     return undefined;
   }
 
   return makeReference({
     fileName,
-    name: tagName.expression,
+    name: tagName,
     sourceFile,
   });
+}
+
+function hasImplementsAttribute(node: ts.JsxOpeningLikeElement) {
+  return node.attributes.properties.some(
+    (property) =>
+      ts.isJsxAttribute(property) &&
+      ts.isIdentifier(property.name) &&
+      property.name.text === "implements",
+  );
 }
 
 function isApiCall({

@@ -6,7 +6,7 @@ import type { ResolvedDependencies } from "@night-shift/effect-react";
 import { makeStore, useStore } from "@night-shift/effect-react";
 
 import type { ReasoningLevel } from "../../control-plane/types";
-import { controlPlane } from "../../control-plane/client";
+import { ControlPlane } from "../../control-plane/client";
 import {
   getHostCapacity,
   providerOptions,
@@ -36,7 +36,7 @@ export const createExecutionPreferencesStore = () => {
 export function useNewRunFormState({
   deps: [controlPlaneStore],
 }: {
-  readonly deps: ResolvedDependencies<[typeof controlPlane.store]>;
+  readonly deps: ResolvedDependencies<[typeof ControlPlane]>;
 }) {
   const navigate = useNavigate();
   const [preferences] = useState(createExecutionPreferencesStore);

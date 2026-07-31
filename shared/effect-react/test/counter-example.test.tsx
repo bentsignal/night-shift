@@ -3,7 +3,7 @@ import { act, render, screen } from "@testing-library/react";
 import { describe, expect, test } from "vitest";
 
 import type { CounterState } from "../example/counter";
-import { counter, CounterExample } from "../example/counter";
+import { Counter, CounterExample } from "../example/counter";
 
 describe("CounterExample", () => {
   test("connects provider state to the created component", () => {
@@ -13,9 +13,9 @@ describe("CounterExample", () => {
     }
 
     render(
-      <counter.Store implements={useCounterImplementation}>
+      <Counter implements={useCounterImplementation}>
         <CounterExample />
-      </counter.Store>,
+      </Counter>,
     );
 
     expect(

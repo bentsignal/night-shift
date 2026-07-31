@@ -8,8 +8,8 @@ export interface SecondState {
   readonly label: string;
 }
 
-export const first = createStore("First")<FirstState>();
-export const second = createStore("Second")<SecondState>();
+export const First = createStore("First")<FirstState>();
+export const Second = createStore("Second")<SecondState>();
 
 function useFirstImplementation() {
   return { value: 1 };
@@ -20,7 +20,7 @@ function useSecondImplementation() {
 }
 
 const FirstValue = createComponent({
-  deps: [first.store],
+  deps: [First],
   state: ({ deps: [store] }) => ({
     value: useStore(store, (state) => state.value),
   }),
@@ -28,7 +28,7 @@ const FirstValue = createComponent({
 });
 
 const SecondValue = createComponent({
-  deps: [second.store],
+  deps: [Second],
   state: ({ deps: [store] }) => ({
     label: useStore(store, (state) => state.label),
   }),
@@ -46,20 +46,20 @@ export const UnprovidedPair = createComponent({
 
 export const FirstProvidedPair = createComponent({
   ui: () => (
-    <first.Store implements={useFirstImplementation}>
+    <First implements={useFirstImplementation}>
       <FirstValue />
       <SecondValue />
-    </first.Store>
+    </First>
   ),
 });
 
 export const BothProvidedPair = createComponent({
   ui: () => (
-    <first.Store implements={useFirstImplementation}>
-      <second.Store implements={useSecondImplementation}>
+    <First implements={useFirstImplementation}>
+      <Second implements={useSecondImplementation}>
         <FirstValue />
         <SecondValue />
-      </second.Store>
-    </first.Store>
+      </Second>
+    </First>
   ),
 });

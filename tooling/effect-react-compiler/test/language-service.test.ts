@@ -298,13 +298,10 @@ function setCounterProvider(source: string, enabled: boolean) {
   const comment = enabled ? "" : "// ";
   return source
     .replace(
-      /^(\s*)(?:\/\/ )?<counter\.Store implements=\{useCounterImplementation\}>$/mu,
-      `$1${comment}<counter.Store implements={useCounterImplementation}>`,
+      /^(\s*)(?:\/\/ )?<Counter implements=\{useCounterImplementation\}>$/mu,
+      `$1${comment}<Counter implements={useCounterImplementation}>`,
     )
-    .replace(
-      /^(\s*)(?:\/\/ )?<\/counter\.Store>$/mu,
-      `$1${comment}</counter.Store>`,
-    );
+    .replace(/^(\s*)(?:\/\/ )?<\/Counter>$/mu, `$1${comment}</Counter>`);
 }
 
 function removeTestComponent(source: string) {

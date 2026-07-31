@@ -9,7 +9,7 @@ import type {
   ControlPlaneSnapshot,
   SubmitWorkInput,
 } from "../../control-plane/types";
-import { controlPlane } from "../../control-plane/client";
+import { ControlPlane } from "../../control-plane/client";
 import { NewRunForm } from "./new-run-form";
 import { useNewRunFormState } from "./new-run-form-state";
 
@@ -56,9 +56,9 @@ function testControlPlaneStore(
 
 const NewRunFormHarness = createComponent({
   ui: () => (
-    <controlPlane.Store implements={() => testControlPlaneState()}>
+    <ControlPlane implements={() => testControlPlaneState()}>
       <NewRunForm />
-    </controlPlane.Store>
+    </ControlPlane>
   ),
 });
 

@@ -8,7 +8,7 @@ export interface ReadableStore<State> {
   readonly subscribe: (listener: Listener) => () => void;
 }
 
-export interface Store<State> extends ReadableStore<State> {
+export interface WritableStore<State> extends ReadableStore<State> {
   readonly set: (next: State) => void;
   readonly update: (update: (current: State) => State) => void;
 }

@@ -1,13 +1,13 @@
 import { createComponent } from "@night-shift/effect-react";
 import { Card, CardFooter } from "@night-shift/ui-web/components/card";
 
-import { controlPlane } from "../../control-plane/client";
+import { ControlPlane } from "../../control-plane/client";
 import { NewRunFormFields, QueueButton } from "./new-run-form-fields";
 import { useNewRunFormState } from "./new-run-form-state";
 
 export const NewRunForm = createComponent({
   displayName: "NewRunForm",
-  deps: [controlPlane.store],
+  deps: [ControlPlane],
   state: useNewRunFormState,
   ui: ({ state }) => (
     <form action={(formData) => void state.submit(formData)}>

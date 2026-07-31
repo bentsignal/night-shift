@@ -7,13 +7,13 @@ import type {
 import { createComponent } from "@night-shift/effect-react";
 
 import type { ControlPlaneState } from "../../control-plane/client";
-import { controlPlane } from "../../control-plane/client";
+import { ControlPlane } from "../../control-plane/client";
 
 type Includes<Union, Member> = Member extends Union ? true : false;
 type Expect<Value extends true> = Value;
 
 const _NewRunFormRequirements = createComponent({
-  deps: [controlPlane.store],
+  deps: [ControlPlane],
   ui: () => null,
 });
 

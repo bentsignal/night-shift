@@ -32,9 +32,11 @@ describe("createComponent", () => {
   });
 
   test("resolves declared stores as an ordered tuple", () => {
-    const counter = createStore("ComponentTestCounter")<{ count: number }>();
+    const CounterStore = createStore("ComponentTestCounter")<{
+      count: number;
+    }>();
     const Counter = createComponent({
-      deps: [counter.store],
+      deps: [CounterStore],
       state: ({ deps: [store] }) => ({
         count: useStore(store, (snapshot) => snapshot.count),
       }),
@@ -42,20 +44,20 @@ describe("createComponent", () => {
     });
 
     render(
-      <counter.Store implements={() => ({ count: 7 })}>
+      <CounterStore implements={() => ({ count: 7 })}>
         <Counter />
-      </counter.Store>,
+      </CounterStore>,
     );
 
     expect(screen.getByText("7")).toBeInTheDocument();
   });
 
   test("fails clearly when a declared store has no provider", () => {
-    const counter = createStore("MissingComponentTestCounter")<{
+    const CounterStore = createStore("MissingComponentTestCounter")<{
       count: number;
     }>();
     const Counter = createComponent({
-      deps: [counter.store],
+      deps: [CounterStore],
       ui: () => null,
     });
 

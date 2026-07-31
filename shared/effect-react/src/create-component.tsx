@@ -1,12 +1,7 @@
 import type { ReactElement } from "react";
 import { Cause, Effect, Effectable, Exit } from "effect";
 
-import type {
-  StoreDependency,
-  StoreDependencyTypeId,
-  StoreProvider,
-  StoreRequirement,
-} from "./provider-store";
+import type { Store, StoreRequirement, StoreTypeId } from "./provider-store";
 import type { ReadableStore } from "./store";
 import { provideServiceContext, useServiceContext } from "./service-context";
 
@@ -93,7 +88,7 @@ type ComponentRequirements<Value> =
     : never;
 
 type ProviderRequirements<Provider> =
-  Provider extends StoreProvider<infer Name, infer State>
+  Provider extends Store<infer Name, infer State>
     ? StoreRequirement<Name, State>
     : never;
 
@@ -104,7 +99,7 @@ export type ComponentEffect<Value> = Effect.Effect<
 >;
 
 type StoreDependencies = readonly {
-  readonly [StoreDependencyTypeId]: {
+  readonly [StoreTypeId]: {
     readonly name: string;
     readonly state: object;
   };
@@ -112,7 +107,7 @@ type StoreDependencies = readonly {
 
 export type ResolvedDependencies<Dependencies extends StoreDependencies> = {
   readonly [Index in keyof Dependencies]: Dependencies[Index] extends {
-    readonly [StoreDependencyTypeId]: {
+    readonly [StoreTypeId]: {
       readonly state: infer State extends object;
     };
   }
@@ -121,7 +116,7 @@ export type ResolvedDependencies<Dependencies extends StoreDependencies> = {
 };
 
 type DependencyRequirement<Dependency> = Dependency extends {
-  readonly [StoreDependencyTypeId]: {
+  readonly [StoreTypeId]: {
     readonly name: infer Name extends string;
     readonly state: infer State extends object;
   };
@@ -215,10 +210,7 @@ export function createComponent(definition: unknown) {
   const CreatedComponent = (props: object) => {
     const services = useServiceContext();
     const dependencies = resolveDependencies(
-      (componentDefinition.deps ?? []) as readonly StoreDependency<
-        string,
-        object
-      >[],
+      (componentDefinition.deps ?? []) as readonly Store<string, object>[],
       services,
     );
 
@@ -257,7 +249,7 @@ function makeComponent<Props, Requirements>(
 }
 
 type RuntimeComponentDefinition = {
-  readonly deps?: readonly StoreDependency<string, object>[];
+  readonly deps?: readonly Store<string, object>[];
   readonly displayName?: string;
   readonly state?: (input: {
     readonly deps: readonly ReadableStore<object>[];
@@ -293,7 +285,7 @@ function EvaluatedUI({
 }
 
 function resolveDependencies(
-  dependencies: readonly StoreDependency<string, object>[],
+  dependencies: readonly Store<string, object>[],
   services: Parameters<typeof provideServiceContext>[1],
 ) {
   const resolved = Effect.all(dependencies).pipe((effect) =>

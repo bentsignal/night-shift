@@ -12,8 +12,7 @@ type StoreProps<State extends object> = {
 };
 
 export declare const StoreRequirementTypeId: unique symbol;
-export declare const StoreDependencyTypeId: unique symbol;
-export declare const StoreProviderTypeId: unique symbol;
+export declare const StoreTypeId: unique symbol;
 declare const StoreImplementationTypeId: unique symbol;
 
 export interface StoreRequirement<Name extends string, State extends object> {
@@ -23,21 +22,18 @@ export interface StoreRequirement<Name extends string, State extends object> {
   };
 }
 
-export interface StoreProvider<Name extends string, State extends object> {
+export interface Store<
+  Name extends string,
+  State extends object,
+> extends Context.Tag<StoreRequirement<Name, State>, ReadableStore<State>> {
   (props: StoreProps<State>): ReactNode;
   /** @internal Used only by the in-memory Effect React transform. */
   readonly __effectReactImplementation: (
     state: State,
   ) => StoreImplementation<State>;
-  readonly [StoreProviderTypeId]: StoreRequirement<Name, State>;
-}
-
-export interface StoreDependency<
-  Name extends string,
-  State extends object,
-> extends Context.Tag<StoreRequirement<Name, State>, ReadableStore<State>> {
-  readonly [StoreDependencyTypeId]: {
+  readonly [StoreTypeId]: {
     readonly name: Name;
+    readonly requirement: StoreRequirement<Name, State>;
     readonly state: State;
   };
 }
@@ -66,13 +62,10 @@ type StoreName<Name extends string> = string extends Name
  */
 export function createStore<const Name extends string>(name: StoreName<Name>) {
   return function defineStore<State extends object>() {
-    const store = Context.GenericTag<
+    const dependency = Context.GenericTag<
       StoreRequirement<Name, State>,
       ReadableStore<State>
-    >(`@night-shift/effect-react/store/${name}`) as StoreDependency<
-      Name,
-      State
-    >;
+    >(`@night-shift/effect-react/store/${name}`);
 
     function Store({
       children,
@@ -85,7 +78,7 @@ export function createStore<const Name extends string>(name: StoreName<Name>) {
       const [storeHandle] = useState(() => makeStore(value));
       const parentServices = useServiceContext();
       const [services] = useState(() =>
-        Context.add(parentServices, store, storeHandle),
+        Context.add(parentServices, dependency, storeHandle),
       );
 
       useLayoutEffect(() => {
@@ -99,14 +92,12 @@ export function createStore<const Name extends string>(name: StoreName<Name>) {
       );
     }
 
-    Object.assign(Store, {
+    Object.setPrototypeOf(Store, Object.getPrototypeOf(dependency));
+    Object.assign(Store, dependency, {
       __effectReactImplementation: (state: State) => state,
       displayName: `${name}Store`,
     });
 
-    return {
-      store,
-      Store: Store as unknown as StoreProvider<Name, State>,
-    };
+    return Store as unknown as Store<Name, State>;
   };
 }

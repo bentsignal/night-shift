@@ -33,10 +33,10 @@ describe("React Compiler lowering", () => {
         useStore,
       } from "@night-shift/effect-react";
 
-      const counter = createStore("Counter")<{ count: number }>();
+      const Counter = createStore("Counter")<{ count: number }>();
 
       const CounterValue = createComponent({
-        deps: [counter.store],
+        deps: [Counter],
         state: ({ deps: [store] }) => ({
           count: useStore(store, (state) => state.count),
         }),
@@ -50,9 +50,9 @@ describe("React Compiler lowering", () => {
 
       const CounterPanel = createComponent({
         ui: () => (
-          <counter.Store implements={useCounterImplementation}>
+          <Counter implements={useCounterImplementation}>
             <CounterValue />
-          </counter.Store>
+          </Counter>
         ),
       });
     `;
@@ -61,10 +61,10 @@ describe("React Compiler lowering", () => {
     expect(source).not.toContain('"use memo"');
     expect(result.lowered).toContain('"use memo"');
     expect(result.lowered).toContain(
-      ".__effectReactProvidedRequirements([counter.Store], CounterValue)",
+      ".__effectReactProvidedRequirements([Counter], CounterValue)",
     );
     expect(result.lowered).toContain(
-      "implements={counter.Store.__effectReactImplementation(useCounterImplementation())}",
+      "implements={Counter.__effectReactImplementation(useCounterImplementation())}",
     );
     expect(result.code).toContain('from "react/compiler-runtime"');
     expect(result.code.match(/\b_c\(/gu)).toHaveLength(4);
@@ -84,7 +84,7 @@ describe("React Compiler lowering", () => {
       import { useState } from "react";
       import { createComponent, createStore } from "@night-shift/effect-react";
 
-      const navigation = createStore("Navigation")<{ ready: boolean }>();
+      const Navigation = createStore("Navigation")<{ ready: boolean }>();
 
       function formState({ deps: [navigationStore] }) {
         const [submitting] = useState(false);
@@ -92,7 +92,7 @@ describe("React Compiler lowering", () => {
       }
 
       export const Form = createComponent({
-        deps: [navigation.store],
+        deps: [Navigation],
         state: formState,
         ui: ({ state }) => <output>{String(state.submitting)}</output>,
       });

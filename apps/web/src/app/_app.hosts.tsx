@@ -12,13 +12,13 @@ import {
 import { cn } from "@night-shift/ui-web/lib/utils";
 
 import type { Host } from "../control-plane/types";
-import { controlPlane } from "../control-plane/client";
+import { ControlPlane } from "../control-plane/client";
 import { formatMoment } from "../control-plane/view-model";
 import { Page } from "../features/control-plane/page";
 
 const HostsPage = createComponent({
   displayName: "HostsPage",
-  deps: [controlPlane.store],
+  deps: [ControlPlane],
   state: ({ deps: [store] }) => ({
     hosts: useStore(store, (state) => state.hosts),
   }),

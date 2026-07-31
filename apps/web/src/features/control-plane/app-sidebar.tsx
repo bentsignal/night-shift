@@ -26,7 +26,7 @@ import {
   useSidebar,
 } from "@night-shift/ui-web/components/sidebar";
 
-import { controlPlane } from "../../control-plane/client";
+import { ControlPlane } from "../../control-plane/client";
 import { getHostCapacity } from "../../control-plane/view-model";
 import { QuickLink } from "../quick-link/quick-link";
 import { statusTone } from "./status-badge";
@@ -39,7 +39,7 @@ const navigation = [
 
 export const AppSidebar = createComponent({
   displayName: "AppSidebar",
-  deps: [controlPlane.store],
+  deps: [ControlPlane],
 
   state: ({ deps: [store] }) => {
     const authorityState = useStore(store, (state) => state.authority);

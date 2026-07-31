@@ -12,7 +12,7 @@ export interface CounterState {
   readonly setCount: Dispatch<SetStateAction<number>>;
 }
 
-export const counter = createStore("LabCounter")<CounterState>();
+export const Counter = createStore("LabCounter")<CounterState>();
 
 function useCounterImplementation() {
   const [count, setCount] = useState(5);
@@ -21,7 +21,7 @@ function useCounterImplementation() {
 
 export const CounterReadout = createComponent({
   displayName: "CounterReadout",
-  deps: [counter.store],
+  deps: [Counter],
 
   state: ({ deps: [store] }) => ({
     count: useStore(store, (state) => state.count),
@@ -36,7 +36,7 @@ export const CounterReadout = createComponent({
 
 export const CounterControls = createComponent({
   displayName: "CounterControls",
-  deps: [counter.store],
+  deps: [Counter],
 
   state: ({ deps: [store] }) => {
     const setCount = useStore(store, (state) => state.setCount);
@@ -79,7 +79,7 @@ export const CounterControls = createComponent({
 export const CounterInstrument = createComponent({
   displayName: "CounterInstrument",
   ui: () => (
-    <counter.Store implements={useCounterImplementation}>
+    <Counter implements={useCounterImplementation}>
       <section aria-labelledby="counter-title" className="instrument">
         <div className="instrument-heading">
           <div>
@@ -99,7 +99,7 @@ export const CounterInstrument = createComponent({
 
         <CounterControls />
       </section>
-    </counter.Store>
+    </Counter>
   ),
 });
 

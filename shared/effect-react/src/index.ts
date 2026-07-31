@@ -9,15 +9,14 @@ export {
 } from "./create-component";
 export {
   createStore,
-  type StoreDependency,
-  type StoreProvider,
+  type Store,
   type StoreRequirement,
 } from "./provider-store";
 export {
   makeStore,
   type ReadableStore,
   type SelectorOptions,
-  type Store,
   type StoreOptions,
   useStore,
+  type WritableStore,
 } from "./store";

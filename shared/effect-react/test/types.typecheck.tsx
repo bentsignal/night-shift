@@ -45,6 +45,14 @@ createComponent({
   },
 });
 
+createComponent({
+  // @ts-expect-error stateless UI cannot request a state parameter
+  ui: ({ state }) => {
+    void state;
+    return null;
+  },
+});
+
 const Stateful = createComponent({
   state: () => ({ count: 1 }),
   ui: ({ state }) => {
@@ -70,20 +78,24 @@ interface SecondState {
   readonly label: string;
 }
 
-const first = createStore("TypedFirst")<FirstState>();
-const second = createStore("TypedSecond")<SecondState>();
+const First = createStore("TypedFirst")<FirstState>();
+const Second = createStore("TypedSecond")<SecondState>();
 
-// @ts-expect-error createStore exposes a store dependency and provider, not a service
-const _RemovedService = first.service;
+// @ts-expect-error createStore returns only the unified store value
+const _RemovedService = First.service;
 // @ts-expect-error store selection is performed through the shared useStore hook
-const _RemovedHook = first.useStore;
+const _RemovedHook = First.useStore;
+// @ts-expect-error the provider is the returned store value itself
+const _RemovedProviderProperty = First.Store;
+// @ts-expect-error the dependency is the returned store value itself
+const _RemovedDependencyProperty = First.store;
 
-first.store satisfies {
+First satisfies {
   readonly key: string;
 };
 
 const Consumer = createComponent({
-  deps: [first.store, second.store],
+  deps: [First, Second],
   state: ({ deps: [firstStore, secondStore] }) => {
     firstStore satisfies ReadableStore<FirstState>;
     secondStore satisfies ReadableStore<SecondState>;
@@ -109,11 +121,11 @@ type _ConsumerRequirements = Expect<
 
 const Boundary = createComponent({ ui: () => null });
 const _FirstProvided = Boundary.__effectReactProvidedRequirements(
-  [first.Store],
+  [First],
   Consumer,
 );
 const _BothProvided = Boundary.__effectReactProvidedRequirements(
-  [first.Store, second.Store],
+  [First, Second],
   Consumer,
 );
 

@@ -9,14 +9,14 @@ import { createComponent, createStore, useStore } from "../src";
 
 describe("provider stores", () => {
   test("gives same-shaped stores distinct identities", () => {
-    const first = createStore("FirstIdentity")<{ count: number }>();
-    const second = createStore("SecondIdentity")<{ count: number }>();
+    const First = createStore("FirstIdentity")<{ count: number }>();
+    const Second = createStore("SecondIdentity")<{ count: number }>();
 
-    expect(first.store.key).not.toBe(second.store.key);
+    expect(First.key).not.toBe(Second.key);
   });
 
   test("rerenders consumers only when their selected state changes", () => {
-    const example = createStore("SelectiveRerenders")<{
+    const Example = createStore("SelectiveRerenders")<{
       count: number;
       setCount: Dispatch<SetStateAction<number>>;
       setText: Dispatch<SetStateAction<string>>;
@@ -31,7 +31,7 @@ describe("provider stores", () => {
     }
 
     const Count = createComponent({
-      deps: [example.store],
+      deps: [Example],
       state: ({ deps: [store] }) => {
         const count = useStore(store, (state) => state.count);
         countRenders += 1;
@@ -40,7 +40,7 @@ describe("provider stores", () => {
       ui: ({ state }) => <span>{state.count}</span>,
     });
     const Actions = createComponent({
-      deps: [example.store],
+      deps: [Example],
       state: ({ deps: [store] }) => ({
         setCount: useStore(store, (state) => state.setCount),
         setText: useStore(store, (state) => state.setText),
@@ -58,10 +58,10 @@ describe("provider stores", () => {
     });
 
     render(
-      <example.Store implements={useImplementation}>
+      <Example implements={useImplementation}>
         <Count />
         <Actions />
-      </example.Store>,
+      </Example>,
     );
 
     act(() => screen.getByRole("button", { name: "Change text" }).click());
@@ -73,14 +73,14 @@ describe("provider stores", () => {
   });
 
   test("isolates nested provider implementations", () => {
-    const example = createStore("NestedProviders")<{ value: string }>();
+    const Example = createStore("NestedProviders")<{ value: string }>();
     const Value = createComponent({
-      deps: [example.store],
+      deps: [Example],
       state: ({
         deps: [store],
         props,
       }: {
-        deps: ResolvedDependencies<[typeof example.store]>;
+        deps: ResolvedDependencies<[typeof Example]>;
         props: { label: string };
       }) => ({
         label: props.label,
@@ -90,12 +90,12 @@ describe("provider stores", () => {
     });
 
     render(
-      <example.Store implements={() => ({ value: "outer" })}>
+      <Example implements={() => ({ value: "outer" })}>
         <Value label="outer" />
-        <example.Store implements={() => ({ value: "inner" })}>
+        <Example implements={() => ({ value: "inner" })}>
           <Value label="inner" />
-        </example.Store>
-      </example.Store>,
+        </Example>
+      </Example>,
     );
 
     expect(screen.getByText("outer: outer")).toBeInTheDocument();
@@ -103,9 +103,9 @@ describe("provider stores", () => {
   });
 
   test("renders the initial implementation snapshot on the server", () => {
-    const example = createStore("ServerSnapshot")<{ count: number }>();
+    const Example = createStore("ServerSnapshot")<{ count: number }>();
     const Count = createComponent({
-      deps: [example.store],
+      deps: [Example],
       state: ({ deps: [store] }) => ({
         count: useStore(store, (state) => state.count),
       }),
@@ -114,9 +114,9 @@ describe("provider stores", () => {
 
     expect(
       renderToString(
-        <example.Store implements={() => ({ count: 7 })}>
+        <Example implements={() => ({ count: 7 })}>
           <Count />
-        </example.Store>,
+        </Example>,
       ),
     ).toContain(">7<");
   });

@@ -12,7 +12,7 @@ import { ThemeProvider } from "@night-shift/ui-web/theme-provider";
 
 import type { ControlPlaneState } from "../../control-plane/client";
 import type { ControlPlaneClient } from "../../control-plane/types";
-import { controlPlane, useControlPlaneState } from "../../control-plane/client";
+import { ControlPlane, useControlPlaneState } from "../../control-plane/client";
 import { ConvexControlPlaneClient } from "../../control-plane/convex-client";
 import { demoControlPlaneClient } from "../../control-plane/demo-client";
 import { AppSidebar } from "./app-sidebar";
@@ -88,7 +88,7 @@ const ApplicationFrame = createComponent({
     };
     state: { pathname: string };
   }) => (
-    <controlPlane.Store implements={() => props.implementation}>
+    <ControlPlane implements={() => props.implementation}>
       <SidebarProvider
         defaultOpen
         style={
@@ -113,6 +113,6 @@ const ApplicationFrame = createComponent({
           <div className="min-h-0 flex-1 overflow-y-auto">{props.children}</div>
         </SidebarInset>
       </SidebarProvider>
-    </controlPlane.Store>
+    </ControlPlane>
   ),
 });
