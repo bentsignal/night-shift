@@ -1,7 +1,6 @@
 import type { ReactNode } from "react";
 import { useEffect, useState } from "react";
 import { Outlet, useRouterState } from "@tanstack/react-router";
-import { Effect } from "effect";
 
 import { createComponent } from "@night-shift/effect-react";
 import {
@@ -77,7 +76,7 @@ const ApplicationFrame = createComponent({
     const pathname = useRouterState({
       select: (state) => state.location.pathname,
     });
-    return Effect.succeed({ pathname });
+    return { pathname };
   },
   ui: ({
     props,

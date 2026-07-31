@@ -1,7 +1,6 @@
 // eslint-disable-next-line no-restricted-imports -- React.memo is the observation boundary that proves compiler-generated values stay referentially stable.
 import { memo, useState } from "react";
 import { act, render, screen } from "@testing-library/react";
-import { Effect } from "effect";
 import { describe, expect, test, vi } from "vitest";
 
 import { createComponent } from "@night-shift/effect-react";
@@ -45,11 +44,11 @@ const CompilerProof = createComponent({
   state: ({ props }: { props: ProbeProps }) => {
     const [revision, setRevision] = useState(0);
 
-    return Effect.succeed({
+    return {
       revision,
       props,
       update: () => setRevision((current) => current + 1),
-    });
+    };
   },
   ui: ({ state }) => {
     const componentValue = { source: "component" };

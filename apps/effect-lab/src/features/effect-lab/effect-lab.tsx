@@ -1,5 +1,3 @@
-import { Effect } from "effect";
-
 import { createComponent } from "@night-shift/effect-react";
 
 import { CounterInstrument } from "./counter";
@@ -7,7 +5,6 @@ import { RuntimeTrace } from "./runtime-trace";
 
 export const WorkspaceFrame = createComponent({
   displayName: "WorkspaceFrame",
-  state: () => Effect.succeed({}),
   ui: () => (
     <main className="workspace">
       <CounterInstrument />
@@ -18,7 +15,6 @@ export const WorkspaceFrame = createComponent({
 
 export const EffectLab = createComponent({
   displayName: "EffectLab",
-  state: () => Effect.succeed({}),
   ui: () => (
     <div className="lab-shell">
       <header className="topbar">

@@ -1,8 +1,8 @@
-import type { useNavigate } from "@tanstack/react-router";
 import { useState } from "react";
-import { Context, Effect } from "effect";
+import { useNavigate } from "@tanstack/react-router";
+import { Effect } from "effect";
 
-import type { Store } from "@night-shift/effect-react";
+import type { ResolvedDependencies } from "@night-shift/effect-react";
 import { makeStore, useStore } from "@night-shift/effect-react";
 
 import type { ReasoningLevel } from "../../control-plane/types";
@@ -24,16 +24,6 @@ export interface ExecutionPreferences {
   readonly reasoning: ReasoningLevel;
 }
 
-export class NewRunPreferences extends Context.Tag("NewRunPreferences")<
-  NewRunPreferences,
-  () => Store<ExecutionPreferences>
->() {}
-
-export class NewRunNavigation extends Context.Tag("NewRunNavigation")<
-  NewRunNavigation,
-  typeof useNavigate
->() {}
-
 export const createExecutionPreferencesStore = () => {
   const firstProvider = providerOptions[0];
   return makeStore({
@@ -43,28 +33,17 @@ export const createExecutionPreferencesStore = () => {
   });
 };
 
-export const newRunFormDeps = Effect.gen(function* () {
-  const controlPlaneStore = yield* controlPlane.store;
-  const createPreferences = yield* NewRunPreferences;
-  const useNavigation = yield* NewRunNavigation;
-
-  return { controlPlaneStore, createPreferences, useNavigation };
-});
-
 export function useNewRunFormState({
-  deps,
+  deps: [controlPlaneStore],
 }: {
-  readonly deps: Effect.Effect.Success<typeof newRunFormDeps>;
+  readonly deps: ResolvedDependencies<[typeof controlPlane.store]>;
 }) {
-  const navigate = deps.useNavigation();
-  const [preferences] = useState(deps.createPreferences);
+  const navigate = useNavigate();
+  const [preferences] = useState(createExecutionPreferencesStore);
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string>();
-  const hosts = useStore(deps.controlPlaneStore, (state) => state.hosts);
-  const submitWork = useStore(
-    deps.controlPlaneStore,
-    (state) => state.submitWork,
-  );
+  const hosts = useStore(controlPlaneStore, (state) => state.hosts);
+  const submitWork = useStore(controlPlaneStore, (state) => state.submitWork);
   const provider = useStore(preferences, (state) => state.provider);
   const model = useStore(preferences, (state) => state.model);
   const reasoning = useStore(preferences, (state) => state.reasoning);
@@ -127,7 +106,7 @@ export function useNewRunFormState({
     );
   };
 
-  return Effect.succeed({
+  return {
     capacityLabel:
       capacity.available > 0
         ? `${capacity.available} ${capacity.available === 1 ? "host" : "hosts"} ready`
@@ -144,9 +123,7 @@ export function useNewRunFormState({
     selectReasoning,
     submit,
     submitting,
-  });
+  };
 }
 
-export type NewRunFormState = Effect.Effect.Success<
-  ReturnType<typeof useNewRunFormState>
->;
+export type NewRunFormState = ReturnType<typeof useNewRunFormState>;

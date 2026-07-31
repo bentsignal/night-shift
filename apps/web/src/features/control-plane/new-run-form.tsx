@@ -1,24 +1,13 @@
-import { useNavigate } from "@tanstack/react-router";
-import { Effect } from "effect";
-
 import { createComponent } from "@night-shift/effect-react";
 import { Card, CardFooter } from "@night-shift/ui-web/components/card";
 
+import { controlPlane } from "../../control-plane/client";
 import { NewRunFormFields, QueueButton } from "./new-run-form-fields";
-import {
-  createExecutionPreferencesStore,
-  newRunFormDeps,
-  NewRunNavigation,
-  NewRunPreferences,
-  useNewRunFormState,
-} from "./new-run-form-state";
+import { useNewRunFormState } from "./new-run-form-state";
 
 export const NewRunForm = createComponent({
   displayName: "NewRunForm",
-  deps: newRunFormDeps.pipe(
-    Effect.provideService(NewRunPreferences, createExecutionPreferencesStore),
-    Effect.provideService(NewRunNavigation, useNavigate),
-  ),
+  deps: [controlPlane.store],
   state: useNewRunFormState,
   ui: ({ state }) => (
     <form action={(formData) => void state.submit(formData)}>

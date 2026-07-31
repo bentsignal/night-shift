@@ -1,13 +1,7 @@
 import { render, screen } from "@testing-library/react";
-import { Effect } from "effect";
 import { describe, expect, test, vi } from "vitest";
 
-import {
-  AsyncComponentStateError,
-  createComponent,
-  makeStore,
-  useStore,
-} from "../src";
+import { createComponent, createStore, useStore } from "../src";
 
 describe("createComponent", () => {
   test("renders stateless UI with props and no manufactured state", () => {
@@ -22,125 +16,49 @@ describe("createComponent", () => {
     expect(ui).toHaveBeenCalledWith({ props: { label: "Ready" } });
   });
 
-  test("renders stateless dependency failures without invoking UI", () => {
-    const ui = vi.fn(() => <span>unreachable</span>);
-    const Failed = createComponent({
-      deps: Effect.fail("missing-dependency" as const),
-      ui,
-      onFailure: (error) => <span>{error}</span>,
+  test("passes plain state from state to UI", () => {
+    const Counter = createComponent({
+      state: ({ props }: { props: { initial: number } }) => ({
+        count: props.initial,
+      }),
+      ui: ({ props, state }) => (
+        <span>{`${props.initial}: ${state.count}`}</span>
+      ),
     });
 
-    render(<Failed />);
+    render(<Counter initial={42} />);
 
-    expect(screen.getByText("missing-dependency")).toBeInTheDocument();
-    expect(ui).not.toHaveBeenCalled();
+    expect(screen.getByText("42: 42")).toBeInTheDocument();
   });
 
-  test("passes dependencies, props, and state through each phase", () => {
-    const deps = { suffix: "!" };
-    const state = vi.fn(
-      ({
-        deps: resolved,
-        props,
-      }: {
-        deps: typeof deps;
-        props: { label: string };
-      }) =>
-        Effect.succeed({
-          count: 42,
-          label: `${props.label}${resolved.suffix}`,
-        }),
-    );
-    const ui = vi.fn(
-      ({
-        props,
-        state: componentState,
-      }: {
-        props: { label: string };
-        state: { count: number; label: string };
-      }) => <span>{`${props.label}: ${componentState.count}`}</span>,
-    );
+  test("resolves declared stores as an ordered tuple", () => {
+    const counter = createStore("ComponentTestCounter")<{ count: number }>();
     const Counter = createComponent({
-      deps: Effect.succeed(deps),
-      state,
-      ui,
-    });
-
-    render(<Counter label="Count" />);
-
-    expect(screen.getByText("Count: 42")).toBeInTheDocument();
-    expect(state).toHaveBeenCalledWith({
-      deps,
-      props: { label: "Count" },
-    });
-    expect(ui).toHaveBeenCalledWith({
-      props: { label: "Count" },
-      state: { count: 42, label: "Count!" },
-    });
-  });
-
-  test("keeps store selection inside state", () => {
-    const store = makeStore({ count: 7 });
-    const Counter = createComponent({
-      state: () =>
-        Effect.succeed({
-          count: useStore(store, (snapshot) => snapshot.count),
-        }),
+      deps: [counter.store],
+      state: ({ deps: [store] }) => ({
+        count: useStore(store, (snapshot) => snapshot.count),
+      }),
       ui: ({ state }) => <span>{state.count}</span>,
     });
 
-    render(<Counter />);
+    render(
+      <counter.Store implements={() => ({ count: 7 })}>
+        <Counter />
+      </counter.Store>,
+    );
 
     expect(screen.getByText("7")).toBeInTheDocument();
   });
 
-  test("renders typed state-construction failures explicitly", () => {
-    const Failed = createComponent({
-      deps: Effect.fail("missing-store" as const),
-      state: () => Effect.succeed({ ready: false }),
-      ui: ({ state }) => <span>{String(state.ready)}</span>,
-      onFailure: (error) => <span>{error}</span>,
-    });
-
-    render(<Failed />);
-
-    expect(screen.getByText("missing-store")).toBeInTheDocument();
-  });
-
-  test("allows an explicit defect renderer", () => {
-    const Defect = createComponent({
-      deps: Effect.die("broken-state"),
-      state: () => Effect.succeed({ ready: false }),
-      ui: ({ state }) => <span>{String(state.ready)}</span>,
-      onDefect: (defect) => <span>{String(defect)}</span>,
-    });
-
-    render(<Defect />);
-
-    expect(screen.getByText("broken-state")).toBeInTheDocument();
-  });
-
-  test("rejects asynchronous state construction", () => {
-    const deps = Effect.promise(async () => ({ ready: true }));
-
-    const Async = createComponent({
-      deps,
-      state: () => Effect.succeed({}),
+  test("fails clearly when a declared store has no provider", () => {
+    const counter = createStore("MissingComponentTestCounter")<{
+      count: number;
+    }>();
+    const Counter = createComponent({
+      deps: [counter.store],
       ui: () => null,
     });
 
-    expect(() => render(<Async />)).toThrow(AsyncComponentStateError);
-  });
-
-  test("preserves typed failures through state evaluation", () => {
-    const Failed = createComponent({
-      state: () => Effect.fail("state-failure" as const),
-      ui: () => <span>unreachable</span>,
-      onFailure: (error) => <span>{error}</span>,
-    });
-
-    render(<Failed />);
-
-    expect(screen.getByText("state-failure")).toBeInTheDocument();
+    expect(() => render(<Counter />)).toThrow("Service not found");
   });
 });

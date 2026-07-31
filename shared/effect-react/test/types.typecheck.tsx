@@ -1,9 +1,13 @@
 import type { ComponentType } from "react";
-import { Context, Effect } from "effect";
+import { Effect } from "effect";
 
-import type { CounterState } from "../example/counter";
-import type { ComponentEffect, ReadableStore, StoreRequirement } from "../src";
-import { CounterButton, CounterExample } from "../example/counter";
+import type {
+  Component,
+  ComponentEffect,
+  ComponentWithProps,
+  ReadableStore,
+  StoreRequirement,
+} from "../src";
 import { createComponent, createStore, useStore } from "../src";
 
 type Equal<Left, Right> =
@@ -14,6 +18,7 @@ type Equal<Left, Right> =
     : false;
 
 type Expect<Value extends true> = Value;
+type Requirements<Value> = Effect.Effect.Context<ComponentEffect<Value>>;
 
 declare const dynamicStoreName: string;
 // @ts-expect-error store identity must be one string literal
@@ -23,242 +28,113 @@ declare const unionStoreName: "First" | "Second";
 // @ts-expect-error one declaration cannot represent multiple store identities
 createStore(unionStoreName);
 
-type CounterRequirement = StoreRequirement<"Counter", CounterState>;
-type _CounterButtonRequirement = Expect<
-  Equal<
-    Effect.Effect.Context<ComponentEffect<typeof CounterButton>>,
-    CounterRequirement
-  >
->;
-type _CounterExampleRequirement = Expect<
-  Equal<
-    Effect.Effect.Context<ComponentEffect<typeof CounterExample>>,
-    CounterRequirement
-  >
->;
-
-class NumberService extends Context.Tag("NumberService")<
-  NumberService,
-  number
->() {}
-
-class TextService extends Context.Tag("TextService")<TextService, string>() {}
-
 const Stateless = createComponent<{ label: string }>({
   ui: ({ props }) => {
     props.label satisfies string;
     return null;
   },
 });
-
+Stateless satisfies ComponentWithProps<{ label: string }>;
 Stateless satisfies ComponentType<{ label: string }>;
 
 createComponent({
   ui: (input) => {
-    // @ts-expect-error stateless UI receives props and no state field
+    // @ts-expect-error stateless UI has no state field
     const _state = input.state;
     return null;
   },
 });
 
-const InferredState = createComponent({
-  state: () => Effect.succeed({ count: 1 }),
+const Stateful = createComponent({
+  state: () => ({ count: 1 }),
   ui: ({ state }) => {
     state.count satisfies number;
     return null;
   },
 });
+Stateful satisfies Component;
 
-InferredState satisfies ComponentType;
-
-const requiredDeps = Effect.gen(function* () {
-  const number = yield* NumberService;
-  const text = yield* TextService;
-  return { number, text };
-});
-
-const Required = createComponent({
-  deps: requiredDeps,
-  state: ({ deps }) => Effect.succeed({ label: `${deps.text}:${deps.number}` }),
-  ui: ({ props, state }) => {
-    props satisfies Record<string, never>;
-    state.label satisfies string;
-    return null;
-  },
-});
-
-Required satisfies ComponentType;
-type RequiredEffect = ComponentEffect<typeof Required>;
-type RequiredServices = Effect.Effect.Context<RequiredEffect>;
-type _RequiredServices = Expect<
-  Equal<RequiredServices, NumberService | TextService>
->;
-
-const _StatelessRequired = createComponent({
-  deps: requiredDeps,
-  ui: ({ props }) => {
-    props satisfies Record<string, never>;
-    return null;
-  },
-});
-
-type StatelessRequiredEffect = ComponentEffect<typeof _StatelessRequired>;
-type _StatelessRequiredServices = Expect<
-  Equal<
-    Effect.Effect.Context<StatelessRequiredEffect>,
-    NumberService | TextService
-  >
->;
-
-const Ready = createComponent({
-  deps: requiredDeps.pipe(
-    Effect.provideService(NumberService, 1),
-    Effect.provideService(TextService, "ready"),
-  ),
-  state: ({ deps }) => Effect.succeed({ label: `${deps.text}:${deps.number}` }),
-  ui: ({ state }) => {
-    state.label satisfies string;
-    return null;
-  },
-});
-
-Ready satisfies ComponentType;
-type ReadyEffect = ComponentEffect<typeof Ready>;
-type _ReadyServices = Expect<Equal<Effect.Effect.Context<ReadyEffect>, never>>;
-
-const Failed = createComponent({
-  deps: Effect.fail("typed-failure" as const),
-  state: () => Effect.succeed({ ready: false }),
+createComponent({
+  state: () => ({ ready: true }),
   ui: ({ state }) => {
     state.ready satisfies boolean;
     return null;
   },
-  onFailure: (error) => {
-    error satisfies "typed-failure";
-    return null;
-  },
 });
 
-Failed satisfies ComponentType;
-
-const StateFailed = createComponent({
-  state: () => Effect.fail("state-failure" as const),
-  ui: () => null,
-  onFailure: (error) => {
-    error satisfies "state-failure";
-    return null;
-  },
-});
-
-StateFailed satisfies ComponentType;
-
-createComponent({
-  state: () => Effect.succeed({ ready: true }),
-  // @ts-expect-error views render JSX or null, not arbitrary React nodes
-  ui: () => "business logic leaked into the view",
-});
-
-interface TypedCounterState {
+interface FirstState {
   readonly count: number;
 }
 
-const typedStore = createStore("TypedCounter")<TypedCounterState>();
-const otherTypedStore = createStore("OtherTypedCounter")<TypedCounterState>();
+interface SecondState {
+  readonly label: string;
+}
 
-// @ts-expect-error Effect requirements are exposed as `store`, not `service`
-const _RemovedService = typedStore.service;
+const first = createStore("TypedFirst")<FirstState>();
+const second = createStore("TypedSecond")<SecondState>();
 
-typedStore.store satisfies Context.Tag<
-  StoreRequirement<"TypedCounter", TypedCounterState>,
-  ReadableStore<TypedCounterState>
->;
+// @ts-expect-error createStore exposes a store dependency and provider, not a service
+const _RemovedService = first.service;
+// @ts-expect-error store selection is performed through the shared useStore hook
+const _RemovedHook = first.useStore;
 
-const _StoreConsumer = createComponent({
-  deps: Effect.gen(function* () {
-    const typedStoreHandle = yield* typedStore.store;
-    const otherTypedStoreHandle = yield* otherTypedStore.store;
-    const offset = yield* NumberService;
-    return { offset, otherTypedStoreHandle, typedStoreHandle };
-  }),
-  state: ({ deps }) =>
-    Effect.succeed({
-      count:
-        useStore(deps.typedStoreHandle, (state) => state.count) +
-        useStore(deps.otherTypedStoreHandle, (state) => state.count) +
-        deps.offset,
-    }),
+first.store satisfies {
+  readonly key: string;
+};
+
+const Consumer = createComponent({
+  deps: [first.store, second.store],
+  state: ({ deps: [firstStore, secondStore] }) => {
+    firstStore satisfies ReadableStore<FirstState>;
+    secondStore satisfies ReadableStore<SecondState>;
+    return {
+      count: useStore(firstStore, (state) => state.count),
+      label: useStore(secondStore, (state) => state.label),
+    };
+  },
   ui: ({ state }) => {
     state.count satisfies number;
+    state.label satisfies string;
     return null;
   },
 });
 
-type StoreConsumerEffect = ComponentEffect<typeof _StoreConsumer>;
-type _StoreRequirement = Expect<
-  Equal<
-    Effect.Effect.Context<StoreConsumerEffect>,
-    | NumberService
-    | StoreRequirement<"OtherTypedCounter", TypedCounterState>
-    | StoreRequirement<"TypedCounter", TypedCounterState>
-  >
+type FirstRequirement = StoreRequirement<"TypedFirst", FirstState>;
+type SecondRequirement = StoreRequirement<"TypedSecond", SecondState>;
+
+Consumer satisfies Component<FirstRequirement | SecondRequirement>;
+type _ConsumerRequirements = Expect<
+  Equal<Requirements<typeof Consumer>, FirstRequirement | SecondRequirement>
 >;
 
-const _NestedConsumer = createComponent({
-  deps: Effect.gen(function* () {
-    const StoreConsumer = yield* _StoreConsumer;
-    return { StoreConsumer };
-  }),
-  state: ({ deps }) => Effect.succeed({ StoreConsumer: deps.StoreConsumer }),
-  ui: ({ state }) => {
-    state.StoreConsumer satisfies ComponentType;
-    return null;
-  },
-});
-
-type NestedConsumerEffect = ComponentEffect<typeof _NestedConsumer>;
-type _NestedRequirement = Expect<
-  Equal<
-    Effect.Effect.Context<NestedConsumerEffect>,
-    | NumberService
-    | StoreRequirement<"OtherTypedCounter", TypedCounterState>
-    | StoreRequirement<"TypedCounter", TypedCounterState>
-  >
->;
-
-const _ProviderBoundary = createComponent({
-  state: () => Effect.succeed({}),
-  ui: () => null,
-});
-const _ProvidedConsumer = _ProviderBoundary.__effectReactProvidedRequirements(
-  [typedStore.Store],
-  _NestedConsumer,
+const Boundary = createComponent({ ui: () => null });
+const _FirstProvided = Boundary.__effectReactProvidedRequirements(
+  [first.Store],
+  Consumer,
+);
+const _BothProvided = Boundary.__effectReactProvidedRequirements(
+  [first.Store, second.Store],
+  Consumer,
 );
 
-type ProvidedConsumerEffect = ComponentEffect<typeof _ProvidedConsumer>;
-type _ProvidedRequirement = Expect<
-  Equal<
-    Effect.Effect.Context<ProvidedConsumerEffect>,
-    NumberService | StoreRequirement<"OtherTypedCounter", TypedCounterState>
-  >
+type _FirstProvidedRequirements = Expect<
+  Equal<Requirements<typeof _FirstProvided>, SecondRequirement>
+>;
+type _BothProvidedRequirements = Expect<
+  Equal<Requirements<typeof _BothProvided>, never>
 >;
 
-const _OuterConsumer = createComponent({
-  deps: Effect.gen(function* () {
-    const ProvidedConsumer = yield* _ProvidedConsumer;
-    return { ProvidedConsumer };
-  }),
-  state: ({ deps }) =>
-    Effect.succeed({ ProvidedConsumer: deps.ProvidedConsumer }),
+const effectAction = Effect.succeed("done");
+createComponent({
+  state: () => ({ effectAction }),
   ui: ({ state }) => {
-    state.ProvidedConsumer satisfies ComponentType;
+    state.effectAction satisfies Effect.Effect<string>;
     return null;
   },
 });
 
-type OuterConsumerEffect = ComponentEffect<typeof _OuterConsumer>;
-type _OuterRequirement = Expect<
-  Equal<
-    Effect.Effect.Context<OuterConsumerEffect>,
-    NumberService | StoreRequirement<"OtherTypedCounter", TypedCounterState>
-  >
->;
+createComponent({
+  // @ts-expect-error dependencies must be stores created by createStore
+  deps: [Effect.succeed("not-a-store")],
+  ui: () => null,
+});

@@ -1,5 +1,4 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { Effect } from "effect";
 import { Cpu, Server } from "lucide-react";
 
 import { createComponent, useStore } from "@night-shift/effect-react";
@@ -19,13 +18,10 @@ import { Page } from "../features/control-plane/page";
 
 const HostsPage = createComponent({
   displayName: "HostsPage",
-  deps: Effect.gen(function* () {
-    return { store: yield* controlPlane.store };
+  deps: [controlPlane.store],
+  state: ({ deps: [store] }) => ({
+    hosts: useStore(store, (state) => state.hosts),
   }),
-  state: ({ deps }) =>
-    Effect.succeed({
-      hosts: useStore(deps.store, (state) => state.hosts),
-    }),
   ui: ({ state }) => (
     <Page
       description="Execution machines enrolled with the control plane."

@@ -12,6 +12,7 @@ type StoreProps<State extends object> = {
 };
 
 export declare const StoreRequirementTypeId: unique symbol;
+export declare const StoreDependencyTypeId: unique symbol;
 export declare const StoreProviderTypeId: unique symbol;
 declare const StoreImplementationTypeId: unique symbol;
 
@@ -29,6 +30,16 @@ export interface StoreProvider<Name extends string, State extends object> {
     state: State,
   ) => StoreImplementation<State>;
   readonly [StoreProviderTypeId]: StoreRequirement<Name, State>;
+}
+
+export interface StoreDependency<
+  Name extends string,
+  State extends object,
+> extends Context.Tag<StoreRequirement<Name, State>, ReadableStore<State>> {
+  readonly [StoreDependencyTypeId]: {
+    readonly name: Name;
+    readonly state: State;
+  };
 }
 
 interface StoreImplementation<State extends object> {
@@ -58,7 +69,10 @@ export function createStore<const Name extends string>(name: StoreName<Name>) {
     const store = Context.GenericTag<
       StoreRequirement<Name, State>,
       ReadableStore<State>
-    >(`@night-shift/effect-react/store/${name}`);
+    >(`@night-shift/effect-react/store/${name}`) as StoreDependency<
+      Name,
+      State
+    >;
 
     function Store({
       children,

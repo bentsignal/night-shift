@@ -1,14 +1,12 @@
 import { createFileRoute } from "@tanstack/react-router";
 
+import { createComponent } from "@night-shift/effect-react";
+
 import { NewRunForm } from "../features/control-plane/new-run-form";
 import { Page } from "../features/control-plane/page";
 
-export const Route = createFileRoute("/_app/new")({
-  component: NewRunPage,
-});
-
-function NewRunPage() {
-  return (
+const NewRunPage = createComponent({
+  ui: () => (
     <Page
       description="Queue work now. Convex will hold it until a host is ready."
       size="medium"
@@ -16,5 +14,9 @@ function NewRunPage() {
     >
       <NewRunForm />
     </Page>
-  );
-}
+  ),
+});
+
+export const Route = createFileRoute("/_app/new")({
+  component: NewRunPage,
+});

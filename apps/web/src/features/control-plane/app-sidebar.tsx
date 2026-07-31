@@ -1,6 +1,5 @@
 import { useEffect } from "react";
 import { useRouterState } from "@tanstack/react-router";
-import { Effect } from "effect";
 import {
   Bot,
   CircleDot,
@@ -40,14 +39,12 @@ const navigation = [
 
 export const AppSidebar = createComponent({
   displayName: "AppSidebar",
-  deps: Effect.gen(function* () {
-    return { store: yield* controlPlane.store };
-  }),
+  deps: [controlPlane.store],
 
-  state: ({ deps }) => {
-    const authorityState = useStore(deps.store, (state) => state.authority);
-    const hosts = useStore(deps.store, (state) => state.hosts);
-    const runs = useStore(deps.store, (state) => state.runs);
+  state: ({ deps: [store] }) => {
+    const authorityState = useStore(store, (state) => state.authority);
+    const hosts = useStore(store, (state) => state.hosts);
+    const runs = useStore(store, (state) => state.runs);
     const { isMobile, setOpenMobile } = useSidebar();
     const pathname = useRouterState({
       select: (state) => state.location.pathname,
@@ -65,7 +62,7 @@ export const AppSidebar = createComponent({
       if (isMobile) setOpenMobile(false);
     }, [isMobile, pathname, setOpenMobile]);
 
-    return Effect.succeed({ authority, capacity, pathname, runs });
+    return { authority, capacity, pathname, runs };
   },
   ui: ({ state }) => (
     <Sidebar collapsible="icon">

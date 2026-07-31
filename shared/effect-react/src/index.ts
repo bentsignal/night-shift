@@ -1,14 +1,15 @@
 export {
-  AsyncComponentStateError,
+  type Component,
   createComponent,
-  type ComponentDefinition,
   type ComponentEffect,
   type ComponentState,
-  type EffectComponent,
+  type ComponentWithProps,
   type EffectReactAnalysisRequired,
+  type ResolvedDependencies,
 } from "./create-component";
 export {
   createStore,
+  type StoreDependency,
   type StoreProvider,
   type StoreRequirement,
 } from "./provider-store";

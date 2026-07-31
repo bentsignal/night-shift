@@ -10,28 +10,23 @@ describe("analyzeEffectReact", () => {
           fileName: "/project/counter.tsx",
           source: `
             import { createComponent, createStore } from "@night-shift/effect-react";
-            import { Effect } from "effect";
-
             const counter = createStore("Counter")<{
               count: number;
             }>();
 
             const Button = createComponent({
-              deps: Effect.gen(function* () {
-                yield* counter.store;
-                return {};
-              }),
-              state: () => Effect.succeed({}),
+              deps: [counter.store],
+              state: () => ({}),
               ui: () => <button />,
             });
 
             const Row = createComponent({
-              state: () => Effect.succeed({}),
+              state: () => ({}),
               ui: () => <Button />,
             });
 
             const Panel = createComponent({
-              state: () => Effect.succeed({}),
+              state: () => ({}),
               ui: () => (
                 <counter.Store implements={() => ({ count: 0 })}>
                   <Row />
@@ -62,23 +57,17 @@ describe("analyzeEffectReact", () => {
           fileName: "/project/panel.tsx",
           source: `
             import { createComponent, createStore } from "@night-shift/effect-react";
-            import { Effect } from "effect";
-
             const session = createStore("Session")<{ id: string }>();
             const theme = createStore("Theme")<{ dark: boolean }>();
 
             const Leaf = createComponent({
-              deps: Effect.gen(function* () {
-                yield* session.store;
-                yield* theme.store;
-                return {};
-              }),
-              state: () => Effect.succeed({}),
+              deps: [session.store, theme.store],
+              state: () => ({}),
               ui: () => <span />,
             });
 
             const Panel = createComponent({
-              state: () => Effect.succeed({}),
+              state: () => ({}),
               ui: () => (
                 <session.Store implements={() => ({ id: "one" })}>
                   <Leaf />
@@ -112,23 +101,15 @@ describe("analyzeEffectReact", () => {
           fileName: "/project/scoped.tsx",
           source: `
             import { createComponent, createStore } from "@night-shift/effect-react";
-            import { Effect } from "effect";
-
             const counter = createStore("Counter")<{ count: number }>();
             const CounterValue = createComponent({
-              deps: Effect.gen(function* () {
-                yield* counter.store;
-                return {};
-              }),
-              state: () => Effect.succeed({}),
+              deps: [counter.store],
+              state: () => ({}),
               ui: () => <output />,
             });
             const DirectConsumer = createComponent({
-              deps: Effect.gen(function* () {
-                yield* counter.store;
-                return {};
-              }),
-              state: () => Effect.succeed({}),
+              deps: [counter.store],
+              state: () => ({}),
               ui: () => (
                 <counter.Store implements={() => ({ count: 0 })}>
                   <CounterValue />
@@ -136,7 +117,7 @@ describe("analyzeEffectReact", () => {
               ),
             });
             const Mixed = createComponent({
-              state: () => Effect.succeed({}),
+              state: () => ({}),
               ui: () => (
                 <>
                   <counter.Store implements={() => ({ count: 0 })}>
@@ -162,15 +143,10 @@ describe("analyzeEffectReact", () => {
           fileName: "/project/root.tsx",
           source: `
             import { createComponent, createStore } from "@night-shift/effect-react";
-            import { Effect } from "effect";
-
             const auth = createStore("Auth")<{ userId: string }>();
             const Protected = createComponent({
-              deps: Effect.gen(function* () {
-                yield* auth.store;
-                return {};
-              }),
-              state: () => Effect.succeed({}),
+              deps: [auth.store],
+              state: () => ({}),
               ui: () => <main />,
             });
 
@@ -196,19 +172,14 @@ describe("analyzeEffectReact", () => {
           fileName: "/project/cycle.tsx",
           source: `
             import { createComponent, createStore } from "@night-shift/effect-react";
-            import { Effect } from "effect";
-
             const clock = createStore("Clock")<{ now: number }>();
             const A = createComponent({
-              deps: Effect.gen(function* () {
-                yield* clock.store;
-                return {};
-              }),
-              state: () => Effect.succeed({}),
+              deps: [clock.store],
+              state: () => ({}),
               ui: () => <B />,
             });
             const B = createComponent({
-              state: () => Effect.succeed({}),
+              state: () => ({}),
               ui: () => <A />,
             });
           `,
@@ -240,15 +211,11 @@ describe("analyzeEffectReact", () => {
           fileName: "/project/button.tsx",
           source: `
             import { createComponent } from "@night-shift/effect-react";
-            import { Effect } from "effect";
             import { auth as authentication } from "./stores";
 
             export const Button = createComponent({
-              deps: Effect.gen(function* () {
-                yield* authentication.store;
-                return {};
-              }),
-              state: () => Effect.succeed({}),
+              deps: [authentication.store],
+              state: () => ({}),
               ui: () => <button />,
             });
           `,
@@ -257,11 +224,10 @@ describe("analyzeEffectReact", () => {
           fileName: "/project/panel.tsx",
           source: `
             import { createComponent } from "@night-shift/effect-react";
-            import { Effect } from "effect";
             import { Button as Action } from "./button";
 
             export const Panel = createComponent({
-              state: () => Effect.succeed({}),
+              state: () => ({}),
               ui: () => <Action />,
             });
           `,
@@ -298,14 +264,12 @@ describe("lowerEffectReactSources", () => {
         fileName: "/project/example.tsx",
         source: `
           import { createComponent } from "@night-shift/effect-react";
-          import { Effect } from "effect";
-
           const Child = createComponent({
-            state: () => Effect.succeed({}),
+            state: () => ({}),
             ui: () => null,
           });
           const Parent = createComponent({
-            state: () => Effect.succeed({}),
+            state: () => ({}),
             ui: () => <Child />,
           });
         `,
@@ -331,19 +295,14 @@ describe("lowerEffectReactSources", () => {
         fileName: "/project/provider.tsx",
         source: `
           import { createComponent, createStore } from "@night-shift/effect-react";
-          import { Effect } from "effect";
-
           const counter = createStore("Counter")<{ count: number }>();
           const Child = createComponent({
-            deps: Effect.gen(function* () {
-              yield* counter.store;
-              return {};
-            }),
-              state: () => Effect.succeed({}),
+            deps: [counter.store],
+            state: () => ({}),
             ui: () => null,
           });
           const Parent = createComponent({
-            state: () => Effect.succeed({}),
+            state: () => ({}),
             ui: () => (
               <counter.Store implements={() => ({ count: 0 })}>
                 <Child />

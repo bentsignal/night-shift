@@ -62,9 +62,7 @@ describe("createEffectReactLanguageService", () => {
         labCounterFileName,
         "CounterInstrument",
       ),
-    ).toBe(
-      "const CounterInstrument: EffectComponent<Record<string, never>, never, never>",
-    );
+    ).toBe("const CounterInstrument: Component<never>");
 
     project.updateFile(labCounterFileName, withoutProvider);
     expect(
@@ -75,7 +73,7 @@ describe("createEffectReactLanguageService", () => {
         "CounterInstrument",
       ),
     ).toBe(
-      'const CounterInstrument: EffectComponent<Record<string, never>, never, StoreRequirement<"LabCounter", CounterState>>',
+      'const CounterInstrument: Component<StoreRequirement<"LabCounter", CounterState>>',
     );
   }, 15_000);
 
@@ -97,9 +95,7 @@ describe("createEffectReactLanguageService", () => {
         labFrameFileName,
         "WorkspaceFrame",
       ),
-    ).toBe(
-      "const WorkspaceFrame: EffectComponent<Record<string, never>, never, never>",
-    );
+    ).toBe("const WorkspaceFrame: Component<never>");
 
     project.updateFile(labCounterFileName, withoutProvider);
     expect(
@@ -110,7 +106,7 @@ describe("createEffectReactLanguageService", () => {
         "WorkspaceFrame",
       ),
     ).toBe(
-      'const WorkspaceFrame: EffectComponent<Record<string, never>, never, StoreRequirement<"LabCounter", CounterState>>',
+      'const WorkspaceFrame: Component<StoreRequirement<"LabCounter", CounterState>>',
     );
 
     project.updateFile(labCounterFileName, withProvider);
@@ -121,9 +117,7 @@ describe("createEffectReactLanguageService", () => {
         labFrameFileName,
         "WorkspaceFrame",
       ),
-    ).toBe(
-      "const WorkspaceFrame: EffectComponent<Record<string, never>, never, never>",
-    );
+    ).toBe("const WorkspaceFrame: Component<never>");
   }, 15_000);
 
   it("discovers a lowercase stateless component added after project load", () => {
@@ -153,7 +147,7 @@ const testComponent = createComponent({
         "testComponent",
       ),
     ).toBe(
-      'const testComponent: EffectComponent<Record<string, never>, never, StoreRequirement<"LabCounter", CounterState>>',
+      'const testComponent: Component<StoreRequirement<"LabCounter", CounterState>>',
     );
   }, 15_000);
 
@@ -186,18 +180,16 @@ const testComponent = createComponent({
     expect(
       quickInfoOf(service, source, multipleStoresFileName, "UnprovidedPair"),
     ).toBe(
-      'const UnprovidedPair: EffectComponent<Record<string, never>, never, StoreRequirement<"First", FirstState> | StoreRequirement<"Second", SecondState>>',
+      'const UnprovidedPair: Component<StoreRequirement<"First", FirstState> | StoreRequirement<"Second", SecondState>>',
     );
     expect(
       quickInfoOf(service, source, multipleStoresFileName, "FirstProvidedPair"),
     ).toBe(
-      'const FirstProvidedPair: EffectComponent<Record<string, never>, never, StoreRequirement<"Second", SecondState>>',
+      'const FirstProvidedPair: Component<StoreRequirement<"Second", SecondState>>',
     );
     expect(
       quickInfoOf(service, source, multipleStoresFileName, "BothProvidedPair"),
-    ).toBe(
-      "const BothProvidedPair: EffectComponent<Record<string, never>, never, never>",
-    );
+    ).toBe("const BothProvidedPair: Component<never>");
   }, 15_000);
 });
 

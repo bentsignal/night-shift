@@ -1,8 +1,7 @@
 import { act, render, renderHook, screen } from "@testing-library/react";
-import { Effect } from "effect";
 import { describe, expect, it, vi } from "vitest";
 
-import { makeStore } from "@night-shift/effect-react";
+import { createComponent, makeStore } from "@night-shift/effect-react";
 
 import type { ControlPlaneState } from "../../control-plane/client";
 import type {
@@ -10,15 +9,9 @@ import type {
   ControlPlaneSnapshot,
   SubmitWorkInput,
 } from "../../control-plane/types";
-import { controlPlane, ControlPlaneProvider } from "../../control-plane/client";
+import { controlPlane } from "../../control-plane/client";
 import { NewRunForm } from "./new-run-form";
-import {
-  createExecutionPreferencesStore,
-  newRunFormDeps,
-  NewRunNavigation,
-  NewRunPreferences,
-  useNewRunFormState,
-} from "./new-run-form-state";
+import { useNewRunFormState } from "./new-run-form-state";
 
 const router = vi.hoisted(() => ({
   navigate: vi.fn().mockResolvedValue(undefined),
@@ -44,26 +37,34 @@ function client(submitWork = vi.fn<ControlPlaneClient["submitWork"]>()) {
   } satisfies ControlPlaneClient;
 }
 
-function testControlPlaneStore(
+function testControlPlaneState(
   submitWork = vi.fn<ControlPlaneClient["submitWork"]>(),
 ) {
   const testClient = client(submitWork);
-  const state = {
+  return {
     ...testClient.getSnapshot(),
     commandRun: testClient.commandRun,
     submitWork: testClient.submitWork,
   } satisfies ControlPlaneState;
-
-  return makeStore(state);
 }
+
+function testControlPlaneStore(
+  submitWork = vi.fn<ControlPlaneClient["submitWork"]>(),
+) {
+  return makeStore(testControlPlaneState(submitWork));
+}
+
+const NewRunFormHarness = createComponent({
+  ui: () => (
+    <controlPlane.Store implements={() => testControlPlaneState()}>
+      <NewRunForm />
+    </controlPlane.Store>
+  ),
+});
 
 describe("NewRunForm", () => {
   it("exposes the state/ui contract as the rendered form", () => {
-    render(
-      <ControlPlaneProvider client={client()}>
-        <NewRunForm />
-      </ControlPlaneProvider>,
-    );
+    render(<NewRunFormHarness />);
 
     expect(screen.getByLabelText("What should the agent do?")).toBeTruthy();
     expect(screen.getByLabelText("Project")).toBeTruthy();
@@ -74,22 +75,8 @@ describe("NewRunForm", () => {
     const submitWork = vi
       .fn<ControlPlaneClient["submitWork"]>()
       .mockResolvedValue("run_effect");
-    const deps = Effect.runSync(
-      newRunFormDeps.pipe(
-        Effect.provideService(
-          controlPlane.store,
-          testControlPlaneStore(submitWork),
-        ),
-        Effect.provideService(
-          NewRunPreferences,
-          createExecutionPreferencesStore,
-        ),
-        Effect.provideService(NewRunNavigation, () => router.navigate),
-      ),
-    );
-    const { result } = renderHook(() =>
-      Effect.runSync(useNewRunFormState({ deps })),
-    );
+    const deps = [testControlPlaneStore(submitWork)] as const;
+    const { result } = renderHook(() => useNewRunFormState({ deps }));
 
     act(() => {
       result.current.selectProvider("anthropic");

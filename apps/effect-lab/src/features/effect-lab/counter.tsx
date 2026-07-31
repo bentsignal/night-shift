@@ -1,6 +1,5 @@
 import type { Dispatch, SetStateAction } from "react";
 import { useState } from "react";
-import { Effect } from "effect";
 
 import {
   createComponent,
@@ -22,14 +21,11 @@ function useCounterImplementation() {
 
 export const CounterReadout = createComponent({
   displayName: "CounterReadout",
-  deps: Effect.gen(function* () {
-    return { store: yield* counter.store };
-  }),
+  deps: [counter.store],
 
-  state: ({ deps }) =>
-    Effect.succeed({
-      count: useStore(deps.store, (state) => state.count),
-    }),
+  state: ({ deps: [store] }) => ({
+    count: useStore(store, (state) => state.count),
+  }),
 
   ui: ({ state }) => (
     <output aria-live="polite" className="counter-value">
@@ -40,17 +36,15 @@ export const CounterReadout = createComponent({
 
 export const CounterControls = createComponent({
   displayName: "CounterControls",
-  deps: Effect.gen(function* () {
-    return { store: yield* counter.store };
-  }),
+  deps: [counter.store],
 
-  state: ({ deps }) => {
-    const setCount = useStore(deps.store, (state) => state.setCount);
-    return Effect.succeed({
+  state: ({ deps: [store] }) => {
+    const setCount = useStore(store, (state) => state.setCount);
+    return {
       decrement: () => setCount((current) => current - 1),
       increment: () => setCount((current) => current + 1),
       reset: () => setCount(0),
-    });
+    };
   },
 
   ui: ({ state }) => (
@@ -84,7 +78,6 @@ export const CounterControls = createComponent({
  */
 export const CounterInstrument = createComponent({
   displayName: "CounterInstrument",
-  state: () => Effect.succeed({}),
   ui: () => (
     <counter.Store implements={useCounterImplementation}>
       <section aria-labelledby="counter-title" className="instrument">

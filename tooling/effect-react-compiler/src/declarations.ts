@@ -82,14 +82,9 @@ export function readComponentDefinition({
   const jsxChildReferences = ui
     ? collectJsxReferences({ expression: ui, fileName, sourceFile })
     : [];
-  const childReferences = [
-    ...(deps
-      ? collectYieldedComponents({ expression: deps, fileName, sourceFile })
-      : []),
-    ...jsxChildReferences,
-  ];
+  const childReferences = jsxChildReferences;
   const storeReferences = deps
-    ? collectYieldedStores({ expression: deps, fileName, sourceFile })
+    ? collectStoreDependencies({ expression: deps, fileName, sourceFile })
     : [];
 
   return {
@@ -143,7 +138,7 @@ export function collectOrdinaryBoundaries({
   return boundaries;
 }
 
-function collectYieldedStores({
+function collectStoreDependencies({
   expression,
   fileName,
   sourceFile,
@@ -156,12 +151,9 @@ function collectYieldedStores({
 
   visit(expression, (node) => {
     if (
-      !ts.isYieldExpression(node) ||
-      !node.asteriskToken ||
-      !node.expression ||
-      !ts.isPropertyAccessExpression(node.expression) ||
-      node.expression.name.text !== "store" ||
-      !ts.isIdentifier(node.expression.expression)
+      !ts.isPropertyAccessExpression(node) ||
+      node.name.text !== "store" ||
+      !ts.isIdentifier(node.expression)
     ) {
       return;
     }
@@ -169,44 +161,10 @@ function collectYieldedStores({
     references.push(
       makeReference({
         fileName,
-        name: node.expression.expression,
-        sourceFile,
-      }),
-    );
-  });
-
-  return references;
-}
-
-function collectYieldedComponents({
-  expression,
-  fileName,
-  sourceFile,
-}: {
-  readonly expression: ts.Expression;
-  readonly fileName: string;
-  readonly sourceFile: ts.SourceFile;
-}) {
-  const references = Array<ChildReference>();
-
-  visit(expression, (node) => {
-    if (
-      !ts.isYieldExpression(node) ||
-      !node.asteriskToken ||
-      !node.expression ||
-      !ts.isIdentifier(node.expression)
-    ) {
-      return;
-    }
-
-    references.push({
-      component: makeReference({
-        fileName,
         name: node.expression,
         sourceFile,
       }),
-      providers: [],
-    });
+    );
   });
 
   return references;

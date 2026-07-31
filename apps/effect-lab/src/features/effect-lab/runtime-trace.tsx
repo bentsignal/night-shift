@@ -1,4 +1,3 @@
-import { Effect } from "effect";
 import analysis from "virtual:effect-react-analysis";
 
 import { createComponent } from "@night-shift/effect-react";
@@ -22,11 +21,10 @@ const nodes = root
 
 export const RuntimeTrace = createComponent({
   displayName: "RuntimeTrace",
-  state: () =>
-    Effect.succeed({
-      nodes,
-      unresolved: root?.requirements.length ?? analysis.diagnostics.length,
-    }),
+  state: () => ({
+    nodes,
+    unresolved: root?.requirements.length ?? analysis.diagnostics.length,
+  }),
   ui: ({ state }) => (
     <aside aria-labelledby="trace-title" className="trace">
       <div className="trace-heading">

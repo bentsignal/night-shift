@@ -1,6 +1,5 @@
 import type { Dispatch, SetStateAction } from "react";
 import { useEffect, useState } from "react";
-import { Effect } from "effect";
 
 import { createComponent, createStore, useStore } from "../src";
 
@@ -19,23 +18,22 @@ export function useCounterImplementation() {
 export const CounterButton = createComponent({
   displayName: "CounterButton",
 
-  deps: Effect.gen(function* () {
-    return { store: yield* counter.store };
-  }),
+  deps: [counter.store],
 
   state: ({ deps }) => {
-    const count = useStore(deps.store, (state) => state.count);
-    const setCount = useStore(deps.store, (state) => state.setCount);
+    const [store] = deps;
+    const count = useStore(store, (state) => state.count);
+    const setCount = useStore(store, (state) => state.setCount);
 
     // eslint-disable-next-line no-restricted-syntax -- Effect components still support ordinary React hooks when they are the right tool.
     useEffect(() => {
       console.log("test effect");
     }, []);
 
-    return Effect.succeed({
+    return {
       count,
       increment: () => setCount((current) => current + 1),
-    });
+    };
   },
 
   ui: ({ state }) => (
@@ -46,8 +44,6 @@ export const CounterButton = createComponent({
 });
 
 export const CounterRow = createComponent({
-  state: () => Effect.succeed({}),
-
   ui: () => (
     <div>
       <span>Nested counter</span>
@@ -57,8 +53,6 @@ export const CounterRow = createComponent({
 });
 
 export const CounterPanel = createComponent({
-  state: () => Effect.succeed({}),
-
   ui: () => (
     // <counter.Store implements={useCounterImplementation}>
     <section>
@@ -70,8 +64,6 @@ export const CounterPanel = createComponent({
 });
 
 export const CounterExample = createComponent({
-  state: () => Effect.succeed({}),
-
   ui: () => (
     <main>
       <CounterPanel />

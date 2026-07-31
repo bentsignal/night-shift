@@ -27,7 +27,6 @@ describe("React Compiler lowering", () => {
   it("compiles component state, ui, and provider hooks", async () => {
     const source = `
       import { useState } from "react";
-      import { Effect } from "effect";
       import {
         createComponent,
         createStore,
@@ -37,12 +36,9 @@ describe("React Compiler lowering", () => {
       const counter = createStore("Counter")<{ count: number }>();
 
       const CounterValue = createComponent({
-        deps: Effect.gen(function* () {
-          const store = yield* counter.store;
-          return { store };
-        }),
-        state: ({ deps }) => Effect.succeed({
-          count: useStore(deps.store, (state) => state.count),
+        deps: [counter.store],
+        state: ({ deps: [store] }) => ({
+          count: useStore(store, (state) => state.count),
         }),
         ui: ({ state }) => <output>{state.count}</output>,
       });
@@ -53,7 +49,6 @@ describe("React Compiler lowering", () => {
       }
 
       const CounterPanel = createComponent({
-        state: () => Effect.succeed({}),
         ui: () => (
           <counter.Store implements={useCounterImplementation}>
             <CounterValue />
@@ -75,7 +70,7 @@ describe("React Compiler lowering", () => {
     expect(result.code.match(/\b_c\(/gu)).toHaveLength(4);
     expect(
       result.events.filter((event) => event.kind === "CompileSuccess"),
-    ).toHaveLength(5);
+    ).toHaveLength(4);
     expect(
       result.events.some(
         (event) =>
@@ -87,16 +82,17 @@ describe("React Compiler lowering", () => {
   it("compiles a named state callback without hook naming conventions", async () => {
     const source = `
       import { useState } from "react";
-      import { Effect } from "effect";
-      import { createComponent } from "@night-shift/effect-react";
+      import { createComponent, createStore } from "@night-shift/effect-react";
 
-      function formState({ deps }) {
+      const navigation = createStore("Navigation")<{ ready: boolean }>();
+
+      function formState({ deps: [navigationStore] }) {
         const [submitting] = useState(false);
-        return Effect.succeed({ navigate: deps.navigate, submitting });
+        return { navigationStore, submitting };
       }
 
       export const Form = createComponent({
-        deps: Effect.succeed({ navigate: () => {} }),
+        deps: [navigation.store],
         state: formState,
         ui: ({ state }) => <output>{String(state.submitting)}</output>,
       });
@@ -104,7 +100,7 @@ describe("React Compiler lowering", () => {
     const result = await compile(source, "/project/form-state.tsx");
 
     expect(result.lowered).toContain(
-      'function formState({ deps }) {\n"use memo";',
+      'function formState({ deps: [navigationStore] }) {\n"use memo";',
     );
     expect(result.code).toContain("_c(");
     expect(
