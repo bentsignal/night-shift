@@ -8,7 +8,7 @@ import type {
   ReadableStore,
   StoreRequirement,
 } from "../src";
-import { createComponent, createStore, useStore } from "../src";
+import { createComponent, createStore, defineProps, useStore } from "../src";
 
 type Equal<Left, Right> =
   (<Value>() => Value extends Left ? 1 : 2) extends <
@@ -21,7 +21,8 @@ type Expect<Value extends true> = Value;
 type Requirements<Value> = Effect.Effect.Context<ComponentEffect<Value>>;
 
 const Propful = createComponent({
-  state: ({ props }: { props: { label: string } }) => ({
+  props: defineProps<{ label: string }>(),
+  state: ({ props }) => ({
     label: props.label,
   }),
   ui: ({ state }) => {
@@ -38,7 +39,8 @@ const _MissingProp = <Propful />;
 const _ExtraProp = <Propful extra label="Ready" />;
 
 createComponent({
-  state: ({ props }: { props: { label: string } }) => ({
+  props: defineProps<{ label: string }>(),
+  state: ({ props }) => ({
     label: props.label,
   }),
   ui: (input) => {
@@ -48,8 +50,9 @@ createComponent({
   },
 });
 
-// @ts-expect-error components with props must derive render state
-createComponent<{ label: string }>({
+createComponent({
+  // @ts-expect-error components with props must derive render state
+  props: defineProps<{ label: string }>(),
   ui: () => null,
 });
 
@@ -138,6 +141,32 @@ type SecondRequirement = StoreRequirement<"Second", SecondState>;
 Consumer satisfies Component<FirstRequirement | SecondRequirement>;
 type _ConsumerRequirements = Expect<
   Equal<Requirements<typeof Consumer>, FirstRequirement | SecondRequirement>
+>;
+
+const PropfulConsumer = createComponent({
+  props: defineProps<{ readonly multiplier: number }>(),
+  deps: [First, Second],
+  state: ({ deps, props }) => ({
+    count: useStore(deps.first, (state) => state.count) * props.multiplier,
+    label: useStore(deps.second, (state) => state.label),
+  }),
+  ui: ({ state }) => {
+    state.count satisfies number;
+    state.label satisfies string;
+    return null;
+  },
+});
+
+PropfulConsumer satisfies ComponentWithProps<
+  { readonly multiplier: number },
+  FirstRequirement | SecondRequirement
+>;
+const _PropfulConsumerUsage = <PropfulConsumer multiplier={2} />;
+type _PropfulConsumerRequirements = Expect<
+  Equal<
+    Requirements<typeof PropfulConsumer>,
+    FirstRequirement | SecondRequirement
+  >
 >;
 
 const Boundary = createComponent({ ui: () => null });

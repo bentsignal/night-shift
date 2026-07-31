@@ -2,7 +2,7 @@ import type { ReactNode } from "react";
 import { useEffect, useState } from "react";
 import { Outlet, useRouterState } from "@tanstack/react-router";
 
-import { createComponent } from "@night-shift/effect-react";
+import { createComponent, defineProps } from "@night-shift/effect-react";
 import {
   SidebarInset,
   SidebarProvider,
@@ -71,14 +71,11 @@ function ConnectedControlPlane({ client }: { client: ControlPlaneClient }) {
 }
 
 const ApplicationFrame = createComponent({
-  state: ({
-    props,
-  }: {
-    props: {
-      readonly children: ReactNode;
-      readonly implementation: ControlPlaneState;
-    };
-  }) => {
+  props: defineProps<{
+    readonly children: ReactNode;
+    readonly implementation: ControlPlaneState;
+  }>(),
+  state: ({ props }) => {
     const pathname = useRouterState({
       select: (state) => state.location.pathname,
     });

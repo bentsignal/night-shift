@@ -4,8 +4,7 @@ import { renderToString } from "react-dom/server";
 import { act, render, screen } from "@testing-library/react";
 import { describe, expect, test } from "vitest";
 
-import type { ResolvedDependencies } from "../src";
-import { createComponent, createStore, useStore } from "../src";
+import { createComponent, createStore, defineProps, useStore } from "../src";
 
 describe("provider stores", () => {
   test("gives same-shaped stores distinct identities", () => {
@@ -75,14 +74,9 @@ describe("provider stores", () => {
   test("isolates nested provider implementations", () => {
     const Example = createStore<{ value: string }>();
     const Value = createComponent({
+      props: defineProps<{ label: string }>(),
       deps: [Example],
-      state: ({
-        deps,
-        props,
-      }: {
-        deps: ResolvedDependencies<[typeof Example]>;
-        props: { label: string };
-      }) => ({
+      state: ({ deps, props }) => ({
         label: props.label,
         value: useStore(deps.store!, (state) => state.value),
       }),

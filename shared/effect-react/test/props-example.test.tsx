@@ -1,11 +1,11 @@
 import { render, screen } from "@testing-library/react";
 import { describe, expect, test } from "vitest";
 
-import { Greeting } from "../example/props";
+import { PropsExample } from "../example/props";
 
 describe("props example", () => {
-  test("derives UI state from component props", () => {
-    render(<Greeting name="Ada" punctuation="!" />);
+  test("derives UI state from component props and store dependencies", () => {
+    render(<PropsExample />);
 
     expect(screen.getByText("Hello, Ada!")).toBeInTheDocument();
   });

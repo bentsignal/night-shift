@@ -1,17 +1,34 @@
-import { createComponent } from "../src";
+import { createComponent, createStore, defineProps, useStore } from "../src";
 
-export interface GreetingProps {
-  readonly name: string;
-  readonly punctuation?: "!" | ".";
+interface GreetingStyleState {
+  readonly salutation: string;
 }
 
+export const GreetingStyle = createStore<GreetingStyleState>();
+
 export const Greeting = createComponent({
-  state: ({ props }: { props: GreetingProps }) => ({
-    message: `Hello, ${props.name}${props.punctuation ?? "."}`,
-  }),
+  props: defineProps<{
+    readonly name: string;
+    readonly punctuation?: "!" | ".";
+  }>(),
+  deps: [GreetingStyle],
+  state: ({ deps, props }) => {
+    const salutation = useStore(
+      deps.greetingStyle,
+      (style) => style.salutation,
+    );
+
+    return {
+      message: `${salutation}, ${props.name}${props.punctuation ?? "."}`,
+    };
+  },
   ui: ({ state }) => <p>{state.message}</p>,
 });
 
 export const PropsExample = createComponent({
-  ui: () => <Greeting name="Ada" punctuation="!" />,
+  ui: () => (
+    <GreetingStyle implements={() => ({ salutation: "Hello" })}>
+      <Greeting name="Ada" punctuation="!" />
+    </GreetingStyle>
+  ),
 });

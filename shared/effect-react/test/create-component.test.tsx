@@ -1,7 +1,7 @@
 import { render, screen } from "@testing-library/react";
 import { describe, expect, test, vi } from "vitest";
 
-import { createComponent, createStore, useStore } from "../src";
+import { createComponent, createStore, defineProps, useStore } from "../src";
 
 describe("createComponent", () => {
   test("routes props through state before rendering UI", () => {
@@ -9,7 +9,8 @@ describe("createComponent", () => {
       <span>{state.label}</span>
     ));
     const Label = createComponent({
-      state: ({ props }: { props: { label: string } }) => ({
+      props: defineProps<{ label: string }>(),
+      state: ({ props }) => ({
         label: props.label,
       }),
       ui,
@@ -23,7 +24,8 @@ describe("createComponent", () => {
 
   test("passes plain state from state to UI", () => {
     const Counter = createComponent({
-      state: ({ props }: { props: { initial: number } }) => ({
+      props: defineProps<{ initial: number }>(),
+      state: ({ props }) => ({
         count: props.initial,
         label: `Initial ${props.initial}`,
       }),

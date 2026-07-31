@@ -13,7 +13,17 @@ type RenderResult = ReactElement | null;
 type EmptyProps = Record<string, never>;
 
 export declare const ComponentTypeId: unique symbol;
+export declare const ComponentPropsTypeId: unique symbol;
 export declare const EffectReactAnalysisRequiredTypeId: unique symbol;
+
+export interface ComponentProps<Props> {
+  readonly [ComponentPropsTypeId]: (props: Props) => Props;
+}
+
+const componentProps = Object.freeze({});
+
+export const defineProps = <Props,>() =>
+  componentProps as ComponentProps<Props>;
 
 export interface EffectReactAnalysisRequired {
   readonly [EffectReactAnalysisRequiredTypeId]: "Effect React compiler analysis is not active";
@@ -169,35 +179,56 @@ export type StatefulComponentDefinition<
   Dependencies extends StoreDependencies,
   State,
 > = {
+  readonly props: ComponentProps<Props>;
   readonly deps: readonly [...Dependencies];
   readonly state: ComponentState<Props, Dependencies, State>;
+  readonly ui: (input: StatefulComponentInput<State>) => RenderResult;
+};
+
+type StatefulComponentWithoutPropsDefinition<
+  Dependencies extends StoreDependencies,
+  State,
+> = {
+  readonly props?: never;
+  readonly deps: readonly [...Dependencies];
+  readonly state: ComponentState<EmptyProps, Dependencies, State>;
   readonly ui: (input: StatefulComponentInput<State>) => RenderResult;
 };
 
 export type StatelessComponentDefinition<
   Dependencies extends StoreDependencies,
 > = {
+  readonly props?: never;
   readonly deps: readonly [...Dependencies];
   readonly state?: never;
   readonly ui: () => RenderResult;
 };
 
 type StatefulComponentWithoutDependencies<Props, State> = {
+  readonly props: ComponentProps<Props>;
   readonly deps?: never;
   readonly state: (input: { readonly props: Props }) => State;
   readonly ui: (input: StatefulComponentInput<State>) => RenderResult;
 };
 
+type StatefulComponentWithoutPropsOrDependencies<State> = {
+  readonly props?: never;
+  readonly deps?: never;
+  readonly state: (input: { readonly props: EmptyProps }) => State;
+  readonly ui: (input: StatefulComponentInput<State>) => RenderResult;
+};
+
 type StatelessComponentWithoutDependencies = {
+  readonly props?: never;
   readonly deps?: never;
   readonly state?: never;
   readonly ui: () => RenderResult;
 };
 
 export function createComponent<
-  Props = EmptyProps,
-  const Dependencies extends StoreDependencies = StoreDependencies,
-  State = never,
+  Props,
+  const Dependencies extends StoreDependencies,
+  State,
 >(
   definition: StatefulComponentDefinition<Props, Dependencies, State>,
 ): CreatedComponent<
@@ -205,15 +236,24 @@ export function createComponent<
   DependencyRequirements<Dependencies> | EffectReactAnalysisRequired
 >;
 export function createComponent<
-  const Dependencies extends StoreDependencies = StoreDependencies,
+  const Dependencies extends StoreDependencies,
+  State,
 >(
+  definition: StatefulComponentWithoutPropsDefinition<Dependencies, State>,
+): Component<
+  DependencyRequirements<Dependencies> | EffectReactAnalysisRequired
+>;
+export function createComponent<const Dependencies extends StoreDependencies>(
   definition: StatelessComponentDefinition<Dependencies>,
 ): Component<
   DependencyRequirements<Dependencies> | EffectReactAnalysisRequired
 >;
-export function createComponent<Props = EmptyProps, State = never>(
+export function createComponent<Props, State>(
   definition: StatefulComponentWithoutDependencies<Props, State>,
 ): CreatedComponent<Props, EffectReactAnalysisRequired>;
+export function createComponent<State>(
+  definition: StatefulComponentWithoutPropsOrDependencies<State>,
+): Component<EffectReactAnalysisRequired>;
 export function createComponent(
   definition: StatelessComponentWithoutDependencies,
 ): Component<EffectReactAnalysisRequired>;

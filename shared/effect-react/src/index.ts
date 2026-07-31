@@ -2,8 +2,10 @@ export {
   type Component,
   createComponent,
   type ComponentEffect,
+  type ComponentProps,
   type ComponentState,
   type ComponentWithProps,
+  defineProps,
   type EffectReactAnalysisRequired,
   type ResolvedDependencies,
 } from "./create-component";

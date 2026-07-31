@@ -3,7 +3,7 @@ import { memo, useState } from "react";
 import { act, render, screen } from "@testing-library/react";
 import { describe, expect, test, vi } from "vitest";
 
-import { createComponent } from "@night-shift/effect-react";
+import { createComponent, defineProps } from "@night-shift/effect-react";
 
 interface ProbeProps {
   readonly onComponentValue: () => void;
@@ -40,7 +40,8 @@ const ComponentValue = memo(function ComponentValue({
  * component value allocation stable when only `revision` changes.
  */
 const CompilerProof = createComponent({
-  state: ({ props }: { props: ProbeProps }) => {
+  props: defineProps<ProbeProps>(),
+  state: ({ props }) => {
     const [revision, setRevision] = useState(0);
 
     return {

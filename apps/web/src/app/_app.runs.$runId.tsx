@@ -2,8 +2,11 @@ import { createElement } from "react";
 import { createFileRoute } from "@tanstack/react-router";
 import { ArrowLeft } from "lucide-react";
 
-import type { ResolvedDependencies } from "@night-shift/effect-react";
-import { createComponent, useStore } from "@night-shift/effect-react";
+import {
+  createComponent,
+  defineProps,
+  useStore,
+} from "@night-shift/effect-react";
 import { Button } from "@night-shift/ui-web/components/button";
 import {
   Card,
@@ -19,14 +22,9 @@ import { RunDetail } from "../features/control-plane/run-detail";
 import { QuickLink } from "../features/quick-link/quick-link";
 
 const RunPage = createComponent({
+  props: defineProps<{ runId: string }>(),
   deps: [ControlPlane],
-  state: ({
-    deps,
-    props,
-  }: {
-    deps: ResolvedDependencies<[typeof ControlPlane]>;
-    props: { runId: string };
-  }) => ({
+  state: ({ deps, props }) => ({
     authority: useStore(deps.controlPlane, (state) => state.authority),
     commandRun: useStore(deps.controlPlane, (state) => state.commandRun),
     run: useStore(deps.controlPlane, (state) =>
