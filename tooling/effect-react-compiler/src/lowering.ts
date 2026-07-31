@@ -92,6 +92,7 @@ function collectInsertions({
 }) {
   const insertions = Array<SourceInsertion>(
     ...collectReactCompilerInsertions(model),
+    ...collectStoreNameInsertions(model),
     ...collectStoreDependencyInsertions({ model, models }),
     ...collectStoreImplementationInsertions(model),
   );
@@ -112,7 +113,9 @@ function collectInsertions({
       group.push(reference);
       groups.set(key, group);
     }
-    const annotations = Array<string>();
+    const annotations = Array<string>(
+      `.__effectReactNamed(${JSON.stringify(declaration.name)})`,
+    );
 
     for (const references of groups.values()) {
       const children = [
@@ -143,6 +146,13 @@ function collectInsertions({
   }
 
   return insertions.sort((left, right) => left.position - right.position);
+}
+
+function collectStoreNameInsertions(model: SourceModel) {
+  return [...model.stores.values()].map((store) => ({
+    position: store.initializerEnd,
+    text: `.__effectReactNamed(${JSON.stringify(store.name)})`,
+  }));
 }
 
 function collectStoreDependencyInsertions({

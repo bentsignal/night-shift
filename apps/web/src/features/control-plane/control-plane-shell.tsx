@@ -71,7 +71,6 @@ function ConnectedControlPlane({ client }: { client: ControlPlaneClient }) {
 }
 
 const ApplicationFrame = createComponent({
-  displayName: "ApplicationFrame",
   state: () => {
     const pathname = useRouterState({
       select: (state) => state.location.pathname,

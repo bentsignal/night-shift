@@ -40,7 +40,6 @@ const ComponentValue = memo(function ComponentValue({
  * component value allocation stable when only `revision` changes.
  */
 const CompilerProof = createComponent({
-  displayName: "CompilerProof",
   state: ({ props }: { props: ProbeProps }) => {
     const [revision, setRevision] = useState(0);
 

@@ -20,7 +20,6 @@ const nodes = root
   : [];
 
 export const RuntimeTrace = createComponent({
-  displayName: "RuntimeTrace",
   state: () => ({
     nodes,
     unresolved: root?.requirements.length ?? analysis.diagnostics.length,

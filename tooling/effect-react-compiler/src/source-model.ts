@@ -75,18 +75,19 @@ export function buildSourceModel({
       }
 
       const initializer = unwrapExpression(declaration.initializer);
-      const storeName = readStoreName({
+      const isStore = readStoreName({
         apiNamespaces,
         expression: initializer,
         storeFactories,
       });
 
-      if (storeName) {
+      if (isStore) {
         stores.set(declaration.name.text, {
           fileName,
+          initializerEnd: initializer.end,
           location: locationOf(sourceFile, declaration.name),
           name: declaration.name.text,
-          storeName,
+          storeName: declaration.name.text,
         });
         declarationSpans.push({
           end: initializer.end,

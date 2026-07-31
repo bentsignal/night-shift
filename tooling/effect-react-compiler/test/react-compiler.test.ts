@@ -33,7 +33,7 @@ describe("React Compiler lowering", () => {
         useStore,
       } from "@night-shift/effect-react";
 
-      const Counter = createStore("Counter")<{ count: number }>();
+      const Counter = createStore<{ count: number }>();
 
       const CounterValue = createComponent({
         deps: [Counter],
@@ -64,6 +64,10 @@ describe("React Compiler lowering", () => {
       'deps: [Counter.__effectReactDependency("counter")]',
     );
     expect(result.lowered).toContain(
+      'createStore<{ count: number }>().__effectReactNamed("Counter")',
+    );
+    expect(result.lowered).toContain('.__effectReactNamed("CounterValue")');
+    expect(result.lowered).toContain(
       ".__effectReactProvidedRequirements([Counter], CounterValue)",
     );
     expect(result.lowered).toContain(
@@ -87,7 +91,7 @@ describe("React Compiler lowering", () => {
       import { useState } from "react";
       import { createComponent, createStore } from "@night-shift/effect-react";
 
-      const Navigation = createStore("Navigation")<{ ready: boolean }>();
+      const Navigation = createStore<{ ready: boolean }>();
 
       function formState({ deps }) {
         const [submitting] = useState(false);

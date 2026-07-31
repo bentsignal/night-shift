@@ -38,7 +38,6 @@ const navigation = [
 ];
 
 export const AppSidebar = createComponent({
-  displayName: "AppSidebar",
   deps: [ControlPlane],
 
   state: ({ deps }) => {

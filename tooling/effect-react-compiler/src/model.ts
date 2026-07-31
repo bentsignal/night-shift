@@ -15,6 +15,7 @@ export type ImportBinding = {
 
 export type StoreDeclaration = {
   readonly fileName: string;
+  readonly initializerEnd: number;
   readonly location: SourceLocation;
   readonly name: string;
   readonly storeName: string;

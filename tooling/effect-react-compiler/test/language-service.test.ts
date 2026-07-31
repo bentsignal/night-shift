@@ -41,7 +41,7 @@ describe("createEffectReactLanguageService", () => {
     ).toContain("EffectReactAnalysisRequired");
     expect(
       quickInfoOf(service, source, labCounterFileName, "CounterControls"),
-    ).toContain('StoreRequirement<"LabCounter", CounterState>');
+    ).toContain("StoreRequirement<string, CounterState>");
   }, 15_000);
 
   it("updates quick info when a provider is added or removed", () => {
@@ -73,7 +73,7 @@ describe("createEffectReactLanguageService", () => {
         "CounterInstrument",
       ),
     ).toBe(
-      'const CounterInstrument: Component<StoreRequirement<"LabCounter", CounterState>>',
+      'const CounterInstrument: Component<StoreRequirement<"Counter", CounterState>>',
     );
   }, 15_000);
 
@@ -106,7 +106,7 @@ describe("createEffectReactLanguageService", () => {
         "WorkspaceFrame",
       ),
     ).toBe(
-      'const WorkspaceFrame: Component<StoreRequirement<"LabCounter", CounterState>>',
+      'const WorkspaceFrame: Component<StoreRequirement<"Counter", CounterState>>',
     );
 
     project.updateFile(labCounterFileName, withProvider);
@@ -147,7 +147,7 @@ const testComponent = createComponent({
         "testComponent",
       ),
     ).toBe(
-      'const testComponent: Component<StoreRequirement<"LabCounter", CounterState>>',
+      'const testComponent: Component<StoreRequirement<"Counter", CounterState>>',
     );
   }, 15_000);
 

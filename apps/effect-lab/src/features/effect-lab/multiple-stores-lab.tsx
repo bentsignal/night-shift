@@ -9,7 +9,6 @@ const providerSteps = [
 ] as const;
 
 export const MultipleStoresLab = createComponent({
-  displayName: "MultipleStoresLab",
   ui: () => (
     <div className="lab-shell">
       <header className="topbar">

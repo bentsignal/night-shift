@@ -20,14 +20,6 @@ type Equal<Left, Right> =
 type Expect<Value extends true> = Value;
 type Requirements<Value> = Effect.Effect.Context<ComponentEffect<Value>>;
 
-declare const dynamicStoreName: string;
-// @ts-expect-error store identity must be one string literal
-createStore(dynamicStoreName);
-
-declare const unionStoreName: "First" | "Second";
-// @ts-expect-error one declaration cannot represent multiple store identities
-createStore(unionStoreName);
-
 const Stateless = createComponent<{ label: string }>({
   ui: ({ props }) => {
     props.label satisfies string;
@@ -78,8 +70,8 @@ interface SecondState {
   readonly label: string;
 }
 
-const First = createStore("TypedFirst")<FirstState>();
-const Second = createStore("TypedSecond")<SecondState>();
+const First = createStore<FirstState>();
+const Second = createStore<SecondState>();
 
 // @ts-expect-error createStore returns only the unified store value
 const _RemovedService = First.service;
@@ -113,8 +105,8 @@ const Consumer = createComponent({
   },
 });
 
-type FirstRequirement = StoreRequirement<"TypedFirst", FirstState>;
-type SecondRequirement = StoreRequirement<"TypedSecond", SecondState>;
+type FirstRequirement = StoreRequirement<"First", FirstState>;
+type SecondRequirement = StoreRequirement<"Second", SecondState>;
 
 Consumer satisfies Component<FirstRequirement | SecondRequirement>;
 type _ConsumerRequirements = Expect<

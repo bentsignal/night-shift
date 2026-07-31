@@ -50,73 +50,67 @@ export interface Store<
   readonly __effectReactImplementation: (
     state: State,
   ) => StoreImplementation<State>;
+  /** @internal Used only by the in-memory Effect React transform. */
+  readonly __effectReactNamed: <const InferredName extends string>(
+    name: InferredName,
+  ) => Store<InferredName, State>;
 }
 
 interface StoreImplementation<State extends object> {
   readonly [StoreImplementationTypeId]: State;
 }
 
-type IsUnion<Value, Original = Value> = Value extends Original
-  ? [Original] extends [Value]
-    ? false
-    : true
-  : never;
-
-type StoreName<Name extends string> = string extends Name
-  ? never
-  : true extends IsUnion<Name>
-    ? never
-    : Name;
+let nextStoreIdentity = 0;
 
 /**
  * Declares one injectable store contract.
- *
- * The literal name is its Effect store identity, so reusing a name means
- * reusing the same State contract.
  */
-export function createStore<const Name extends string>(name: StoreName<Name>) {
-  return function defineStore<State extends object>() {
-    const dependency = Context.GenericTag<
-      StoreRequirement<Name, State>,
-      ReadableStore<State>
-    >(`@night-shift/effect-react/store/${name}`);
+export function createStore<State extends object>() {
+  const identity = nextStoreIdentity++;
+  const dependency = Context.GenericTag<
+    StoreRequirement<string, State>,
+    ReadableStore<State>
+  >(`@night-shift/effect-react/store/${identity}`);
 
-    function Store({
-      children,
-      implements: implementation,
-    }: StoreProps<State>) {
-      const value =
-        typeof implementation === "function"
-          ? implementation()
-          : (implementation as unknown as State);
-      const [storeHandle] = useState(() => makeStore(value));
-      const parentServices = useServiceContext();
-      const [services] = useState(() =>
-        Context.add(parentServices, dependency, storeHandle),
-      );
+  function Store({ children, implements: implementation }: StoreProps<State>) {
+    const value =
+      typeof implementation === "function"
+        ? implementation()
+        : (implementation as unknown as State);
+    const [storeHandle] = useState(() => makeStore(value));
+    const parentServices = useServiceContext();
+    const [services] = useState(() =>
+      Context.add(parentServices, dependency, storeHandle),
+    );
 
-      useLayoutEffect(() => {
-        storeHandle.set(value);
-      }, [storeHandle, value]);
+    useLayoutEffect(() => {
+      storeHandle.set(value);
+    }, [storeHandle, value]);
 
-      return (
-        <ServiceContextProvider services={services}>
-          {children}
-        </ServiceContextProvider>
-      );
-    }
+    return (
+      <ServiceContextProvider services={services}>
+        {children}
+      </ServiceContextProvider>
+    );
+  }
 
-    Object.setPrototypeOf(Store, Object.getPrototypeOf(dependency));
-    Object.assign(Store, dependency, {
-      __effectReactDependency: (key: string) =>
-        Object.assign(Object.create(dependency) as object, {
-          __effectReactDependencyKey: key,
-        }),
-      __effectReactDependencyKey: `${name.slice(0, 1).toLowerCase()}${name.slice(1)}`,
-      __effectReactImplementation: (state: State) => state,
-      displayName: `${name}Store`,
-    });
+  Object.setPrototypeOf(Store, Object.getPrototypeOf(dependency));
+  Object.assign(Store, dependency, {
+    __effectReactDependency: (key: string) =>
+      Object.assign(Object.create(dependency) as object, {
+        __effectReactDependencyKey: key,
+      }),
+    __effectReactDependencyKey: "store",
+    __effectReactImplementation: (state: State) => state,
+    __effectReactNamed: (name: string) => {
+      Object.assign(Store, {
+        __effectReactDependencyKey: `${name.slice(0, 1).toLowerCase()}${name.slice(1)}`,
+        displayName: `${name}Store`,
+      });
+      return Store;
+    },
+    displayName: "Store",
+  });
 
-    return Store as unknown as Store<Name, State>;
-  };
+  return Store as unknown as Store<string, State>;
 }

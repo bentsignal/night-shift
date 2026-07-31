@@ -33,7 +33,7 @@ export interface ControlPlaneState extends ControlPlaneSnapshot {
   commandRun: (runId: string, command: RunCommand) => Promise<void>;
 }
 
-export const ControlPlane = createStore("ControlPlane")<ControlPlaneState>();
+export const ControlPlane = createStore<ControlPlaneState>();
 
 export function ControlPlaneProvider({
   children,

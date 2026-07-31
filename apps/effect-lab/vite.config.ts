@@ -11,7 +11,7 @@ export default defineConfig({
     host: "127.0.0.1",
   },
   plugins: [
-    effectReact({ scanRoots: ["src"] }),
+    effectReact({ scanRoots: ["src"], transformUnscanned: true }),
     tsconfigPaths(),
     tanstackStart({
       srcDirectory: "src",

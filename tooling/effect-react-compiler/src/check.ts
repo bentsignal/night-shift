@@ -22,9 +22,18 @@ if (config.error) {
     { noEmit: true },
     configFileName,
   );
-  const sourceFiles = parsed.fileNames.filter(
-    (fileName) => !fileName.endsWith(".d.ts"),
-  );
+  const authoredProgram = ts.createProgram({
+    options: parsed.options,
+    rootNames: parsed.fileNames,
+  });
+  const sourceFiles = authoredProgram
+    .getSourceFiles()
+    .map((sourceFile) => sourceFile.fileName)
+    .filter(
+      (fileName) =>
+        !fileName.endsWith(".d.ts") &&
+        !fileName.includes(`${path.sep}node_modules${path.sep}`),
+    );
   const lowered = lowerEffectReactSources(
     sourceFiles.flatMap((fileName) => {
       const source = ts.sys.readFile(fileName);

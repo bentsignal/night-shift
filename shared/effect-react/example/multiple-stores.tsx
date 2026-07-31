@@ -20,9 +20,9 @@ export interface WorkspaceState {
   readonly reset: () => void;
 }
 
-export const Viewer = createStore("Viewer")<ViewerState>();
-export const Theme = createStore("Theme")<ThemeState>();
-export const Workspace = createStore("Workspace")<WorkspaceState>();
+export const Viewer = createStore<ViewerState>();
+export const Theme = createStore<ThemeState>();
+export const Workspace = createStore<WorkspaceState>();
 
 function useViewerImplementation() {
   const [name, setName] = useState("Ada");

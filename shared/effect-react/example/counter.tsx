@@ -8,7 +8,7 @@ export interface CounterState {
   readonly setCount: Dispatch<SetStateAction<number>>;
 }
 
-export const Counter = createStore("Counter")<CounterState>();
+export const Counter = createStore<CounterState>();
 
 export function useCounterImplementation() {
   const [count, setCount] = useState(0);
@@ -16,8 +16,6 @@ export function useCounterImplementation() {
 }
 
 export const CounterButton = createComponent({
-  displayName: "CounterButton",
-
   deps: [Counter],
 
   state: ({ deps }) => {

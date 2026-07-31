@@ -12,7 +12,7 @@ export interface CounterState {
   readonly setCount: Dispatch<SetStateAction<number>>;
 }
 
-export const Counter = createStore("LabCounter")<CounterState>();
+export const Counter = createStore<CounterState>();
 
 function useCounterImplementation() {
   const [count, setCount] = useState(5);
@@ -20,7 +20,6 @@ function useCounterImplementation() {
 }
 
 export const CounterReadout = createComponent({
-  displayName: "CounterReadout",
   deps: [Counter],
 
   state: ({ deps }) => ({
@@ -35,7 +34,6 @@ export const CounterReadout = createComponent({
 });
 
 export const CounterControls = createComponent({
-  displayName: "CounterControls",
   deps: [Counter],
 
   state: ({ deps }) => {
@@ -77,7 +75,6 @@ export const CounterControls = createComponent({
  * call sites. There is no `yield* ChildComponent` bookkeeping.
  */
 export const CounterInstrument = createComponent({
-  displayName: "CounterInstrument",
   ui: () => (
     <Counter implements={useCounterImplementation}>
       <section aria-labelledby="counter-title" className="instrument">

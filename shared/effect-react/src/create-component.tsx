@@ -40,6 +40,9 @@ interface ComponentProtocol<Props, Requirements, Self> extends Effect.Effect<
     Props,
     Requirements | ComponentRequirements<Components[number]>
   >;
+  readonly __effectReactNamed: (
+    name: string,
+  ) => CreatedComponent<Props, Requirements>;
   readonly __effectReactProvidedRequirements: <
     const Providers extends readonly unknown[],
     const Components extends readonly unknown[],
@@ -166,10 +169,6 @@ type StatelessComponentInput<Props> = {
   readonly props: Props;
 };
 
-type ComponentCommon = {
-  readonly displayName?: string;
-};
-
 export type StatefulComponentDefinition<
   Props,
   Dependencies extends StoreDependencies,
@@ -178,7 +177,7 @@ export type StatefulComponentDefinition<
   readonly deps: readonly [...Dependencies];
   readonly state: ComponentState<Props, Dependencies, State>;
   readonly ui: (input: StatefulComponentInput<Props, State>) => RenderResult;
-} & ComponentCommon;
+};
 
 export type StatelessComponentDefinition<
   Props,
@@ -187,19 +186,19 @@ export type StatelessComponentDefinition<
   readonly deps: readonly [...Dependencies];
   readonly state?: never;
   readonly ui: (input: StatelessComponentInput<Props>) => RenderResult;
-} & ComponentCommon;
+};
 
 type StatefulComponentWithoutDependencies<Props, State> = {
   readonly deps?: never;
   readonly state: (input: { readonly props: Props }) => State;
   readonly ui: (input: StatefulComponentInput<Props, State>) => RenderResult;
-} & ComponentCommon;
+};
 
 type StatelessComponentWithoutDependencies<Props> = {
   readonly deps?: never;
   readonly state?: never;
   readonly ui: (input: StatelessComponentInput<Props>) => RenderResult;
-} & ComponentCommon;
+};
 
 export function createComponent<
   Props = EmptyProps,
@@ -245,10 +244,7 @@ export function createComponent(definition: unknown) {
       <EvaluatedUI definition={componentDefinition} props={props} />
     );
   };
-  CreatedComponent.displayName =
-    componentDefinition.displayName ??
-    componentDefinition.ui.name ??
-    "Component";
+  CreatedComponent.displayName = "Component";
   return eraseComponentType(makeComponent<object, never>(CreatedComponent));
 }
 
@@ -263,6 +259,10 @@ function makeComponent<Props, Requirements>(
   Object.assign(created, Effectable.CommitPrototype, {
     __effectReactAnalyzed: () => created,
     commit: () => Effect.context<Requirements>().pipe(Effect.as(created)),
+    __effectReactNamed: (name: string) => {
+      Object.assign(component, { displayName: name });
+      return created;
+    },
     __effectReactProvidedRequirements: () => created,
     __effectReactRequirements: () => created,
   });
@@ -271,7 +271,6 @@ function makeComponent<Props, Requirements>(
 
 type RuntimeComponentDefinition = {
   readonly deps?: readonly StoreDependency<string, string, object>[];
-  readonly displayName?: string;
   readonly state?: (input: {
     readonly deps: ResolvedRuntimeDependencies;
     readonly props: object;

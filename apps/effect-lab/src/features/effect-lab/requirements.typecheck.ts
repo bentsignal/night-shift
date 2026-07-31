@@ -23,7 +23,7 @@ type Requirements<Component> = Effect.Effect.Context<
 type _CounterReadoutRequiresTheCounter = Expect<
   Equal<
     Requirements<typeof CounterReadout>,
-    StoreRequirement<"LabCounter", CounterState>
+    StoreRequirement<"Counter", CounterState>
   >
 >;
 type _CounterInstrumentDischargesChildRequirements = Expect<
@@ -32,6 +32,6 @@ type _CounterInstrumentDischargesChildRequirements = Expect<
 type _StatelessComponentKeepsChildRequirements = Expect<
   Equal<
     Requirements<typeof TestComponent>,
-    StoreRequirement<"LabCounter", CounterState>
+    StoreRequirement<"Counter", CounterState>
   >
 >;

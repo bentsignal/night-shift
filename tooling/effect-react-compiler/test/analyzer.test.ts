@@ -10,7 +10,7 @@ describe("analyzeEffectReact", () => {
           fileName: "/project/counter.tsx",
           source: `
             import { createComponent, createStore } from "@night-shift/effect-react";
-            const Counter = createStore("Counter")<{
+            const Counter = createStore<{
               count: number;
             }>();
 
@@ -57,8 +57,8 @@ describe("analyzeEffectReact", () => {
           fileName: "/project/panel.tsx",
           source: `
             import { createComponent, createStore } from "@night-shift/effect-react";
-            const Session = createStore("Session")<{ id: string }>();
-            const Theme = createStore("Theme")<{ dark: boolean }>();
+            const Session = createStore<{ id: string }>();
+            const Theme = createStore<{ dark: boolean }>();
 
             const Leaf = createComponent({
               deps: [Session, Theme],
@@ -101,7 +101,7 @@ describe("analyzeEffectReact", () => {
           fileName: "/project/scoped.tsx",
           source: `
             import { createComponent, createStore } from "@night-shift/effect-react";
-            const Counter = createStore("Counter")<{ count: number }>();
+            const Counter = createStore<{ count: number }>();
             const CounterValue = createComponent({
               deps: [Counter],
               state: () => ({}),
@@ -143,7 +143,7 @@ describe("analyzeEffectReact", () => {
           fileName: "/project/root.tsx",
           source: `
             import { createComponent, createStore } from "@night-shift/effect-react";
-            const Auth = createStore("Auth")<{ userId: string }>();
+            const Auth = createStore<{ userId: string }>();
             const Protected = createComponent({
               deps: [Auth],
               state: () => ({}),
@@ -172,7 +172,7 @@ describe("analyzeEffectReact", () => {
           fileName: "/project/cycle.tsx",
           source: `
             import { createComponent, createStore } from "@night-shift/effect-react";
-            const Clock = createStore("Clock")<{ now: number }>();
+            const Clock = createStore<{ now: number }>();
             const A = createComponent({
               deps: [Clock],
               state: () => ({}),
@@ -204,7 +204,7 @@ describe("analyzeEffectReact", () => {
           fileName: "/project/stores.ts",
           source: `
             import { createStore } from "@night-shift/effect-react";
-            export const Auth = createStore("Auth")<{ userId: string }>();
+            export const Auth = createStore<{ userId: string }>();
           `,
         },
         {
@@ -279,12 +279,12 @@ describe("lowerEffectReactSources", () => {
     expect(lowered?.insertions).toEqual(
       expect.arrayContaining([
         expect.objectContaining({
-          text: ".__effectReactRequirements(Child).__effectReactAnalyzed()",
+          text: '.__effectReactNamed("Parent").__effectReactRequirements(Child).__effectReactAnalyzed()',
         }),
       ]),
     );
     expect(lowered?.source).toContain(
-      "}).__effectReactRequirements(Child).__effectReactAnalyzed();",
+      '}).__effectReactNamed("Parent").__effectReactRequirements(Child).__effectReactAnalyzed();',
     );
     expect(lowered?.source).toContain('"use memo"');
   });
@@ -295,7 +295,7 @@ describe("lowerEffectReactSources", () => {
         fileName: "/project/provider.tsx",
         source: `
           import { createComponent, createStore } from "@night-shift/effect-react";
-          const Counter = createStore("Counter")<{ count: number }>();
+          const Counter = createStore<{ count: number }>();
           const Child = createComponent({
             deps: [Counter],
             state: () => ({}),

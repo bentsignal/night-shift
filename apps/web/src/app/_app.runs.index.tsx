@@ -10,7 +10,6 @@ import { RunList } from "../features/control-plane/run-list";
 import { QuickLink } from "../features/quick-link/quick-link";
 
 const RunsPage = createComponent({
-  displayName: "RunsPage",
   deps: [ControlPlane],
   state: ({ deps }) => ({
     runs: useStore(deps.controlPlane, (state) => state.runs),

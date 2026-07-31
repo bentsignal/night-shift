@@ -26,6 +26,7 @@ export interface EffectReactCompilerPluginOptions {
   readonly failOnDiagnostics?: boolean;
   readonly roots?: readonly EffectReactRoot[];
   readonly scanRoots?: readonly string[];
+  readonly transformUnscanned?: boolean;
 }
 
 export function effectReactCompiler(
@@ -75,17 +76,24 @@ export function effectReactCompiler(
 
     transform(source, id) {
       const fileName = stripViteQuery(id);
-      if (isAnalyzableSource(fileName)) {
+      if (
+        isAnalyzableSource(fileName) &&
+        !fileName.includes(`${path.sep}node_modules${path.sep}`)
+      ) {
         const resolvedFileName = path.resolve(fileName);
-        if (!sources.has(resolvedFileName)) {
+        if (!sources.has(resolvedFileName) && !options.transformUnscanned) {
           return null;
         }
-        sources.set(resolvedFileName, source);
+        if (sources.has(resolvedFileName)) {
+          sources.set(resolvedFileName, source);
+        }
         const lowered = lowerEffectReactSources(
-          [...sources].map(([sourceFileName, sourceText]) => ({
-            fileName: sourceFileName,
-            source: sourceText,
-          })),
+          sources.has(resolvedFileName)
+            ? [...sources].map(([sourceFileName, sourceText]) => ({
+                fileName: sourceFileName,
+                source: sourceText,
+              }))
+            : [{ fileName: resolvedFileName, source }],
         ).get(resolvedFileName);
         if (lowered && lowered.insertions.length > 0) {
           return {

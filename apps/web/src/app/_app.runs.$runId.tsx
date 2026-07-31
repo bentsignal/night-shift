@@ -19,7 +19,6 @@ import { RunDetail } from "../features/control-plane/run-detail";
 import { QuickLink } from "../features/quick-link/quick-link";
 
 const RunPage = createComponent({
-  displayName: "RunPage",
   deps: [ControlPlane],
   state: ({
     deps,

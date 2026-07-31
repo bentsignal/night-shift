@@ -6,7 +6,6 @@ import { NewRunFormFields, QueueButton } from "./new-run-form-fields";
 import { useNewRunFormState } from "./new-run-form-state";
 
 export const NewRunForm = createComponent({
-  displayName: "NewRunForm",
   deps: [ControlPlane],
   state: useNewRunFormState,
   ui: ({ state }) => (

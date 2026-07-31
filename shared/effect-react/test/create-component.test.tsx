@@ -32,16 +32,13 @@ describe("createComponent", () => {
   });
 
   test("resolves declared stores under their dependency keys", () => {
-    const CounterStore = createStore("ComponentTestCounter")<{
+    const CounterStore = createStore<{
       count: number;
     }>();
     const Counter = createComponent({
       deps: [CounterStore],
       state: ({ deps }) => ({
-        count: useStore(
-          deps.componentTestCounter,
-          (snapshot) => snapshot.count,
-        ),
+        count: useStore(deps.store!, (snapshot) => snapshot.count),
       }),
       ui: ({ state }) => <span>{state.count}</span>,
     });
@@ -56,7 +53,7 @@ describe("createComponent", () => {
   });
 
   test("fails clearly when a declared store has no provider", () => {
-    const CounterStore = createStore("MissingComponentTestCounter")<{
+    const CounterStore = createStore<{
       count: number;
     }>();
     const Counter = createComponent({

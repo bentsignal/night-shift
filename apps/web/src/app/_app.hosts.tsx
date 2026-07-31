@@ -17,7 +17,6 @@ import { formatMoment } from "../control-plane/view-model";
 import { Page } from "../features/control-plane/page";
 
 const HostsPage = createComponent({
-  displayName: "HostsPage",
   deps: [ControlPlane],
   state: ({ deps }) => ({
     hosts: useStore(deps.controlPlane, (state) => state.hosts),

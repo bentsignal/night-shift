@@ -13,7 +13,7 @@ export default defineConfig({
     port: process.env.PORT ? Number(process.env.PORT) : 3000,
   },
   plugins: [
-    effectReact({ scanRoots: ["src"] }),
+    effectReact({ scanRoots: ["src"], transformUnscanned: true }),
     tailwindcss(),
     tsconfigPaths(),
     tanstackStart({

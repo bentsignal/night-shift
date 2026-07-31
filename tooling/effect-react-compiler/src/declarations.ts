@@ -30,21 +30,12 @@ export function readStoreName({
     return undefined;
   }
 
-  const factoryCall = unwrapExpression(expression.expression);
-  if (
-    !ts.isCallExpression(factoryCall) ||
-    !isApiCall({
-      apiNamespaces,
-      expression: factoryCall.expression,
-      localNames: storeFactories,
-      name: "createStore",
-    })
-  ) {
-    return undefined;
-  }
-
-  const name = factoryCall.arguments[0];
-  return name && ts.isStringLiteralLike(name) ? name.text : undefined;
+  return isApiCall({
+    apiNamespaces,
+    expression: expression.expression,
+    localNames: storeFactories,
+    name: "createStore",
+  });
 }
 
 export function readComponentDefinition({

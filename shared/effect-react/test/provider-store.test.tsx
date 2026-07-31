@@ -9,14 +9,14 @@ import { createComponent, createStore, useStore } from "../src";
 
 describe("provider stores", () => {
   test("gives same-shaped stores distinct identities", () => {
-    const First = createStore("FirstIdentity")<{ count: number }>();
-    const Second = createStore("SecondIdentity")<{ count: number }>();
+    const First = createStore<{ count: number }>();
+    const Second = createStore<{ count: number }>();
 
     expect(First.key).not.toBe(Second.key);
   });
 
   test("rerenders consumers only when their selected state changes", () => {
-    const Example = createStore("SelectiveRerenders")<{
+    const Example = createStore<{
       count: number;
       setCount: Dispatch<SetStateAction<number>>;
       setText: Dispatch<SetStateAction<string>>;
@@ -33,7 +33,7 @@ describe("provider stores", () => {
     const Count = createComponent({
       deps: [Example],
       state: ({ deps }) => {
-        const count = useStore(deps.selectiveRerenders, (state) => state.count);
+        const count = useStore(deps.store!, (state) => state.count);
         countRenders += 1;
         return { count };
       },
@@ -42,8 +42,8 @@ describe("provider stores", () => {
     const Actions = createComponent({
       deps: [Example],
       state: ({ deps }) => ({
-        setCount: useStore(deps.selectiveRerenders, (state) => state.setCount),
-        setText: useStore(deps.selectiveRerenders, (state) => state.setText),
+        setCount: useStore(deps.store!, (state) => state.setCount),
+        setText: useStore(deps.store!, (state) => state.setText),
       }),
       ui: ({ state }) => (
         <>
@@ -73,7 +73,7 @@ describe("provider stores", () => {
   });
 
   test("isolates nested provider implementations", () => {
-    const Example = createStore("NestedProviders")<{ value: string }>();
+    const Example = createStore<{ value: string }>();
     const Value = createComponent({
       deps: [Example],
       state: ({
@@ -84,7 +84,7 @@ describe("provider stores", () => {
         props: { label: string };
       }) => ({
         label: props.label,
-        value: useStore(deps.nestedProviders, (state) => state.value),
+        value: useStore(deps.store!, (state) => state.value),
       }),
       ui: ({ state }) => <span>{`${state.label}: ${state.value}`}</span>,
     });
@@ -103,11 +103,11 @@ describe("provider stores", () => {
   });
 
   test("renders the initial implementation snapshot on the server", () => {
-    const Example = createStore("ServerSnapshot")<{ count: number }>();
+    const Example = createStore<{ count: number }>();
     const Count = createComponent({
       deps: [Example],
       state: ({ deps }) => ({
-        count: useStore(deps.serverSnapshot, (state) => state.count),
+        count: useStore(deps.store!, (state) => state.count),
       }),
       ui: ({ state }) => <span>{state.count}</span>,
     });

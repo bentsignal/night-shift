@@ -4,7 +4,6 @@ import { CounterInstrument } from "./counter";
 import { RuntimeTrace } from "./runtime-trace";
 
 export const WorkspaceFrame = createComponent({
-  displayName: "WorkspaceFrame",
   ui: () => (
     <main className="workspace">
       <CounterInstrument />
@@ -14,7 +13,6 @@ export const WorkspaceFrame = createComponent({
 });
 
 export const EffectLab = createComponent({
-  displayName: "EffectLab",
   ui: () => (
     <div className="lab-shell">
       <header className="topbar">
