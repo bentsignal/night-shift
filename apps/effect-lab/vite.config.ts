@@ -6,12 +6,19 @@ import tsconfigPaths from "vite-tsconfig-paths";
 
 import { effectReact } from "@night-shift/effect-react-compiler";
 
+const effectReactSources = [
+  "src",
+  // The live lab imports this source file directly, so it must stay in the
+  // same compiler graph before and after a hot update.
+  "../../shared/effect-react/example/props.tsx",
+];
+
 export default defineConfig({
   server: {
     host: "127.0.0.1",
   },
   plugins: [
-    effectReact({ scanRoots: ["src"], transformUnscanned: true }),
+    effectReact({ scanRoots: effectReactSources, transformUnscanned: true }),
     tsconfigPaths(),
     tanstackStart({
       srcDirectory: "src",

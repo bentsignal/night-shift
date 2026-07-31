@@ -1,4 +1,4 @@
-import { readdir, readFile } from "node:fs/promises";
+import { readdir, readFile, stat } from "node:fs/promises";
 import path from "node:path";
 import type { Plugin } from "vite";
 
@@ -62,8 +62,8 @@ export function effectReactCompiler(
         : [viteRoot];
 
       for (const scanRoot of scanRoots) {
-        await scanSourceTree({
-          directory: path.resolve(viteRoot, scanRoot),
+        await scanSourcePath({
+          sourcePath: path.resolve(viteRoot, scanRoot),
           sources,
         });
       }
@@ -161,21 +161,29 @@ export function formatEffectReactDiagnostics(
   ].join("\n");
 }
 
-async function scanSourceTree({
-  directory,
+async function scanSourcePath({
+  sourcePath,
   sources,
 }: {
-  readonly directory: string;
+  readonly sourcePath: string;
   readonly sources: Map<string, string>;
 }) {
-  const entries = await readdir(directory, { withFileTypes: true });
+  const sourceStats = await stat(sourcePath);
+  if (sourceStats.isFile()) {
+    if (isAnalyzableSource(sourcePath)) {
+      sources.set(path.resolve(sourcePath), await readFile(sourcePath, "utf8"));
+    }
+    return;
+  }
+
+  const entries = await readdir(sourcePath, { withFileTypes: true });
 
   await Promise.all(
     entries.map(async (entry) => {
-      const fileName = path.join(directory, entry.name);
+      const fileName = path.join(sourcePath, entry.name);
       if (entry.isDirectory()) {
         if (!ignoredDirectories.has(entry.name)) {
-          await scanSourceTree({ directory: fileName, sources });
+          await scanSourcePath({ sourcePath: fileName, sources });
         }
         return;
       }

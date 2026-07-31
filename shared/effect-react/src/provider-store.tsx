@@ -1,5 +1,6 @@
 import type { ReactNode } from "react";
-import { useLayoutEffect, useState } from "react";
+// eslint-disable-next-line no-restricted-imports -- React Refresh can replace a generated store's dependency closure while preserving its hook state, so this identity-sensitive context requires an explicit memo boundary.
+import { useLayoutEffect, useMemo, useState } from "react";
 import { Context } from "effect";
 
 import type { ReadableStore } from "./store";
@@ -79,8 +80,10 @@ export function createStore<State extends object>() {
         : (implementation as unknown as State);
     const [storeHandle] = useState(() => makeStore(value));
     const parentServices = useServiceContext();
-    const [services] = useState(() =>
-      Context.add(parentServices, dependency, storeHandle),
+    const services = useMemo(
+      () => Context.add(parentServices, dependency, storeHandle),
+      // eslint-disable-next-line react-hooks/exhaustive-deps -- React Refresh replaces this outer dependency identity without remounting the provider; retaining it is the HMR correctness condition.
+      [dependency, parentServices, storeHandle],
     );
 
     useLayoutEffect(() => {
