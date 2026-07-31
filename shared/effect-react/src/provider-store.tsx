@@ -52,6 +52,8 @@ export interface Store<
     state: State,
   ) => StoreImplementation<State>;
   /** @internal Used only by the in-memory Effect React transform. */
+  readonly __effectReactHot: (id: string) => Store<Name, State>;
+  /** @internal Used only by the in-memory Effect React transform. */
   readonly __effectReactNamed: <const InferredName extends string>(
     name: InferredName,
   ) => Store<InferredName, State>;
@@ -62,6 +64,7 @@ interface StoreImplementation<State extends object> {
 }
 
 let nextStoreIdentity = 0;
+const hotStores = new Map<string, Store<string, object>>();
 
 /**
  * Declares one injectable store contract.
@@ -105,6 +108,12 @@ export function createStore<State extends object>() {
       }),
     __effectReactDependencyKey: "store",
     __effectReactImplementation: (state: State) => state,
+    __effectReactHot: (id: string) => {
+      const existing = hotStores.get(id);
+      if (existing) return existing as unknown as Store<string, State>;
+      hotStores.set(id, Store as unknown as Store<string, object>);
+      return Store;
+    },
     __effectReactNamed: (name: string) => {
       Object.assign(Store, {
         __effectReactDependencyKey: `${name.slice(0, 1).toLowerCase()}${name.slice(1)}`,

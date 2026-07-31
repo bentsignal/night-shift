@@ -1,4 +1,5 @@
 import type { ReactElement } from "react";
+import { useSyncExternalStore } from "react";
 import { Cause, Effect, Effectable, Exit } from "effect";
 
 import type {
@@ -52,6 +53,10 @@ interface ComponentProtocol<Props, Requirements, Self> extends Effect.Effect<
   >;
   readonly __effectReactNamed: (
     name: string,
+  ) => CreatedComponent<Props, Requirements>;
+  readonly __effectReactHot: (
+    id: string,
+    signatures: HotComponentSignatures,
   ) => CreatedComponent<Props, Requirements>;
   readonly __effectReactProvidedRequirements: <
     const Providers extends readonly unknown[],
@@ -118,6 +123,11 @@ export type ComponentEffect<Value> = Effect.Effect<
   never,
   ComponentRequirements<Value>
 >;
+
+type HotComponentSignatures = {
+  readonly state: string;
+  readonly ui: string;
+};
 
 type StoreDependencies = readonly {
   readonly [StoreTypeId]: {
@@ -258,8 +268,16 @@ export function createComponent(
   definition: StatelessComponentWithoutDependencies,
 ): Component<EffectReactAnalysisRequired>;
 export function createComponent(definition: unknown) {
-  const componentDefinition = definition as RuntimeComponentDefinition;
+  const hotState = makeHotComponentState(
+    definition as RuntimeComponentDefinition,
+  );
   const CreatedComponent = (props: object) => {
+    const hotSnapshot = useSyncExternalStore(
+      hotState.subscribe,
+      hotState.getSnapshot,
+      hotState.getSnapshot,
+    );
+    const componentDefinition = hotSnapshot.definition;
     const services = useServiceContext();
     const dependencies = resolveDependencies(
       componentDefinition.deps ?? [],
@@ -268,16 +286,21 @@ export function createComponent(definition: unknown) {
 
     return componentDefinition.state ? (
       <EvaluatedState
+        key={hotSnapshot.stateGeneration}
         deps={dependencies}
-        definition={componentDefinition}
         props={props}
+        state={componentDefinition.state}
+        ui={componentDefinition.ui}
+        uiGeneration={hotSnapshot.uiGeneration}
       />
     ) : (
-      <EvaluatedUI definition={componentDefinition} />
+      <EvaluatedUI key={hotSnapshot.uiGeneration} ui={componentDefinition.ui} />
     );
   };
   CreatedComponent.displayName = "Component";
-  return eraseComponentType(makeComponent<object, never>(CreatedComponent));
+  return eraseComponentType(
+    makeComponent<object, never>(CreatedComponent, hotState),
+  );
 }
 
 function eraseComponentType(component: unknown) {
@@ -286,10 +309,13 @@ function eraseComponentType(component: unknown) {
 
 function makeComponent<Props, Requirements>(
   component: (props: Props) => RenderResult,
+  hotState: HotComponentState,
 ) {
   const created = component as CreatedComponent<Props, Requirements>;
   Object.assign(created, Effectable.CommitPrototype, {
     __effectReactAnalyzed: () => created,
+    __effectReactHot: (id: string, signatures: HotComponentSignatures) =>
+      registerHotComponent(id, signatures, created, hotState),
     commit: () => Effect.context<Requirements>().pipe(Effect.as(created)),
     __effectReactNamed: (name: string) => {
       Object.assign(component, { displayName: name });
@@ -299,6 +325,92 @@ function makeComponent<Props, Requirements>(
     __effectReactRequirements: () => created,
   });
   return created;
+}
+
+type HotComponentSnapshot = {
+  readonly definition: RuntimeComponentDefinition;
+  readonly revision: number;
+  readonly signatures: HotComponentSignatures;
+  readonly stateGeneration: number;
+  readonly uiGeneration: number;
+};
+
+type HotComponentState = {
+  readonly getSnapshot: () => HotComponentSnapshot;
+  readonly initialize: (signatures: HotComponentSignatures) => void;
+  readonly publish: (
+    definition: RuntimeComponentDefinition,
+    signatures: HotComponentSignatures,
+  ) => void;
+  readonly subscribe: (listener: () => void) => () => void;
+};
+
+type HotComponentRecord = {
+  readonly component: CreatedComponent<object, never>;
+  readonly state: HotComponentState;
+};
+
+const hotComponents = new Map<string, HotComponentRecord>();
+
+function makeHotComponentState(definition: RuntimeComponentDefinition) {
+  let snapshot = {
+    definition,
+    revision: 0,
+    signatures: { state: "unregistered", ui: "unregistered" },
+    stateGeneration: 0,
+    uiGeneration: 0,
+  } satisfies HotComponentSnapshot;
+  const listeners = new Set<() => void>();
+
+  return {
+    getSnapshot: () => snapshot,
+    initialize: (signatures) => {
+      snapshot = { ...snapshot, signatures };
+    },
+    publish: (nextDefinition, signatures) => {
+      snapshot = {
+        definition: nextDefinition,
+        revision: snapshot.revision + 1,
+        signatures,
+        stateGeneration:
+          signatures.state === snapshot.signatures.state
+            ? snapshot.stateGeneration
+            : snapshot.stateGeneration + 1,
+        uiGeneration:
+          signatures.ui === snapshot.signatures.ui
+            ? snapshot.uiGeneration
+            : snapshot.uiGeneration + 1,
+      };
+      for (const listener of listeners) listener();
+    },
+    subscribe: (listener) => {
+      listeners.add(listener);
+      return () => listeners.delete(listener);
+    },
+  } satisfies HotComponentState;
+}
+
+function registerHotComponent<Props, Requirements>(
+  id: string,
+  signatures: HotComponentSignatures,
+  component: CreatedComponent<Props, Requirements>,
+  state: HotComponentState,
+) {
+  const existing = hotComponents.get(id);
+  if (existing) {
+    existing.state.publish(state.getSnapshot().definition, signatures);
+    return existing.component as unknown as CreatedComponent<
+      Props,
+      Requirements
+    >;
+  }
+
+  state.initialize(signatures);
+  hotComponents.set(id, {
+    component: component as unknown as CreatedComponent<object, never>,
+    state,
+  });
+  return component;
 }
 
 type RuntimeComponentDefinition = {
@@ -312,23 +424,33 @@ type RuntimeComponentDefinition = {
 
 function EvaluatedState({
   deps,
-  definition,
   props,
+  state: evaluateState,
+  ui,
+  uiGeneration,
 }: {
   deps: ResolvedRuntimeDependencies;
-  definition: RuntimeComponentDefinition;
   props: object;
+  state: NonNullable<RuntimeComponentDefinition["state"]>;
+  ui: RuntimeComponentDefinition["ui"];
+  uiGeneration: number;
 }) {
-  const state = definition.state?.({ deps, props });
-  return definition.ui({ state });
+  "use no memo";
+
+  const state = evaluateState({ deps, props });
+  return <EvaluatedUI key={uiGeneration} state={state} ui={ui} />;
 }
 
 function EvaluatedUI({
-  definition,
+  state,
+  ui,
 }: {
-  definition: RuntimeComponentDefinition;
+  state?: unknown;
+  ui: RuntimeComponentDefinition["ui"];
 }) {
-  return (definition.ui as () => RenderResult)();
+  "use no memo";
+
+  return ui({ state });
 }
 
 function resolveDependencies(

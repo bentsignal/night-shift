@@ -279,14 +279,47 @@ describe("lowerEffectReactSources", () => {
     expect(lowered?.insertions).toEqual(
       expect.arrayContaining([
         expect.objectContaining({
-          text: '.__effectReactNamed("Parent").__effectReactRequirements(Child).__effectReactAnalyzed()',
+          text: expect.stringMatching(
+            /^\.__effectReactNamed\("Parent"\)\.__effectReactHot\("component:\/project\/example\.tsx#Parent", \{"state":"[a-f0-9]{16}","ui":"[a-f0-9]{16}"\}\)\.__effectReactRequirements\(Child\)\.__effectReactAnalyzed\(\)$/u,
+          ),
         }),
       ]),
     );
-    expect(lowered?.source).toContain(
-      '}).__effectReactNamed("Parent").__effectReactRequirements(Child).__effectReactAnalyzed();',
+    expect(lowered?.source).toMatch(
+      /\}\)\.__effectReactNamed\("Parent"\)\.__effectReactHot\("component:\/project\/example\.tsx#Parent", \{"state":"[a-f0-9]{16}","ui":"[a-f0-9]{16}"\}\)\.__effectReactRequirements\(Child\)\.__effectReactAnalyzed\(\);/u,
     );
     expect(lowered?.source).toContain('"use memo"');
+  });
+
+  it("signs resolved named state and ui callbacks independently", () => {
+    const lower = (label: string) =>
+      [
+        ...lowerEffectReactSources([
+          {
+            fileName: "/project/named.tsx",
+            source: `
+            import { createComponent } from "@night-shift/effect-react";
+            function state() { return { count: 0 }; }
+            const ui = ({ state }) => <span>${label} {state.count}</span>;
+            const Example = createComponent({ state, ui });
+          `,
+          },
+        ]).values(),
+      ][0]?.source ?? "";
+
+    const before = lower("Before");
+    const after = lower("After");
+    const signature = /__effectReactHot\([^,]+, (\{[^)]+\})\)/u;
+    const beforeSignatures = JSON.parse(
+      before.match(signature)?.[1] ?? "{}",
+    ) as { state?: string; ui?: string };
+    const afterSignatures = JSON.parse(after.match(signature)?.[1] ?? "{}") as {
+      state?: string;
+      ui?: string;
+    };
+
+    expect(beforeSignatures.state).toBe(afterSignatures.state);
+    expect(beforeSignatures.ui).not.toBe(afterSignatures.ui);
   });
 
   it("lowers provider subtrees into requirement subtraction", () => {

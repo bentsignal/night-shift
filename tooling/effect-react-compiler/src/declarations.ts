@@ -1,3 +1,4 @@
+import { createHash } from "node:crypto";
 import ts from "typescript";
 
 import type {
@@ -16,6 +17,7 @@ import {
   unwrapExpression,
   visit,
 } from "./ast.js";
+import { collectModuleCallbacks } from "./react-compiler-source.js";
 
 export function readStoreName({
   apiNamespaces,
@@ -70,6 +72,7 @@ export function readComponentDefinition({
 
   const deps = findPropertyInitializer(definition, "deps");
   const ui = findPropertyInitializer(definition, "ui");
+  const callbacks = collectModuleCallbacks(sourceFile);
   const jsxChildReferences = ui
     ? collectJsxReferences({ expression: ui, fileName, sourceFile })
     : [];
@@ -81,12 +84,64 @@ export function readComponentDefinition({
   return {
     childReferences,
     fileName,
+    hotSignatures: {
+      state: callbackSignature({
+        callbacks,
+        definition,
+        name: "state",
+        sourceFile,
+      }),
+      ui: callbackSignature({
+        callbacks,
+        definition,
+        name: "ui",
+        sourceFile,
+      }),
+    },
     initializerEnd: expression.end,
     jsxChildReferences,
     kind: "component",
     location: locationOf(sourceFile, expression),
     storeReferences,
   } satisfies Omit<ComponentDeclaration, "name">;
+}
+
+function callbackSignature({
+  callbacks,
+  definition,
+  name,
+  sourceFile,
+}: {
+  readonly callbacks: ReadonlyMap<string, ts.FunctionLikeDeclaration>;
+  readonly definition: ts.ObjectLiteralExpression;
+  readonly name: "state" | "ui";
+  readonly sourceFile: ts.SourceFile;
+}) {
+  const property = definition.properties.find((candidate) => {
+    const propertyName = candidate.name;
+    return (
+      propertyName &&
+      (ts.isIdentifier(propertyName) || ts.isStringLiteralLike(propertyName)) &&
+      propertyName.text === name
+    );
+  });
+  if (!property) return "absent";
+
+  let signatureNode = property as ts.Node;
+  if (ts.isPropertyAssignment(property)) {
+    const initializer = unwrapExpression(property.initializer);
+    signatureNode =
+      ts.isIdentifier(initializer) && callbacks.has(initializer.text)
+        ? (callbacks.get(initializer.text) ?? initializer)
+        : initializer;
+  } else if (ts.isShorthandPropertyAssignment(property)) {
+    signatureNode = callbacks.get(property.name.text) ?? property;
+  }
+
+  return createHash("sha256")
+    .update(signatureNode.getText(sourceFile))
+    .digest("hex")
+    .slice(0, 16);
 }
 
 export function collectOrdinaryBoundaries({

@@ -30,6 +30,10 @@ export type ComponentDeclaration = {
   readonly childReferences: readonly ChildReference[];
   readonly fileName: string;
   readonly initializerEnd: number;
+  readonly hotSignatures: {
+    readonly state: string;
+    readonly ui: string;
+  };
   readonly kind: "component";
   readonly jsxChildReferences: readonly ChildReference[];
   readonly location: SourceLocation;

@@ -64,9 +64,11 @@ describe("React Compiler lowering", () => {
       'deps: [Counter.__effectReactDependency("counter")]',
     );
     expect(result.lowered).toContain(
-      'createStore<{ count: number }>().__effectReactNamed("Counter")',
+      'createStore<{ count: number }>().__effectReactNamed("Counter").__effectReactHot("store:/project/counter.tsx#Counter")',
     );
-    expect(result.lowered).toContain('.__effectReactNamed("CounterValue")');
+    expect(result.lowered).toMatch(
+      /\.__effectReactNamed\("CounterValue"\)\.__effectReactHot\("component:\/project\/counter\.tsx#CounterValue", \{"state":"[a-f0-9]{16}","ui":"[a-f0-9]{16}"\}\)/u,
+    );
     expect(result.lowered).toContain(
       ".__effectReactProvidedRequirements([Counter], CounterValue)",
     );

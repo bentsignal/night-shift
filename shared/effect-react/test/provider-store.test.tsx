@@ -96,6 +96,90 @@ describe("provider stores", () => {
     expect(screen.getByText("inner: inner")).toBeInTheDocument();
   });
 
+  test("keeps store requirements stable while hot-swapping a consumer", () => {
+    const storeHotId = "test:provider-store:Example";
+    const componentHotId = "test:provider-store:Value";
+    const Example = createStore<{ value: string }>().__effectReactHot(
+      storeHotId,
+    );
+    const Value = createComponent({
+      deps: [Example],
+      state: ({ deps }) => ({
+        value: useStore(deps.store!, (state) => state.value),
+      }),
+      ui: ({ state }) => <span>{`Before ${state.value}`}</span>,
+    }).__effectReactHot(componentHotId, {
+      state: "value-state",
+      ui: "before-ui",
+    });
+
+    render(
+      <Example implements={() => ({ value: "refresh" })}>
+        <Value />
+      </Example>,
+    );
+    expect(screen.getByText("Before refresh")).toBeInTheDocument();
+
+    let RefreshedExample: typeof Example | undefined;
+    let RefreshedValue: typeof Value | undefined;
+    act(() => {
+      const nextExample = createStore<{
+        value: string;
+      }>().__effectReactHot(storeHotId);
+      const nextValue = createComponent({
+        deps: [nextExample],
+        state: ({ deps }) => ({
+          value: useStore(deps.store!, (state) => state.value),
+        }),
+        ui: ({ state }) => <span>{`After ${state.value}`}</span>,
+      }).__effectReactHot(componentHotId, {
+        state: "value-state",
+        ui: "after-ui",
+      });
+      RefreshedExample = nextExample;
+      RefreshedValue = nextValue;
+    });
+
+    expect(RefreshedExample).toBe(Example);
+    expect(RefreshedValue).toBe(Value);
+    expect(screen.getByText("After refresh")).toBeInTheDocument();
+  });
+
+  test("re-resolves dependencies when a hot definition changes stores", () => {
+    const First = createStore<{ value: string }>();
+    const Second = createStore<{ value: string }>();
+    const componentHotId = "test:provider-store:ChangingDependency";
+    const signatures = { state: "value-state", ui: "value-ui" };
+    const Value = createComponent({
+      deps: [First],
+      state: ({ deps }) => ({
+        value: useStore(deps.store!, (state) => state.value),
+      }),
+      ui: ({ state }) => <span>{state.value}</span>,
+    }).__effectReactHot(componentHotId, signatures);
+
+    render(
+      <First implements={() => ({ value: "first" })}>
+        <Second implements={() => ({ value: "second" })}>
+          <Value />
+        </Second>
+      </First>,
+    );
+    expect(screen.getByText("first")).toBeInTheDocument();
+
+    act(() => {
+      createComponent({
+        deps: [Second],
+        state: ({ deps }) => ({
+          value: useStore(deps.store!, (state) => state.value),
+        }),
+        ui: ({ state }) => <span>{state.value}</span>,
+      }).__effectReactHot(componentHotId, signatures);
+    });
+
+    expect(screen.getByText("second")).toBeInTheDocument();
+  });
+
   test("renders the initial implementation snapshot on the server", () => {
     const Example = createStore<{ count: number }>();
     const Count = createComponent({

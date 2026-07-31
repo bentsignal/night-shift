@@ -115,6 +115,7 @@ function collectInsertions({
     }
     const annotations = Array<string>(
       `.__effectReactNamed(${JSON.stringify(declaration.name)})`,
+      `.__effectReactHot(${JSON.stringify(hotIdentity("component", model.fileName, declaration.name))}, ${JSON.stringify(declaration.hotSignatures)})`,
     );
 
     for (const references of groups.values()) {
@@ -151,8 +152,16 @@ function collectInsertions({
 function collectStoreNameInsertions(model: SourceModel) {
   return [...model.stores.values()].map((store) => ({
     position: store.initializerEnd,
-    text: `.__effectReactNamed(${JSON.stringify(store.name)})`,
+    text: `.__effectReactNamed(${JSON.stringify(store.name)}).__effectReactHot(${JSON.stringify(hotIdentity("store", model.fileName, store.name))})`,
   }));
+}
+
+function hotIdentity(
+  kind: "component" | "store",
+  fileName: string,
+  name: string,
+) {
+  return `${kind}:${normalizeFileName(fileName)}#${name}`;
 }
 
 function collectStoreDependencyInsertions({

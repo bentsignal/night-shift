@@ -68,6 +68,26 @@ const CompilerProof = createComponent({
   },
 });
 
+const runtimeComponentFactory = createComponent;
+const runtimeHotId = "test:effect-lab:compiled-hot-component";
+
+function useRuntimeHotProbeState() {
+  const [count, setCount] = useState(0);
+  return { count, setCount };
+}
+
+const RuntimeHotProbe = runtimeComponentFactory({
+  state: useRuntimeHotProbeState,
+  ui: ({ state }) => (
+    <button type="button" onClick={() => state.setCount((count) => count + 1)}>
+      {`Before ${state.count}`}
+    </button>
+  ),
+}).__effectReactHot(runtimeHotId, {
+  state: "stable-counter-state",
+  ui: "before-counter-ui",
+});
+
 describe("Effect React Compiler", () => {
   test("memoizes authored state and ui callbacks without directives", () => {
     const onComponentValue = vi.fn();
@@ -94,5 +114,30 @@ describe("Effect React Compiler", () => {
       onStateValue.mock.calls.length,
       onComponentValue.mock.calls.length,
     ]).toEqual([1, 1]);
+  });
+
+  test("does not let compiler caches swallow a hot definition", () => {
+    render(<RuntimeHotProbe />);
+    act(() => screen.getByRole("button", { name: "Before 0" }).click());
+    expect(screen.getByRole("button", { name: "Before 1" })).toBeVisible();
+
+    act(() => {
+      runtimeComponentFactory({
+        state: useRuntimeHotProbeState,
+        ui: ({ state }) => (
+          <button
+            type="button"
+            onClick={() => state.setCount((count) => count + 1)}
+          >
+            {`After ${state.count}`}
+          </button>
+        ),
+      }).__effectReactHot(runtimeHotId, {
+        state: "stable-counter-state",
+        ui: "after-counter-ui",
+      });
+    });
+
+    expect(screen.getByRole("button", { name: "After 1" })).toBeVisible();
   });
 });
