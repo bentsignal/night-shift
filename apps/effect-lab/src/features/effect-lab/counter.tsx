@@ -7,15 +7,13 @@ import {
   useStore,
 } from "@night-shift/effect-react";
 
-export interface CounterState {
-  readonly count: number;
-  readonly setCount: Dispatch<SetStateAction<number>>;
-}
-
-export const Counter = createStore<CounterState>();
+export const Counter = createStore<{
+  count: number;
+  setCount: Dispatch<SetStateAction<number>>;
+}>();
 
 function useCounterImplementation() {
-  const [count, setCount] = useState(5);
+  const [count, setCount] = useState(1);
   return { count, setCount };
 }
 

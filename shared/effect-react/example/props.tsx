@@ -1,23 +1,20 @@
 import { createComponent, createStore, defineProps, useStore } from "../src";
 
-interface GreetingStyleState {
-  readonly salutation: string;
-}
-
-export const GreetingStyle = createStore<GreetingStyleState>();
+export const GreetingStyle = createStore<{
+  salutation: string;
+}>();
 
 export const Greeting = createComponent({
-  props: defineProps<{
-    readonly name: string;
-    readonly punctuation?: "!" | ".";
-  }>(),
   deps: [GreetingStyle],
+  props: defineProps<{
+    name: string;
+    punctuation?: "!" | ".";
+  }>(),
   state: ({ deps, props }) => {
     const salutation = useStore(
       deps.greetingStyle,
       (style) => style.salutation,
     );
-
     return {
       message: `${salutation}, ${props.name}${props.punctuation ?? "."}`,
     };
