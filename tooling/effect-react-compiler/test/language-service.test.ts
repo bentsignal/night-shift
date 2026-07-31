@@ -12,6 +12,10 @@ const labCounterFileName = path.join(
   labProjectRoot,
   "src/features/effect-lab/counter.tsx",
 );
+const labFrameFileName = path.join(
+  labProjectRoot,
+  "src/features/effect-lab/effect-lab.tsx",
+);
 const sharedProjectRoot = path.join(repositoryRoot, "shared/effect-react");
 const sharedConfigFileName = path.join(sharedProjectRoot, "tsconfig.json");
 const sharedCounterFileName = path.join(
@@ -24,6 +28,22 @@ const multipleStoresFileName = path.join(
 );
 
 describe("createEffectReactLanguageService", () => {
+  it("makes missing analysis visible even when deps infer requirements", () => {
+    const { service } = createService({
+      configFileName: labConfigFileName,
+      lower: false,
+      projectRoot: labProjectRoot,
+    });
+    const source = fs.readFileSync(labCounterFileName, "utf8");
+
+    expect(
+      quickInfoOf(service, source, labCounterFileName, "CounterControls"),
+    ).toContain("EffectReactAnalysisRequired");
+    expect(
+      quickInfoOf(service, source, labCounterFileName, "CounterControls"),
+    ).toContain('StoreRequirement<"LabCounter", CounterState>');
+  }, 15_000);
+
   it("updates quick info when a provider is added or removed", () => {
     const project = createService({
       configFileName: labConfigFileName,
@@ -56,6 +76,84 @@ describe("createEffectReactLanguageService", () => {
       ),
     ).toBe(
       'const CounterInstrument: EffectComponent<Record<string, never>, never, StoreRequirement<"LabCounter", CounterState>>',
+    );
+  }, 15_000);
+
+  it("invalidates unchanged parents when an imported child changes", () => {
+    const project = createService({
+      configFileName: labConfigFileName,
+      projectRoot: labProjectRoot,
+    });
+    const counterSource = fs.readFileSync(labCounterFileName, "utf8");
+    const frameSource = fs.readFileSync(labFrameFileName, "utf8");
+    const withProvider = setCounterProvider(counterSource, true);
+    const withoutProvider = setCounterProvider(counterSource, false);
+
+    project.updateFile(labCounterFileName, withProvider);
+    expect(
+      quickInfoOf(
+        project.service,
+        frameSource,
+        labFrameFileName,
+        "WorkspaceFrame",
+      ),
+    ).toBe(
+      "const WorkspaceFrame: EffectComponent<Record<string, never>, never, never>",
+    );
+
+    project.updateFile(labCounterFileName, withoutProvider);
+    expect(
+      quickInfoOf(
+        project.service,
+        frameSource,
+        labFrameFileName,
+        "WorkspaceFrame",
+      ),
+    ).toBe(
+      'const WorkspaceFrame: EffectComponent<Record<string, never>, never, StoreRequirement<"LabCounter", CounterState>>',
+    );
+
+    project.updateFile(labCounterFileName, withProvider);
+    expect(
+      quickInfoOf(
+        project.service,
+        frameSource,
+        labFrameFileName,
+        "WorkspaceFrame",
+      ),
+    ).toBe(
+      "const WorkspaceFrame: EffectComponent<Record<string, never>, never, never>",
+    );
+  }, 15_000);
+
+  it("discovers a lowercase stateless component added after project load", () => {
+    const project = createService({
+      configFileName: labConfigFileName,
+      projectRoot: labProjectRoot,
+    });
+    const source = removeTestComponent(
+      fs.readFileSync(labCounterFileName, "utf8"),
+    );
+    const withLowercaseComponent = `${source}
+
+const testComponent = createComponent({
+  ui: () => <CounterControls />,
+});
+`;
+
+    project.updateFile(labCounterFileName, source);
+    expect(() => project.service.getCompilerOptionsDiagnostics()).not.toThrow();
+    project.updateFile(labCounterFileName, withLowercaseComponent);
+
+    expect(
+      quickInfoOf(
+        project.service,
+        withLowercaseComponent,
+        labCounterFileName,
+        "testComponent",
+      ),
+    ).toBe(
+      'const testComponent: EffectComponent<Record<string, never>, never, StoreRequirement<"LabCounter", CounterState>>',
     );
   }, 15_000);
 
@@ -105,9 +203,11 @@ describe("createEffectReactLanguageService", () => {
 
 function createService({
   configFileName,
+  lower = true,
   projectRoot,
 }: {
   configFileName: string;
+  lower?: boolean;
   projectRoot: string;
 }) {
   const sources = new Map<string, string>();
@@ -185,12 +285,15 @@ function createService({
       };
     },
   });
+  const service = lower
+    ? createEffectReactLanguageService({
+        languageService,
+        languageServiceHost: host,
+        typescript: ts,
+      })
+    : languageService;
   return {
-    service: createEffectReactLanguageService({
-      languageService,
-      languageServiceHost: host,
-      typescript: ts,
-    }),
+    service,
     updateFile(fileName: string, source: string) {
       const resolved = path.resolve(fileName);
       sources.set(resolved, source);
@@ -210,6 +313,13 @@ function setCounterProvider(source: string, enabled: boolean) {
       /^(\s*)(?:\/\/ )?<\/counter\.Store>$/mu,
       `$1${comment}</counter.Store>`,
     );
+}
+
+function removeTestComponent(source: string) {
+  return source.replace(
+    /\nexport const TestComponent = createComponent\(\{[\s\S]*?\n\}\);\n/u,
+    "",
+  );
 }
 
 function quickInfoOf(

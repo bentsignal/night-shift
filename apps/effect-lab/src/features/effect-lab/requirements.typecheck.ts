@@ -6,7 +6,7 @@ import type {
 } from "@night-shift/effect-react";
 
 import type { CounterState } from "./counter";
-import { CounterInstrument, CounterReadout } from "./counter";
+import { CounterInstrument, CounterReadout, TestComponent } from "./counter";
 
 type Equal<Left, Right> =
   (<Value>() => Value extends Left ? 1 : 2) extends <
@@ -28,4 +28,10 @@ type _CounterReadoutRequiresTheCounter = Expect<
 >;
 type _CounterInstrumentDischargesChildRequirements = Expect<
   Equal<Requirements<typeof CounterInstrument>, never>
+>;
+type _StatelessComponentKeepsChildRequirements = Expect<
+  Equal<
+    Requirements<typeof TestComponent>,
+    StoreRequirement<"LabCounter", CounterState>
+  >
 >;

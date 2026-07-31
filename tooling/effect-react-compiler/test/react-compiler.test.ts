@@ -6,6 +6,24 @@ import { describe, expect, it } from "vitest";
 import { lowerEffectReactSources } from "../src";
 
 describe("React Compiler lowering", () => {
+  it("compiles a stateless component without manufacturing state", async () => {
+    const source = `
+      import { createComponent } from "@night-shift/effect-react";
+
+      const shell = createComponent({
+        ui: () => <main />,
+      });
+    `;
+    const result = await compile(source, "/project/stateless.tsx");
+
+    expect(result.lowered).not.toContain("state:");
+    expect(result.lowered).toContain('ui: () => { "use memo";');
+    expect(result.code).toContain("_c(");
+    expect(
+      result.events.filter((event) => event.kind === "CompileSuccess"),
+    ).toHaveLength(1);
+  });
+
   it("compiles component state, ui, and provider hooks", async () => {
     const source = `
       import { useState } from "react";

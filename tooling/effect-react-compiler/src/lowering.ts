@@ -134,12 +134,11 @@ function collectInsertions({
       );
     }
 
-    if (annotations.length > 0) {
-      insertions.push({
-        position: declaration.initializerEnd,
-        text: annotations.join(""),
-      });
-    }
+    annotations.push(".__effectReactAnalyzed()");
+    insertions.push({
+      position: declaration.initializerEnd,
+      text: annotations.join(""),
+    });
   }
 
   return insertions.sort((left, right) => left.position - right.position);

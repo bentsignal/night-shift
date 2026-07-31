@@ -5,7 +5,7 @@
         "typescript": {
           "tsdk": "./node_modules/typescript/lib",
           "tsserver": {
-            "pluginPaths": ["./node_modules"]
+            "pluginPaths": ["./node_modules/.pnpm/node_modules"]
           }
         },
         "vtsls": {

@@ -110,6 +110,14 @@ export const CounterInstrument = createComponent({
   ),
 });
 
+export const TestComponent = createComponent({
+  ui: () => (
+    <div>
+      <CounterControls />
+    </div>
+  ),
+});
+
 function formatCount(count: number) {
   const magnitude = Math.abs(count).toString().padStart(2, "0");
   return count < 0 ? `−${magnitude}` : `+${magnitude}`;

@@ -10,6 +10,32 @@ import {
 } from "../src";
 
 describe("createComponent", () => {
+  test("renders stateless UI with props and no manufactured state", () => {
+    const ui = vi.fn(({ props }: { props: { label: string } }) => (
+      <span>{props.label}</span>
+    ));
+    const Label = createComponent<{ label: string }>({ ui });
+
+    render(<Label label="Ready" />);
+
+    expect(screen.getByText("Ready")).toBeInTheDocument();
+    expect(ui).toHaveBeenCalledWith({ props: { label: "Ready" } });
+  });
+
+  test("renders stateless dependency failures without invoking UI", () => {
+    const ui = vi.fn(() => <span>unreachable</span>);
+    const Failed = createComponent({
+      deps: Effect.fail("missing-dependency" as const),
+      ui,
+      onFailure: (error) => <span>{error}</span>,
+    });
+
+    render(<Failed />);
+
+    expect(screen.getByText("missing-dependency")).toBeInTheDocument();
+    expect(ui).not.toHaveBeenCalled();
+  });
+
   test("passes dependencies, props, and state through each phase", () => {
     const deps = { suffix: "!" };
     const state = vi.fn(

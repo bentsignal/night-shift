@@ -7,6 +7,11 @@ import { provideServiceContext, useServiceContext } from "./service-context";
 type RenderResult = ReactElement | null;
 
 export declare const EffectComponentTypeId: unique symbol;
+export declare const EffectReactAnalysisRequiredTypeId: unique symbol;
+
+export interface EffectReactAnalysisRequired {
+  readonly [EffectReactAnalysisRequiredTypeId]: "Effect React compiler analysis is not active";
+}
 
 export interface EffectComponent<
   Props,
@@ -22,6 +27,11 @@ export interface EffectComponent<
     RenderResult,
     Error,
     Requirements
+  >;
+  readonly __effectReactAnalyzed: () => EffectComponent<
+    Props,
+    Error,
+    Exclude<Requirements, EffectReactAnalysisRequired>
   >;
   readonly __effectReactRequirements: <
     const Components extends readonly unknown[],
@@ -86,29 +96,46 @@ export type ComponentState<Props, Dependencies, State, Error> = (input: {
   readonly props: Props;
 }) => Effect.Effect<State, Error>;
 
-type ComponentInput<Props, State> = {
+type StatefulComponentInput<Props, State> = {
   readonly props: Props;
   readonly state: State;
 };
 
-type ComponentUI<Props, State> = (
-  input: ComponentInput<Props, State>,
-) => RenderResult;
+type StatelessComponentInput<Props> = {
+  readonly props: Props;
+};
 
 type ComponentErrors<DependenciesError, StateError> =
   DependenciesError | StateError;
 
-type ComponentLifecycle<
+type ComponentCommon<Error> = {
+  readonly displayName?: string;
+  readonly onDefect?: (defect: unknown) => RenderResult;
+} & FailureRenderer<Error>;
+
+export type StatefulComponentDefinition<
   Props,
   Dependencies,
   State,
   DependenciesError,
   StateError,
+  Requirements,
 > = {
-  readonly ui: ComponentUI<Props, State>;
-  readonly onDefect?: (defect: unknown) => RenderResult;
   readonly state: ComponentState<Props, Dependencies, State, StateError>;
-} & FailureRenderer<ComponentErrors<DependenciesError, StateError>>;
+  readonly ui: (input: StatefulComponentInput<Props, State>) => RenderResult;
+} & ComponentCommon<ComponentErrors<DependenciesError, StateError>> &
+  DependencyInput<Dependencies, DependenciesError, Requirements>;
+
+export type StatelessComponentDefinition<
+  Props,
+  Dependencies,
+  DependenciesError,
+  Requirements,
+> = {
+  readonly state?: never;
+  readonly ui: (input: StatelessComponentInput<Props>) => RenderResult;
+} & ComponentCommon<DependenciesError> &
+  DependencyInput<Dependencies, DependenciesError, Requirements>;
 
 type DependencyInput<Dependencies, Error, Requirements> = [void] extends [
   Dependencies,
@@ -119,20 +146,6 @@ type DependencyInput<Dependencies, Error, Requirements> = [void] extends [
   : {
       readonly deps: Effect.Effect<Dependencies, Error, Requirements>;
     };
-
-type RuntimeDefinition<
-  Props,
-  Dependencies,
-  State,
-  DependenciesError,
-  StateError,
-> = ComponentLifecycle<
-  Props,
-  Dependencies,
-  State,
-  DependenciesError,
-  StateError
->;
 
 type FailureRenderer<Error> = [Error] extends [never]
   ? {
@@ -149,16 +162,21 @@ export type ComponentDefinition<
   DependenciesError,
   StateError,
   Requirements,
-> = ComponentLifecycle<
-  Props,
-  Dependencies,
-  State,
-  DependenciesError,
-  StateError
-> &
-  DependencyInput<Dependencies, DependenciesError, Requirements> & {
-    readonly displayName?: string;
-  };
+> =
+  | StatefulComponentDefinition<
+      Props,
+      Dependencies,
+      State,
+      DependenciesError,
+      StateError,
+      Requirements
+    >
+  | StatelessComponentDefinition<
+      Props,
+      Dependencies,
+      DependenciesError,
+      Requirements
+    >;
 
 export class AsyncComponentStateError extends Error {
   override readonly name = "AsyncComponentStateError";
@@ -177,7 +195,45 @@ export function createComponent<
   State = never,
   DependenciesError = never,
   StateError = never,
-  Requirements = never,
+  Requirements = EffectReactAnalysisRequired,
+>(
+  definition: StatefulComponentDefinition<
+    Props,
+    Dependencies,
+    State,
+    DependenciesError,
+    StateError,
+    Requirements
+  >,
+): EffectComponent<
+  Props,
+  ComponentErrors<DependenciesError, StateError>,
+  Requirements | EffectReactAnalysisRequired
+>;
+export function createComponent<
+  Props = Record<string, never>,
+  Dependencies = void,
+  DependenciesError = never,
+  Requirements = EffectReactAnalysisRequired,
+>(
+  definition: StatelessComponentDefinition<
+    Props,
+    Dependencies,
+    DependenciesError,
+    Requirements
+  >,
+): EffectComponent<
+  Props,
+  DependenciesError,
+  Requirements | EffectReactAnalysisRequired
+>;
+export function createComponent<
+  Props = Record<string, never>,
+  Dependencies = void,
+  State = never,
+  DependenciesError = never,
+  StateError = never,
+  Requirements = EffectReactAnalysisRequired,
 >(
   definition: ComponentDefinition<
     Props,
@@ -205,12 +261,14 @@ export function createComponent<
       return renderFailure(definition, dependencies.cause);
     }
 
-    return (
+    return definition.state ? (
       <EvaluatedState
         deps={dependencies.value}
         definition={definition}
         props={props}
       />
+    ) : (
+      <EvaluatedUI definition={definition} props={props} />
     );
   };
   CreatedComponent.displayName =
@@ -231,6 +289,7 @@ export function makeEffectComponent<Props, Error, Requirements>(
     Requirements
   >;
   Object.assign(effectComponent, Effectable.CommitPrototype, {
+    __effectReactAnalyzed: () => effectComponent,
     commit: () =>
       Effect.context<Requirements>().pipe(Effect.as(effectComponent)),
     __effectReactProvidedRequirements: () => effectComponent,
@@ -245,18 +304,20 @@ function EvaluatedState<
   State,
   DependenciesError,
   StateError,
+  Requirements,
 >({
   deps,
   definition,
   props,
 }: {
   deps: Dependencies;
-  definition: RuntimeDefinition<
+  definition: StatefulComponentDefinition<
     Props,
     Dependencies,
     State,
     DependenciesError,
-    StateError
+    StateError,
+    Requirements
   >;
   props: Props;
 }) {
@@ -270,6 +331,21 @@ function EvaluatedState<
     return renderFailure(definition, state.cause);
   }
   return definition.ui({ props, state: state.value });
+}
+
+function EvaluatedUI<Props, Dependencies, DependenciesError, Requirements>({
+  definition,
+  props,
+}: {
+  definition: StatelessComponentDefinition<
+    Props,
+    Dependencies,
+    DependenciesError,
+    Requirements
+  >;
+  props: Props;
+}) {
+  return definition.ui({ props });
 }
 
 function runState<Success, Error>(effect: Effect.Effect<Success, Error>) {

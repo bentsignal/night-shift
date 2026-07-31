@@ -44,6 +44,33 @@ class NumberService extends Context.Tag("NumberService")<
 
 class TextService extends Context.Tag("TextService")<TextService, string>() {}
 
+const Stateless = createComponent<{ label: string }>({
+  ui: ({ props }) => {
+    props.label satisfies string;
+    return null;
+  },
+});
+
+Stateless satisfies ComponentType<{ label: string }>;
+
+createComponent({
+  ui: (input) => {
+    // @ts-expect-error stateless UI receives props and no state field
+    const _state = input.state;
+    return null;
+  },
+});
+
+const InferredState = createComponent({
+  state: () => Effect.succeed({ count: 1 }),
+  ui: ({ state }) => {
+    state.count satisfies number;
+    return null;
+  },
+});
+
+InferredState satisfies ComponentType;
+
 const requiredDeps = Effect.gen(function* () {
   const number = yield* NumberService;
   const text = yield* TextService;
@@ -65,6 +92,22 @@ type RequiredEffect = ComponentEffect<typeof Required>;
 type RequiredServices = Effect.Effect.Context<RequiredEffect>;
 type _RequiredServices = Expect<
   Equal<RequiredServices, NumberService | TextService>
+>;
+
+const _StatelessRequired = createComponent({
+  deps: requiredDeps,
+  ui: ({ props }) => {
+    props satisfies Record<string, never>;
+    return null;
+  },
+});
+
+type StatelessRequiredEffect = ComponentEffect<typeof _StatelessRequired>;
+type _StatelessRequiredServices = Expect<
+  Equal<
+    Effect.Effect.Context<StatelessRequiredEffect>,
+    NumberService | TextService
+  >
 >;
 
 const Ready = createComponent({

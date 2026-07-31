@@ -34,6 +34,11 @@ export function createEffectReactLanguageService({
             : target.getScriptSnapshot(fileName);
         };
       }
+      if (property === "getScriptVersion") {
+        return (fileName: string) =>
+          loweredProject.scriptVersion(fileName) ??
+          target.getScriptVersion(fileName);
+      }
       if (property === "getProjectVersion") {
         return () => loweredProject.version();
       }
@@ -100,21 +105,21 @@ function createLoweredProject({
 }) {
   let cacheKey = "";
   let lowered = new Map<string, LoweredEffectReactSource>();
+  let scriptVersions = new Map<string, number>();
 
   const refresh = () => {
     const fileNames = host
       .getScriptFileNames()
       .filter((fileName) => isEffectReactSource(fileName));
-    const scriptVersions = fileNames
+    const authoredVersions = fileNames
       .map((fileName) => `${fileName}:${host.getScriptVersion(fileName)}`)
       .join("|");
-    const nextCacheKey = `${host.getProjectVersion?.() ?? ""}|${scriptVersions}`;
+    const nextCacheKey = `${host.getProjectVersion?.() ?? ""}|${authoredVersions}`;
     if (nextCacheKey === cacheKey) {
       return;
     }
 
-    cacheKey = nextCacheKey;
-    lowered = lowerEffectReactSources(
+    const nextLowered = lowerEffectReactSources(
       fileNames.flatMap((fileName) => {
         const snapshot = host.getScriptSnapshot(fileName);
         return snapshot
@@ -127,6 +132,21 @@ function createLoweredProject({
           : [];
       }),
     );
+    const nextScriptVersions = new Map(scriptVersions);
+    for (const [fileName, source] of nextLowered) {
+      const previous = lowered.get(fileName);
+      const previousVersion = scriptVersions.get(fileName) ?? 0;
+      nextScriptVersions.set(
+        fileName,
+        previous?.source === source.source
+          ? previousVersion
+          : previousVersion + 1,
+      );
+    }
+
+    lowered = nextLowered;
+    scriptVersions = nextScriptVersions;
+    cacheKey = nextCacheKey;
   };
 
   return {
@@ -148,6 +168,11 @@ function createLoweredProject({
           ? typescript.ScriptKind.TSX
           : typescript.ScriptKind.TS,
       );
+    },
+    scriptVersion(fileName: string) {
+      refresh();
+      const version = scriptVersions.get(path.resolve(fileName));
+      return version === undefined ? undefined : String(version);
     },
     version() {
       refresh();

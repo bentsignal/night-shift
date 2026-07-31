@@ -315,11 +315,13 @@ describe("lowerEffectReactSources", () => {
     expect(lowered?.insertions).toEqual(
       expect.arrayContaining([
         expect.objectContaining({
-          text: ".__effectReactRequirements(Child)",
+          text: ".__effectReactRequirements(Child).__effectReactAnalyzed()",
         }),
       ]),
     );
-    expect(lowered?.source).toContain("}).__effectReactRequirements(Child);");
+    expect(lowered?.source).toContain(
+      "}).__effectReactRequirements(Child).__effectReactAnalyzed();",
+    );
     expect(lowered?.source).toContain('"use memo"');
   });
 

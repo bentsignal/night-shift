@@ -5,6 +5,7 @@ export {
   type ComponentEffect,
   type ComponentState,
   type EffectComponent,
+  type EffectReactAnalysisRequired,
 } from "./create-component";
 export {
   createStore,
