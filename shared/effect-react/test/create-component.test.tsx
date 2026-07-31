@@ -4,31 +4,35 @@ import { describe, expect, test, vi } from "vitest";
 import { createComponent, createStore, useStore } from "../src";
 
 describe("createComponent", () => {
-  test("renders stateless UI with props and no manufactured state", () => {
-    const ui = vi.fn(({ props }: { props: { label: string } }) => (
-      <span>{props.label}</span>
+  test("routes props through state before rendering UI", () => {
+    const ui = vi.fn(({ state }: { state: { label: string } }) => (
+      <span>{state.label}</span>
     ));
-    const Label = createComponent<{ label: string }>({ ui });
+    const Label = createComponent({
+      state: ({ props }: { props: { label: string } }) => ({
+        label: props.label,
+      }),
+      ui,
+    });
 
     render(<Label label="Ready" />);
 
     expect(screen.getByText("Ready")).toBeInTheDocument();
-    expect(ui).toHaveBeenCalledWith({ props: { label: "Ready" } });
+    expect(ui).toHaveBeenCalledWith({ state: { label: "Ready" } });
   });
 
   test("passes plain state from state to UI", () => {
     const Counter = createComponent({
       state: ({ props }: { props: { initial: number } }) => ({
         count: props.initial,
+        label: `Initial ${props.initial}`,
       }),
-      ui: ({ props, state }) => (
-        <span>{`${props.initial}: ${state.count}`}</span>
-      ),
+      ui: ({ state }) => <span>{`${state.label}: ${state.count}`}</span>,
     });
 
     render(<Counter initial={42} />);
 
-    expect(screen.getByText("42: 42")).toBeInTheDocument();
+    expect(screen.getByText("Initial 42: 42")).toBeInTheDocument();
   });
 
   test("resolves declared stores under their dependency keys", () => {

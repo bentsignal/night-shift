@@ -20,22 +20,49 @@ type Equal<Left, Right> =
 type Expect<Value extends true> = Value;
 type Requirements<Value> = Effect.Effect.Context<ComponentEffect<Value>>;
 
-const Stateless = createComponent<{ label: string }>({
-  ui: ({ props }) => {
-    props.label satisfies string;
+const Propful = createComponent({
+  state: ({ props }: { props: { label: string } }) => ({
+    label: props.label,
+  }),
+  ui: ({ state }) => {
+    state.label satisfies string;
     return null;
   },
 });
-Stateless satisfies ComponentWithProps<{ label: string }>;
-Stateless satisfies ComponentType<{ label: string }>;
+Propful satisfies ComponentWithProps<{ label: string }>;
+Propful satisfies ComponentType<{ label: string }>;
+const _PropfulUsage = <Propful label="Ready" />;
+// @ts-expect-error propful components require their declared props
+const _MissingProp = <Propful />;
+// @ts-expect-error propful components reject undeclared props
+const _ExtraProp = <Propful extra label="Ready" />;
 
 createComponent({
+  state: ({ props }: { props: { label: string } }) => ({
+    label: props.label,
+  }),
   ui: (input) => {
-    // @ts-expect-error stateless UI has no state field
-    const _state = input.state;
+    // @ts-expect-error props are consumed by state and are not exposed to ui
+    void input.props;
     return null;
   },
 });
+
+// @ts-expect-error components with props must derive render state
+createComponent<{ label: string }>({
+  ui: () => null,
+});
+
+createComponent({
+  // @ts-expect-error stateless UI cannot request an input
+  ui: (_input: { readonly state: unknown }) => null,
+});
+
+const Stateless = createComponent({ ui: () => null });
+Stateless satisfies Component;
+const _StatelessUsage = <Stateless />;
+// @ts-expect-error stateless components do not accept props
+const _StatelessProp = <Stateless label="Ready" />;
 
 createComponent({
   // @ts-expect-error stateless UI cannot request a state parameter

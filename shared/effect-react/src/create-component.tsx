@@ -160,13 +160,8 @@ export type ComponentState<
   readonly props: Props;
 }) => State;
 
-type StatefulComponentInput<Props, State> = {
-  readonly props: Props;
+type StatefulComponentInput<State> = {
   readonly state: State;
-};
-
-type StatelessComponentInput<Props> = {
-  readonly props: Props;
 };
 
 export type StatefulComponentDefinition<
@@ -176,28 +171,27 @@ export type StatefulComponentDefinition<
 > = {
   readonly deps: readonly [...Dependencies];
   readonly state: ComponentState<Props, Dependencies, State>;
-  readonly ui: (input: StatefulComponentInput<Props, State>) => RenderResult;
+  readonly ui: (input: StatefulComponentInput<State>) => RenderResult;
 };
 
 export type StatelessComponentDefinition<
-  Props,
   Dependencies extends StoreDependencies,
 > = {
   readonly deps: readonly [...Dependencies];
   readonly state?: never;
-  readonly ui: (input: StatelessComponentInput<Props>) => RenderResult;
+  readonly ui: () => RenderResult;
 };
 
 type StatefulComponentWithoutDependencies<Props, State> = {
   readonly deps?: never;
   readonly state: (input: { readonly props: Props }) => State;
-  readonly ui: (input: StatefulComponentInput<Props, State>) => RenderResult;
+  readonly ui: (input: StatefulComponentInput<State>) => RenderResult;
 };
 
-type StatelessComponentWithoutDependencies<Props> = {
+type StatelessComponentWithoutDependencies = {
   readonly deps?: never;
   readonly state?: never;
-  readonly ui: (input: StatelessComponentInput<Props>) => RenderResult;
+  readonly ui: () => RenderResult;
 };
 
 export function createComponent<
@@ -211,20 +205,18 @@ export function createComponent<
   DependencyRequirements<Dependencies> | EffectReactAnalysisRequired
 >;
 export function createComponent<
-  Props = EmptyProps,
   const Dependencies extends StoreDependencies = StoreDependencies,
 >(
-  definition: StatelessComponentDefinition<Props, Dependencies>,
-): CreatedComponent<
-  Props,
+  definition: StatelessComponentDefinition<Dependencies>,
+): Component<
   DependencyRequirements<Dependencies> | EffectReactAnalysisRequired
 >;
 export function createComponent<Props = EmptyProps, State = never>(
   definition: StatefulComponentWithoutDependencies<Props, State>,
 ): CreatedComponent<Props, EffectReactAnalysisRequired>;
-export function createComponent<Props = EmptyProps>(
-  definition: StatelessComponentWithoutDependencies<Props>,
-): CreatedComponent<Props, EffectReactAnalysisRequired>;
+export function createComponent(
+  definition: StatelessComponentWithoutDependencies,
+): Component<EffectReactAnalysisRequired>;
 export function createComponent(definition: unknown) {
   const componentDefinition = definition as RuntimeComponentDefinition;
   const CreatedComponent = (props: object) => {
@@ -241,7 +233,7 @@ export function createComponent(definition: unknown) {
         props={props}
       />
     ) : (
-      <EvaluatedUI definition={componentDefinition} props={props} />
+      <EvaluatedUI definition={componentDefinition} />
     );
   };
   CreatedComponent.displayName = "Component";
@@ -275,10 +267,7 @@ type RuntimeComponentDefinition = {
     readonly deps: ResolvedRuntimeDependencies;
     readonly props: object;
   }) => unknown;
-  readonly ui: (input: {
-    readonly props: object;
-    readonly state?: unknown;
-  }) => RenderResult;
+  readonly ui: (input: { readonly state: unknown }) => RenderResult;
 };
 
 function EvaluatedState({
@@ -291,17 +280,15 @@ function EvaluatedState({
   props: object;
 }) {
   const state = definition.state?.({ deps, props });
-  return definition.ui({ props, state });
+  return definition.ui({ state });
 }
 
 function EvaluatedUI({
   definition,
-  props,
 }: {
   definition: RuntimeComponentDefinition;
-  props: object;
 }) {
-  return definition.ui({ props });
+  return (definition.ui as () => RenderResult)();
 }
 
 function resolveDependencies(

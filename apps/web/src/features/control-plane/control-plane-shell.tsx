@@ -71,23 +71,25 @@ function ConnectedControlPlane({ client }: { client: ControlPlaneClient }) {
 }
 
 const ApplicationFrame = createComponent({
-  state: () => {
-    const pathname = useRouterState({
-      select: (state) => state.location.pathname,
-    });
-    return { pathname };
-  },
-  ui: ({
+  state: ({
     props,
-    state,
   }: {
     props: {
       readonly children: ReactNode;
       readonly implementation: ControlPlaneState;
     };
-    state: { pathname: string };
-  }) => (
-    <ControlPlane implements={() => props.implementation}>
+  }) => {
+    const pathname = useRouterState({
+      select: (state) => state.location.pathname,
+    });
+    return {
+      children: props.children,
+      implementation: props.implementation,
+      pathname,
+    };
+  },
+  ui: ({ state }) => (
+    <ControlPlane implements={() => state.implementation}>
       <SidebarProvider
         defaultOpen
         style={
@@ -109,7 +111,7 @@ const ApplicationFrame = createComponent({
             </div>
             <ThemeToggle />
           </header>
-          <div className="min-h-0 flex-1 overflow-y-auto">{props.children}</div>
+          <div className="min-h-0 flex-1 overflow-y-auto">{state.children}</div>
         </SidebarInset>
       </SidebarProvider>
     </ControlPlane>
