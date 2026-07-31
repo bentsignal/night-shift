@@ -36,7 +36,8 @@ body {
   background-size: 48px 48px;
 }
 
-button {
+button,
+input {
   font: inherit;
 }
 
@@ -383,33 +384,173 @@ h2 {
   place-items: center;
 }
 
-.multi-store-output > section {
+.multi-store-dashboard {
   display: grid;
-  width: min(100%, 440px);
+  width: min(100%, 520px);
   gap: 14px;
-  padding: 28px;
+  padding: 18px;
   border: 1px solid var(--line-bright);
   background: var(--panel-raised);
 }
 
-.multi-store-output span,
-.multi-store-output strong {
-  display: block;
+.store-card {
+  padding: 18px;
+  border: 1px solid var(--line);
+  background: var(--panel);
 }
 
-.multi-store-output span {
-  color: var(--acid);
-  font-size: clamp(20px, 4vw, 38px);
-  letter-spacing: -0.06em;
+.store-card-heading {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  margin-bottom: 18px;
 }
 
-.multi-store-output strong {
-  padding-top: 14px;
-  border-top: 1px solid var(--line);
+.store-card-heading > span,
+.identity-store > label,
+.transform-output small {
   color: var(--quiet);
-  font-size: 10px;
-  font-weight: 500;
+  font-size: 8px;
   letter-spacing: 0.16em;
+  text-transform: uppercase;
+}
+
+.store-card-heading button,
+.workspace-controls button {
+  border: 1px solid var(--line-bright);
+  background: var(--panel-raised);
+  color: var(--quiet);
+  cursor: pointer;
+  transition:
+    border-color 140ms ease,
+    color 140ms ease,
+    transform 140ms ease;
+}
+
+.store-card-heading button:hover,
+.workspace-controls button:hover {
+  border-color: var(--acid-muted);
+  color: var(--acid);
+}
+
+.store-card-heading button:active,
+.workspace-controls button:active {
+  transform: translateY(1px);
+}
+
+.store-card-heading button:focus-visible,
+.workspace-controls button:focus-visible,
+.identity-store input:focus-visible {
+  outline: 2px solid var(--acid);
+  outline-offset: 2px;
+}
+
+.store-card-heading button {
+  padding: 8px 10px;
+  font-size: 7px;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+}
+
+.identity-store {
+  --store-accent: #ad7cff;
+}
+
+.identity-store[data-accent="amber"] {
+  --store-accent: #ffbd4a;
+}
+
+.identity-store[data-accent="cyan"] {
+  --store-accent: #4de7e7;
+}
+
+.identity-store > label {
+  display: block;
+  margin-bottom: 8px;
+}
+
+.identity-store input {
+  width: 100%;
+  border: 0;
+  border-bottom: 1px solid var(--line-bright);
+  padding: 9px 0 11px;
+  background: transparent;
+  color: var(--quiet);
+  font-size: 13px;
+}
+
+.transform-output {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  align-items: end;
+  gap: 6px 16px;
+  margin-top: 18px;
+}
+
+.transform-output small {
+  grid-column: 1 / -1;
+}
+
+.transform-output output {
+  overflow: hidden;
+  color: var(--store-accent);
+  font-size: clamp(24px, 4vw, 36px);
+  letter-spacing: -0.06em;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  transition: color 180ms ease;
+}
+
+.transform-output > span {
+  color: var(--store-accent);
+  font-size: 8px;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  transition: color 180ms ease;
+}
+
+.workspace-store {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  align-items: end;
+  gap: 16px;
+}
+
+.workspace-store .store-card-heading {
+  grid-column: 1 / -1;
+  margin-bottom: 0;
+}
+
+.workspace-store .store-card-heading strong {
+  color: var(--quiet);
+  font-size: 9px;
+  font-weight: 500;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+}
+
+.workspace-store > output {
+  color: var(--acid);
+  font-size: 48px;
+  font-variant-numeric: tabular-nums;
+  font-weight: 300;
+  letter-spacing: -0.08em;
+  line-height: 0.9;
+}
+
+.workspace-controls {
+  display: grid;
+  grid-template-columns: 34px auto 34px;
+  gap: 5px;
+}
+
+.workspace-controls button {
+  height: 34px;
+  min-width: 34px;
+  padding: 0 10px;
+  font-size: 8px;
+  letter-spacing: 0.08em;
   text-transform: uppercase;
 }
 
