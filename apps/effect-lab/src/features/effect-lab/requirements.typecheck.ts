@@ -23,9 +23,7 @@ type Equal<Left, Right> =
 type Expect<Value extends true> = Value;
 type StoreState<Value> =
   Value extends Store<infer _Name, infer State> ? State : never;
-type Requirements<Component> = Effect.Effect.Context<
-  ComponentEffect<Component>
->;
+type Requirements<Component> = Effect.Services<ComponentEffect<Component>>;
 type CounterState = StoreState<typeof Counter>;
 
 type _CounterReadoutRequiresTheCounter = Expect<

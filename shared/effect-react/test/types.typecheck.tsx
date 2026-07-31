@@ -18,7 +18,7 @@ type Equal<Left, Right> =
     : false;
 
 type Expect<Value extends true> = Value;
-type Requirements<Value> = Effect.Effect.Context<ComponentEffect<Value>>;
+type Requirements<Value> = Effect.Services<ComponentEffect<Value>>;
 
 const Propful = createComponent({
   props: defineProps<{ label: string }>(),

@@ -18,9 +18,7 @@ type Equal<Left, Right> =
 
 type Expect<Value extends true> = Value;
 
-type Requirements<Component> = Effect.Effect.Context<
-  ComponentEffect<Component>
->;
+type Requirements<Component> = Effect.Services<ComponentEffect<Component>>;
 
 type CounterRequirement = StoreRequirement<"Counter", CounterState>;
 

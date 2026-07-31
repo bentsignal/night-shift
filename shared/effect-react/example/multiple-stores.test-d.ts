@@ -23,9 +23,7 @@ type Equal<Left, Right> =
 
 type Expect<Value extends true> = Value;
 
-type Requirements<Component> = Effect.Effect.Context<
-  ComponentEffect<Component>
->;
+type Requirements<Component> = Effect.Services<ComponentEffect<Component>>;
 
 type ViewerRequirement = StoreRequirement<"Viewer", ViewerState>;
 type ThemeRequirement = StoreRequirement<"Theme", ThemeState>;

@@ -17,7 +17,7 @@ const _NewRunFormRequirements = createComponent({
   ui: () => null,
 });
 
-type Requirements = Effect.Effect.Context<
+type Requirements = Effect.Services<
   ComponentEffect<typeof _NewRunFormRequirements>
 >;
 

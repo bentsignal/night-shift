@@ -309,7 +309,13 @@ function makeComponent<Props, Requirements>(
   hotState: HotComponentState<RuntimeComponentDefinition>,
 ) {
   const created = component as CreatedComponent<Props, Requirements>;
-  Object.assign(created, Effectable.CommitPrototype, {
+  const effectPrototype = Effectable.Prototype<
+    Effect.Effect<CreatedComponent<Props, Requirements>, never, Requirements>
+  >({
+    label: "EffectReactComponent",
+    evaluate: () => Effect.context<Requirements>().pipe(Effect.as(created)),
+  });
+  Object.assign(created, effectPrototype, {
     __effectReactAnalyzed: () => created,
     __effectReactHot: (id: string, signatures: HotComponentSignatures) =>
       registerHotComponent({
@@ -318,7 +324,6 @@ function makeComponent<Props, Requirements>(
         signatures,
         state: hotState,
       }),
-    commit: () => Effect.context<Requirements>().pipe(Effect.as(created)),
     __effectReactNamed: (name: string) => {
       Object.assign(component, { displayName: name });
       return created;

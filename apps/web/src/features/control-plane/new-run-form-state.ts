@@ -92,7 +92,7 @@ export function useNewRunFormState({
       catch: (cause) =>
         cause instanceof Error ? cause : new Error("Unable to queue run"),
     }).pipe(
-      Effect.catchAll((cause) =>
+      Effect.catch((cause) =>
         Effect.sync(() => {
           setError(cause.message);
         }),

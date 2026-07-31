@@ -28,7 +28,7 @@ export interface StoreDependency<
   Key extends string,
   Name extends string,
   State extends object,
-> extends Context.Tag<StoreRequirement<Name, State>, ReadableStore<State>> {
+> extends Context.Service<StoreRequirement<Name, State>, ReadableStore<State>> {
   /** @internal The property used for this dependency in resolved component deps. */
   readonly __effectReactDependencyKey: Key;
   readonly [StoreTypeId]: {
@@ -71,7 +71,7 @@ let nextStoreIdentity = 0;
  */
 export function createStore<State extends object>() {
   const identity = nextStoreIdentity++;
-  const dependency = Context.GenericTag<
+  const dependency = Context.Service<
     StoreRequirement<string, State>,
     ReadableStore<State>
   >(`@night-shift/effect-react/store/${identity}`);
