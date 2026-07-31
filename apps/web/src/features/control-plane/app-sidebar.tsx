@@ -10,7 +10,7 @@ import {
   SquareTerminal,
 } from "lucide-react";
 
-import { createComponent, useStoreSelector } from "@night-shift/effect-react";
+import { createComponent, useStore } from "@night-shift/effect-react";
 import {
   Sidebar,
   SidebarContent,
@@ -41,16 +41,13 @@ const navigation = [
 export const AppSidebar = createComponent({
   displayName: "AppSidebar",
   deps: Effect.gen(function* () {
-    return { store: yield* controlPlane.service };
+    return { store: yield* controlPlane.store };
   }),
 
   state: ({ deps }) => {
-    const authorityState = useStoreSelector(
-      deps.store,
-      (state) => state.authority,
-    );
-    const hosts = useStoreSelector(deps.store, (state) => state.hosts);
-    const runs = useStoreSelector(deps.store, (state) => state.runs);
+    const authorityState = useStore(deps.store, (state) => state.authority);
+    const hosts = useStore(deps.store, (state) => state.hosts);
+    const runs = useStore(deps.store, (state) => state.runs);
     const { isMobile, setOpenMobile } = useSidebar();
     const pathname = useRouterState({
       select: (state) => state.location.pathname,

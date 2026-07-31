@@ -4,7 +4,7 @@ import { Context, Effect } from "effect";
 import type { CounterState } from "../example/counter";
 import type { ComponentEffect, ReadableStore, StoreRequirement } from "../src";
 import { CounterButton, CounterExample } from "../example/counter";
-import { createComponent, createStore, useStoreSelector } from "../src";
+import { createComponent, createStore, useStore } from "../src";
 
 type Equal<Left, Right> =
   (<Value>() => Value extends Left ? 1 : 2) extends <
@@ -20,7 +20,7 @@ declare const dynamicStoreName: string;
 createStore(dynamicStoreName);
 
 declare const unionStoreName: "First" | "Second";
-// @ts-expect-error one declaration cannot represent multiple service identities
+// @ts-expect-error one declaration cannot represent multiple store identities
 createStore(unionStoreName);
 
 type CounterRequirement = StoreRequirement<"Counter", CounterState>;
@@ -165,27 +165,26 @@ interface TypedCounterState {
 const typedStore = createStore("TypedCounter")<TypedCounterState>();
 const otherTypedStore = createStore("OtherTypedCounter")<TypedCounterState>();
 
-typedStore.service satisfies Context.Tag<
+// @ts-expect-error Effect requirements are exposed as `store`, not `service`
+const _RemovedService = typedStore.service;
+
+typedStore.store satisfies Context.Tag<
   StoreRequirement<"TypedCounter", TypedCounterState>,
   ReadableStore<TypedCounterState>
 >;
-// @ts-expect-error selectors are obtained by yielding the Effect service
-const _RemovedUseStore = typedStore.useStore;
-// @ts-expect-error implementations enter through the Store component
-const _RemovedProvide = typedStore.provide;
 
 const _StoreConsumer = createComponent({
   deps: Effect.gen(function* () {
-    const typedStoreHandle = yield* typedStore.service;
-    const otherTypedStoreHandle = yield* otherTypedStore.service;
+    const typedStoreHandle = yield* typedStore.store;
+    const otherTypedStoreHandle = yield* otherTypedStore.store;
     const offset = yield* NumberService;
     return { offset, otherTypedStoreHandle, typedStoreHandle };
   }),
   state: ({ deps }) =>
     Effect.succeed({
       count:
-        useStoreSelector(deps.typedStoreHandle, (state) => state.count) +
-        useStoreSelector(deps.otherTypedStoreHandle, (state) => state.count) +
+        useStore(deps.typedStoreHandle, (state) => state.count) +
+        useStore(deps.otherTypedStoreHandle, (state) => state.count) +
         deps.offset,
     }),
   ui: ({ state }) => {

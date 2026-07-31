@@ -86,7 +86,7 @@ export function buildSourceModel({
           fileName,
           location: locationOf(sourceFile, declaration.name),
           name: declaration.name.text,
-          serviceName: storeName,
+          storeName,
         });
         declarationSpans.push({
           end: initializer.end,

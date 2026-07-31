@@ -2,7 +2,7 @@ import type { Dispatch, SetStateAction } from "react";
 import { useEffect, useState } from "react";
 import { Effect } from "effect";
 
-import { createComponent, createStore, useStoreSelector } from "../src";
+import { createComponent, createStore, useStore } from "../src";
 
 export interface CounterState {
   readonly count: number;
@@ -20,12 +20,12 @@ export const CounterButton = createComponent({
   displayName: "CounterButton",
 
   deps: Effect.gen(function* () {
-    return { store: yield* counter.service };
+    return { store: yield* counter.store };
   }),
 
   state: ({ deps }) => {
-    const count = useStoreSelector(deps.store, (state) => state.count);
-    const setCount = useStoreSelector(deps.store, (state) => state.setCount);
+    const count = useStore(deps.store, (state) => state.count);
+    const setCount = useStore(deps.store, (state) => state.setCount);
 
     // eslint-disable-next-line no-restricted-syntax -- Effect components still support ordinary React hooks when they are the right tool.
     useEffect(() => {

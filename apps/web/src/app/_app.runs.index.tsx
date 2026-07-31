@@ -2,7 +2,7 @@ import { createFileRoute } from "@tanstack/react-router";
 import { Effect } from "effect";
 import { Plus } from "lucide-react";
 
-import { createComponent, useStoreSelector } from "@night-shift/effect-react";
+import { createComponent, useStore } from "@night-shift/effect-react";
 import { Button } from "@night-shift/ui-web/components/button";
 
 import { controlPlane } from "../control-plane/client";
@@ -13,11 +13,11 @@ import { QuickLink } from "../features/quick-link/quick-link";
 const RunsPage = createComponent({
   displayName: "RunsPage",
   deps: Effect.gen(function* () {
-    return { store: yield* controlPlane.service };
+    return { store: yield* controlPlane.store };
   }),
   state: ({ deps }) =>
     Effect.succeed({
-      runs: useStoreSelector(deps.store, (state) => state.runs),
+      runs: useStore(deps.store, (state) => state.runs),
     }),
   ui: ({ state }) => (
     <Page

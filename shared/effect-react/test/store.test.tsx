@@ -3,7 +3,7 @@ import { renderToString } from "react-dom/server";
 import { act, render, screen } from "@testing-library/react";
 import { describe, expect, test } from "vitest";
 
-import { makeStore, useStoreSelector } from "../src/store";
+import { makeStore, useStore } from "../src/store";
 
 describe("store selectors", () => {
   test("rerenders only when the selected slice changes", () => {
@@ -12,7 +12,7 @@ describe("store selectors", () => {
 
     function Count() {
       renders += 1;
-      const count = useStoreSelector(store, (state) => state.count);
+      const count = useStore(store, (state) => state.count);
       return <span>{count}</span>;
     }
 
@@ -36,10 +36,7 @@ describe("store selectors", () => {
 
     function Count() {
       const [multiplier, setMultiplier] = useState(1);
-      const count = useStoreSelector(
-        store,
-        (state) => state.count * multiplier,
-      );
+      const count = useStore(store, (state) => state.count * multiplier);
       return (
         <button type="button" onClick={() => setMultiplier(2)}>
           {count}
@@ -62,7 +59,7 @@ describe("store selectors", () => {
 
     function Parity() {
       renders += 1;
-      const selection = useStoreSelector(
+      const selection = useStore(
         store,
         (state) => ({ even: state.count % 2 === 0 }),
         {
@@ -89,7 +86,7 @@ describe("store selectors", () => {
     const selections = new Array<{ even: boolean }>();
 
     function Parity({ label }: { label: string }) {
-      const selection = useStoreSelector(
+      const selection = useStore(
         store,
         (state) => ({ even: state.count % 2 === 0 }),
         {
@@ -136,7 +133,7 @@ describe("store selectors", () => {
     );
 
     function Count() {
-      const count = useStoreSelector(store, (state) => state.count);
+      const count = useStore(store, (state) => state.count);
       return <span>{count}</span>;
     }
 

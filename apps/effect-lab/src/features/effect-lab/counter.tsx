@@ -5,7 +5,7 @@ import { Effect } from "effect";
 import {
   createComponent,
   createStore,
-  useStoreSelector,
+  useStore,
 } from "@night-shift/effect-react";
 
 export interface CounterState {
@@ -23,12 +23,12 @@ function useCounterImplementation() {
 export const CounterReadout = createComponent({
   displayName: "CounterReadout",
   deps: Effect.gen(function* () {
-    return { store: yield* counter.service };
+    return { store: yield* counter.store };
   }),
 
   state: ({ deps }) =>
     Effect.succeed({
-      count: useStoreSelector(deps.store, (state) => state.count),
+      count: useStore(deps.store, (state) => state.count),
     }),
 
   ui: ({ state }) => (
@@ -41,11 +41,11 @@ export const CounterReadout = createComponent({
 export const CounterControls = createComponent({
   displayName: "CounterControls",
   deps: Effect.gen(function* () {
-    return { store: yield* counter.service };
+    return { store: yield* counter.store };
   }),
 
   state: ({ deps }) => {
-    const setCount = useStoreSelector(deps.store, (state) => state.setCount);
+    const setCount = useStore(deps.store, (state) => state.setCount);
     return Effect.succeed({
       decrement: () => setCount((current) => current - 1),
       increment: () => setCount((current) => current + 1),

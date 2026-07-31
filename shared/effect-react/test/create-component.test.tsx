@@ -6,7 +6,7 @@ import {
   AsyncComponentStateError,
   createComponent,
   makeStore,
-  useStoreSelector,
+  useStore,
 } from "../src";
 
 describe("createComponent", () => {
@@ -84,7 +84,7 @@ describe("createComponent", () => {
     const Counter = createComponent({
       state: () =>
         Effect.succeed({
-          count: useStoreSelector(store, (snapshot) => snapshot.count),
+          count: useStore(store, (snapshot) => snapshot.count),
         }),
       ui: ({ state }) => <span>{state.count}</span>,
     });

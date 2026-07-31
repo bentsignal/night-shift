@@ -3,7 +3,7 @@ import { createFileRoute } from "@tanstack/react-router";
 import { Effect } from "effect";
 import { ArrowLeft } from "lucide-react";
 
-import { createComponent, useStoreSelector } from "@night-shift/effect-react";
+import { createComponent, useStore } from "@night-shift/effect-react";
 import { Button } from "@night-shift/ui-web/components/button";
 import {
   Card,
@@ -21,19 +21,19 @@ import { QuickLink } from "../features/quick-link/quick-link";
 const RunPage = createComponent({
   displayName: "RunPage",
   deps: Effect.gen(function* () {
-    return { store: yield* controlPlane.service };
+    return { store: yield* controlPlane.store };
   }),
   state: ({
     deps,
     props,
   }: {
-    deps: { store: Effect.Effect.Success<typeof controlPlane.service> };
+    deps: { store: Effect.Effect.Success<typeof controlPlane.store> };
     props: { runId: string };
   }) =>
     Effect.succeed({
-      authority: useStoreSelector(deps.store, (state) => state.authority),
-      commandRun: useStoreSelector(deps.store, (state) => state.commandRun),
-      run: useStoreSelector(deps.store, (state) =>
+      authority: useStore(deps.store, (state) => state.authority),
+      commandRun: useStore(deps.store, (state) => state.commandRun),
+      run: useStore(deps.store, (state) =>
         state.runs.find((candidate) => candidate.id === props.runId),
       ),
     }),

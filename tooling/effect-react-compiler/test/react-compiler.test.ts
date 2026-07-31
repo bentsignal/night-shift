@@ -31,18 +31,18 @@ describe("React Compiler lowering", () => {
       import {
         createComponent,
         createStore,
-        useStoreSelector,
+        useStore,
       } from "@night-shift/effect-react";
 
       const counter = createStore("Counter")<{ count: number }>();
 
       const CounterValue = createComponent({
         deps: Effect.gen(function* () {
-          const store = yield* counter.service;
+          const store = yield* counter.store;
           return { store };
         }),
         state: ({ deps }) => Effect.succeed({
-          count: useStoreSelector(deps.store, (state) => state.count),
+          count: useStore(deps.store, (state) => state.count),
         }),
         ui: ({ state }) => <output>{state.count}</output>,
       });

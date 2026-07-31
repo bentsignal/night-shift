@@ -50,12 +50,12 @@ type StoreName<Name extends string> = string extends Name
 /**
  * Declares one injectable store contract.
  *
- * The literal name is its Effect service identity, so reusing a name means
+ * The literal name is its Effect store identity, so reusing a name means
  * reusing the same State contract.
  */
 export function createStore<const Name extends string>(name: StoreName<Name>) {
   return function defineStore<State extends object>() {
-    const service = Context.GenericTag<
+    const store = Context.GenericTag<
       StoreRequirement<Name, State>,
       ReadableStore<State>
     >(`@night-shift/effect-react/store/${name}`);
@@ -68,15 +68,15 @@ export function createStore<const Name extends string>(name: StoreName<Name>) {
         typeof implementation === "function"
           ? implementation()
           : (implementation as unknown as State);
-      const [store] = useState(() => makeStore(value));
+      const [storeHandle] = useState(() => makeStore(value));
       const parentServices = useServiceContext();
       const [services] = useState(() =>
-        Context.add(parentServices, service, store),
+        Context.add(parentServices, store, storeHandle),
       );
 
       useLayoutEffect(() => {
-        store.set(value);
-      }, [store, value]);
+        storeHandle.set(value);
+      }, [storeHandle, value]);
 
       return (
         <ServiceContextProvider services={services}>
@@ -91,7 +91,7 @@ export function createStore<const Name extends string>(name: StoreName<Name>) {
     });
 
     return {
-      service,
+      store,
       Store: Store as unknown as StoreProvider<Name, State>,
     };
   };

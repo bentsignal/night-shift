@@ -22,7 +22,7 @@ export interface SelectorOptions<Selected> {
 }
 
 /**
- * Creates an immutable-snapshot external store suitable for Effect services.
+ * Creates an immutable-snapshot external store suitable for Effect injection.
  */
 export function makeStore<State>(
   initialState: State,
@@ -66,7 +66,7 @@ export function makeStore<State>(
  * Selects one store slice using React's maintained external-store selector.
  * Equal selections retain their identity and do not rerender the consumer.
  */
-export function useStoreSelector<State, Selected>(
+export function useStore<State, Selected>(
   store: ReadableStore<State>,
   selector: (state: State) => Selected,
   options: SelectorOptions<Selected> = {},

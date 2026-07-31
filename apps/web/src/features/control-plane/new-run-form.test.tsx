@@ -77,7 +77,7 @@ describe("NewRunForm", () => {
     const deps = Effect.runSync(
       newRunFormDeps.pipe(
         Effect.provideService(
-          controlPlane.service,
+          controlPlane.store,
           testControlPlaneStore(submitWork),
         ),
         Effect.provideService(

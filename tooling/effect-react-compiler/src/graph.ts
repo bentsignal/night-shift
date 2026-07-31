@@ -146,13 +146,13 @@ function collectDirectRequirements({
   readonly diagnostics: EffectReactDiagnostic[];
   readonly models: ReadonlyMap<string, SourceModel>;
 }) {
-  for (const reference of component.declaration.serviceReferences) {
+  for (const reference of component.declaration.storeReferences) {
     const store = resolveStore({ models, reference });
     if (store) {
-      component.directRequirements.add(store.serviceName);
+      component.directRequirements.add(store.storeName);
     } else {
       diagnostics.push(
-        unresolvedReferenceDiagnostic(reference, "store service"),
+        unresolvedReferenceDiagnostic(reference, "store requirement"),
       );
     }
   }
@@ -174,8 +174,8 @@ function collectDependencies({
       for (const providerReference of reference.providers) {
         const store = resolveStore({ models, reference: providerReference });
         if (store) {
-          providedRequirements.add(store.serviceName);
-          component.providedRequirements.add(store.serviceName);
+          providedRequirements.add(store.storeName);
+          component.providedRequirements.add(store.storeName);
         } else {
           diagnostics.push(
             unresolvedReferenceDiagnostic(providerReference, "provider store"),

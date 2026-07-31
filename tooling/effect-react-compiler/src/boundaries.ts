@@ -122,7 +122,7 @@ export function addUnresolvedBoundaryDiagnostics({
       code: "unresolved-root",
       fileName: boundary.fileName,
       location: boundary.location,
-      message: `${boundary.kind === "react" ? `React component "${boundary.ownerName}" renders` : `Root "${boundary.ownerName}" resolves to`} Effect component "${boundary.componentName}" with unresolved services: ${boundary.requirements
+      message: `${boundary.kind === "react" ? `React component "${boundary.ownerName}" renders` : `Root "${boundary.ownerName}" resolves to`} Effect component "${boundary.componentName}" with unresolved stores: ${boundary.requirements
         .map(
           (requirement) =>
             `${requirement} via ${boundary.requirementPaths[requirement]?.join(" -> ") ?? boundary.componentName}`,

@@ -18,7 +18,7 @@ describe("analyzeEffectReact", () => {
 
             const Button = createComponent({
               deps: Effect.gen(function* () {
-                yield* counter.service;
+                yield* counter.store;
                 return {};
               }),
               state: () => Effect.succeed({}),
@@ -69,8 +69,8 @@ describe("analyzeEffectReact", () => {
 
             const Leaf = createComponent({
               deps: Effect.gen(function* () {
-                yield* session.service;
-                yield* theme.service;
+                yield* session.store;
+                yield* theme.store;
                 return {};
               }),
               state: () => Effect.succeed({}),
@@ -117,7 +117,7 @@ describe("analyzeEffectReact", () => {
             const counter = createStore("Counter")<{ count: number }>();
             const CounterValue = createComponent({
               deps: Effect.gen(function* () {
-                yield* counter.service;
+                yield* counter.store;
                 return {};
               }),
               state: () => Effect.succeed({}),
@@ -125,7 +125,7 @@ describe("analyzeEffectReact", () => {
             });
             const DirectConsumer = createComponent({
               deps: Effect.gen(function* () {
-                yield* counter.service;
+                yield* counter.store;
                 return {};
               }),
               state: () => Effect.succeed({}),
@@ -167,7 +167,7 @@ describe("analyzeEffectReact", () => {
             const auth = createStore("Auth")<{ userId: string }>();
             const Protected = createComponent({
               deps: Effect.gen(function* () {
-                yield* auth.service;
+                yield* auth.store;
                 return {};
               }),
               state: () => Effect.succeed({}),
@@ -201,7 +201,7 @@ describe("analyzeEffectReact", () => {
             const clock = createStore("Clock")<{ now: number }>();
             const A = createComponent({
               deps: Effect.gen(function* () {
-                yield* clock.service;
+                yield* clock.store;
                 return {};
               }),
               state: () => Effect.succeed({}),
@@ -245,7 +245,7 @@ describe("analyzeEffectReact", () => {
 
             export const Button = createComponent({
               deps: Effect.gen(function* () {
-                yield* authentication.service;
+                yield* authentication.store;
                 return {};
               }),
               state: () => Effect.succeed({}),
@@ -336,7 +336,7 @@ describe("lowerEffectReactSources", () => {
           const counter = createStore("Counter")<{ count: number }>();
           const Child = createComponent({
             deps: Effect.gen(function* () {
-              yield* counter.service;
+              yield* counter.store;
               return {};
             }),
               state: () => Effect.succeed({}),

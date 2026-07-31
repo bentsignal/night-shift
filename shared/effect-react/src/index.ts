@@ -18,5 +18,5 @@ export {
   type SelectorOptions,
   type Store,
   type StoreOptions,
-  useStoreSelector,
+  useStore,
 } from "./store";

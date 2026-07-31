@@ -1,6 +1,6 @@
 import { Effect } from "effect";
 
-import { createComponent, createStore, useStoreSelector } from "../src";
+import { createComponent, createStore, useStore } from "../src";
 
 export interface FirstState {
   readonly value: number;
@@ -23,22 +23,22 @@ function useSecondImplementation() {
 
 const FirstValue = createComponent({
   deps: Effect.gen(function* () {
-    return { store: yield* first.service };
+    return { store: yield* first.store };
   }),
   state: ({ deps }) =>
     Effect.succeed({
-      value: useStoreSelector(deps.store, (state) => state.value),
+      value: useStore(deps.store, (state) => state.value),
     }),
   ui: ({ state }) => <span>{state.value}</span>,
 });
 
 const SecondValue = createComponent({
   deps: Effect.gen(function* () {
-    return { store: yield* second.service };
+    return { store: yield* second.store };
   }),
   state: ({ deps }) =>
     Effect.succeed({
-      label: useStoreSelector(deps.store, (state) => state.label),
+      label: useStore(deps.store, (state) => state.label),
     }),
   ui: ({ state }) => <span>{state.label}</span>,
 });

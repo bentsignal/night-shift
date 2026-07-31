@@ -17,7 +17,7 @@ export type StoreDeclaration = {
   readonly fileName: string;
   readonly location: SourceLocation;
   readonly name: string;
-  readonly serviceName: string;
+  readonly storeName: string;
 };
 
 export type ChildReference = {
@@ -33,7 +33,7 @@ export type ComponentDeclaration = {
   readonly jsxChildReferences: readonly ChildReference[];
   readonly location: SourceLocation;
   readonly name: string;
-  readonly serviceReferences: readonly SymbolReference[];
+  readonly storeReferences: readonly SymbolReference[];
 };
 
 export type OrdinaryJsxBoundary = {

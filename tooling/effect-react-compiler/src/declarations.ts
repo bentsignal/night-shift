@@ -88,8 +88,8 @@ export function readComponentDefinition({
       : []),
     ...jsxChildReferences,
   ];
-  const serviceReferences = deps
-    ? collectYieldedServices({ expression: deps, fileName, sourceFile })
+  const storeReferences = deps
+    ? collectYieldedStores({ expression: deps, fileName, sourceFile })
     : [];
 
   return {
@@ -99,7 +99,7 @@ export function readComponentDefinition({
     jsxChildReferences,
     kind: "component",
     location: locationOf(sourceFile, expression),
-    serviceReferences,
+    storeReferences,
   } satisfies Omit<ComponentDeclaration, "name">;
 }
 
@@ -143,7 +143,7 @@ export function collectOrdinaryBoundaries({
   return boundaries;
 }
 
-function collectYieldedServices({
+function collectYieldedStores({
   expression,
   fileName,
   sourceFile,
@@ -160,7 +160,7 @@ function collectYieldedServices({
       !node.asteriskToken ||
       !node.expression ||
       !ts.isPropertyAccessExpression(node.expression) ||
-      node.expression.name.text !== "service" ||
+      node.expression.name.text !== "store" ||
       !ts.isIdentifier(node.expression.expression)
     ) {
       return;

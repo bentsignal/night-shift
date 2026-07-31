@@ -3,7 +3,7 @@ import { useState } from "react";
 import { Context, Effect } from "effect";
 
 import type { Store } from "@night-shift/effect-react";
-import { makeStore, useStoreSelector } from "@night-shift/effect-react";
+import { makeStore, useStore } from "@night-shift/effect-react";
 
 import type { ReasoningLevel } from "../../control-plane/types";
 import { controlPlane } from "../../control-plane/client";
@@ -44,7 +44,7 @@ export const createExecutionPreferencesStore = () => {
 };
 
 export const newRunFormDeps = Effect.gen(function* () {
-  const controlPlaneStore = yield* controlPlane.service;
+  const controlPlaneStore = yield* controlPlane.store;
   const createPreferences = yield* NewRunPreferences;
   const useNavigation = yield* NewRunNavigation;
 
@@ -60,17 +60,14 @@ export function useNewRunFormState({
   const [preferences] = useState(deps.createPreferences);
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string>();
-  const hosts = useStoreSelector(
-    deps.controlPlaneStore,
-    (state) => state.hosts,
-  );
-  const submitWork = useStoreSelector(
+  const hosts = useStore(deps.controlPlaneStore, (state) => state.hosts);
+  const submitWork = useStore(
     deps.controlPlaneStore,
     (state) => state.submitWork,
   );
-  const provider = useStoreSelector(preferences, (state) => state.provider);
-  const model = useStoreSelector(preferences, (state) => state.model);
-  const reasoning = useStoreSelector(preferences, (state) => state.reasoning);
+  const provider = useStore(preferences, (state) => state.provider);
+  const model = useStore(preferences, (state) => state.model);
+  const reasoning = useStore(preferences, (state) => state.reasoning);
   const activeProvider =
     providerOptions.find((option) => option.id === provider) ??
     providerOptions[0];
