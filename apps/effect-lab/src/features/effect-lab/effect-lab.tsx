@@ -22,6 +22,10 @@ export const EffectLab = createComponent({
           <span className="wordmark-mark">E</span>
           <span>effect / react</span>
         </div>
+        <nav aria-label="Lab examples" className="lab-nav">
+          <a href="/">counter</a>
+          <a href="/multiple-stores">three stores</a>
+        </nav>
         <div className="topbar-status">
           <span>LAB 01</span>
           <span className="divider" />
