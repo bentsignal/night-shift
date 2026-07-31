@@ -75,7 +75,7 @@ describe("NewRunForm", () => {
     const submitWork = vi
       .fn<ControlPlaneClient["submitWork"]>()
       .mockResolvedValue("run_effect");
-    const deps = [testControlPlaneStore(submitWork)] as const;
+    const deps = { controlPlane: testControlPlaneStore(submitWork) } as const;
     const { result } = renderHook(() => useNewRunFormState({ deps }));
 
     act(() => {

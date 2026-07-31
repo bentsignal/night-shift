@@ -34,7 +34,7 @@ export const createExecutionPreferencesStore = () => {
 };
 
 export function useNewRunFormState({
-  deps: [controlPlaneStore],
+  deps,
 }: {
   readonly deps: ResolvedDependencies<[typeof ControlPlane]>;
 }) {
@@ -42,8 +42,8 @@ export function useNewRunFormState({
   const [preferences] = useState(createExecutionPreferencesStore);
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string>();
-  const hosts = useStore(controlPlaneStore, (state) => state.hosts);
-  const submitWork = useStore(controlPlaneStore, (state) => state.submitWork);
+  const hosts = useStore(deps.controlPlane, (state) => state.hosts);
+  const submitWork = useStore(deps.controlPlane, (state) => state.submitWork);
   const provider = useStore(preferences, (state) => state.provider);
   const model = useStore(preferences, (state) => state.model);
   const reasoning = useStore(preferences, (state) => state.reasoning);

@@ -21,16 +21,16 @@ function useSecondImplementation() {
 
 const FirstValue = createComponent({
   deps: [First],
-  state: ({ deps: [store] }) => ({
-    value: useStore(store, (state) => state.value),
+  state: ({ deps }) => ({
+    value: useStore(deps.first, (state) => state.value),
   }),
   ui: ({ state }) => <span>{state.value}</span>,
 });
 
 const SecondValue = createComponent({
   deps: [Second],
-  state: ({ deps: [store] }) => ({
-    label: useStore(store, (state) => state.label),
+  state: ({ deps }) => ({
+    label: useStore(deps.second, (state) => state.label),
   }),
   ui: ({ state }) => <span>{state.label}</span>,
 });

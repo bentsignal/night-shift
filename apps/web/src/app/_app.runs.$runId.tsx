@@ -22,15 +22,15 @@ const RunPage = createComponent({
   displayName: "RunPage",
   deps: [ControlPlane],
   state: ({
-    deps: [store],
+    deps,
     props,
   }: {
     deps: ResolvedDependencies<[typeof ControlPlane]>;
     props: { runId: string };
   }) => ({
-    authority: useStore(store, (state) => state.authority),
-    commandRun: useStore(store, (state) => state.commandRun),
-    run: useStore(store, (state) =>
+    authority: useStore(deps.controlPlane, (state) => state.authority),
+    commandRun: useStore(deps.controlPlane, (state) => state.commandRun),
+    run: useStore(deps.controlPlane, (state) =>
       state.runs.find((candidate) => candidate.id === props.runId),
     ),
   }),

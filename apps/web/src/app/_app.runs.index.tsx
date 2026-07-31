@@ -12,8 +12,8 @@ import { QuickLink } from "../features/quick-link/quick-link";
 const RunsPage = createComponent({
   displayName: "RunsPage",
   deps: [ControlPlane],
-  state: ({ deps: [store] }) => ({
-    runs: useStore(store, (state) => state.runs),
+  state: ({ deps }) => ({
+    runs: useStore(deps.controlPlane, (state) => state.runs),
   }),
   ui: ({ state }) => (
     <Page

@@ -41,10 +41,13 @@ export const AppSidebar = createComponent({
   displayName: "AppSidebar",
   deps: [ControlPlane],
 
-  state: ({ deps: [store] }) => {
-    const authorityState = useStore(store, (state) => state.authority);
-    const hosts = useStore(store, (state) => state.hosts);
-    const runs = useStore(store, (state) => state.runs);
+  state: ({ deps }) => {
+    const authorityState = useStore(
+      deps.controlPlane,
+      (state) => state.authority,
+    );
+    const hosts = useStore(deps.controlPlane, (state) => state.hosts);
+    const runs = useStore(deps.controlPlane, (state) => state.runs);
     const { isMobile, setOpenMobile } = useSidebar();
     const pathname = useRouterState({
       select: (state) => state.location.pathname,

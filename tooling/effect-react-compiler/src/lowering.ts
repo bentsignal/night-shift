@@ -2,8 +2,8 @@ import ts from "typescript";
 
 import type { SourceModel } from "./model.js";
 import type { EffectReactSource } from "./types.js";
-import { normalizeFileName, visit } from "./ast.js";
-import { resolveComponent } from "./graph.js";
+import { makeReference, normalizeFileName, visit } from "./ast.js";
+import { resolveComponent, resolveStore } from "./graph.js";
 import { collectReactCompilerInsertions } from "./react-compiler.js";
 import { buildSourceModel } from "./source-model.js";
 
@@ -92,6 +92,7 @@ function collectInsertions({
 }) {
   const insertions = Array<SourceInsertion>(
     ...collectReactCompilerInsertions(model),
+    ...collectStoreDependencyInsertions({ model, models }),
     ...collectStoreImplementationInsertions(model),
   );
 
@@ -142,6 +143,51 @@ function collectInsertions({
   }
 
   return insertions.sort((left, right) => left.position - right.position);
+}
+
+function collectStoreDependencyInsertions({
+  model,
+  models,
+}: {
+  readonly model: SourceModel;
+  readonly models: ReadonlyMap<string, SourceModel>;
+}) {
+  const insertions = Array<SourceInsertion>();
+  const dependencyLocations = new Set(
+    [...model.components.values()].flatMap((component) =>
+      component.storeReferences.map(
+        (reference) =>
+          `${reference.location.line}:${reference.location.column}:${reference.name}`,
+      ),
+    ),
+  );
+
+  visit(model.sourceFile, (node) => {
+    if (!ts.isIdentifier(node)) {
+      return;
+    }
+
+    const reference = makeReference({
+      fileName: model.fileName,
+      name: node,
+      sourceFile: model.sourceFile,
+    });
+    const locationKey = `${reference.location.line}:${reference.location.column}:${reference.name}`;
+    if (
+      !dependencyLocations.has(locationKey) ||
+      !resolveStore({ models, reference })
+    ) {
+      return;
+    }
+
+    const dependencyKey = `${node.text.slice(0, 1).toLowerCase()}${node.text.slice(1)}`;
+    insertions.push({
+      position: node.end,
+      text: `.__effectReactDependency(${JSON.stringify(dependencyKey)})`,
+    });
+  });
+
+  return insertions;
 }
 
 function collectStoreImplementationInsertions(model: SourceModel) {

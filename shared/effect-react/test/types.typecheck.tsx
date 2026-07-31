@@ -96,12 +96,14 @@ First satisfies {
 
 const Consumer = createComponent({
   deps: [First, Second],
-  state: ({ deps: [firstStore, secondStore] }) => {
-    firstStore satisfies ReadableStore<FirstState>;
-    secondStore satisfies ReadableStore<SecondState>;
+  state: ({ deps }) => {
+    deps.first satisfies ReadableStore<FirstState>;
+    deps.second satisfies ReadableStore<SecondState>;
+    // @ts-expect-error resolved dependencies expose only declared keys
+    void deps.missing;
     return {
-      count: useStore(firstStore, (state) => state.count),
-      label: useStore(secondStore, (state) => state.label),
+      count: useStore(deps.first, (state) => state.count),
+      label: useStore(deps.second, (state) => state.label),
     };
   },
   ui: ({ state }) => {

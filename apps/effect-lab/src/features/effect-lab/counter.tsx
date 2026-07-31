@@ -23,8 +23,8 @@ export const CounterReadout = createComponent({
   displayName: "CounterReadout",
   deps: [Counter],
 
-  state: ({ deps: [store] }) => ({
-    count: useStore(store, (state) => state.count),
+  state: ({ deps }) => ({
+    count: useStore(deps.counter, (state) => state.count),
   }),
 
   ui: ({ state }) => (
@@ -38,8 +38,8 @@ export const CounterControls = createComponent({
   displayName: "CounterControls",
   deps: [Counter],
 
-  state: ({ deps: [store] }) => {
-    const setCount = useStore(store, (state) => state.setCount);
+  state: ({ deps }) => {
+    const setCount = useStore(deps.counter, (state) => state.setCount);
     return {
       decrement: () => setCount((current) => current - 1),
       increment: () => setCount((current) => current + 1),

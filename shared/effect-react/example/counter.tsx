@@ -21,9 +21,8 @@ export const CounterButton = createComponent({
   deps: [Counter],
 
   state: ({ deps }) => {
-    const [store] = deps;
-    const count = useStore(store, (state) => state.count);
-    const setCount = useStore(store, (state) => state.setCount);
+    const count = useStore(deps.counter, (state) => state.count);
+    const setCount = useStore(deps.counter, (state) => state.setCount);
 
     // eslint-disable-next-line no-restricted-syntax -- Effect components still support ordinary React hooks when they are the right tool.
     useEffect(() => {

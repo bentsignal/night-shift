@@ -37,8 +37,8 @@ describe("React Compiler lowering", () => {
 
       const CounterValue = createComponent({
         deps: [Counter],
-        state: ({ deps: [store] }) => ({
-          count: useStore(store, (state) => state.count),
+        state: ({ deps }) => ({
+          count: useStore(deps.counter, (state) => state.count),
         }),
         ui: ({ state }) => <output>{state.count}</output>,
       });
@@ -60,6 +60,9 @@ describe("React Compiler lowering", () => {
 
     expect(source).not.toContain('"use memo"');
     expect(result.lowered).toContain('"use memo"');
+    expect(result.lowered).toContain(
+      'deps: [Counter.__effectReactDependency("counter")]',
+    );
     expect(result.lowered).toContain(
       ".__effectReactProvidedRequirements([Counter], CounterValue)",
     );
@@ -86,9 +89,9 @@ describe("React Compiler lowering", () => {
 
       const Navigation = createStore("Navigation")<{ ready: boolean }>();
 
-      function formState({ deps: [navigationStore] }) {
+      function formState({ deps }) {
         const [submitting] = useState(false);
-        return { navigationStore, submitting };
+        return { navigationStore: deps.navigation, submitting };
       }
 
       export const Form = createComponent({
@@ -100,7 +103,7 @@ describe("React Compiler lowering", () => {
     const result = await compile(source, "/project/form-state.tsx");
 
     expect(result.lowered).toContain(
-      'function formState({ deps: [navigationStore] }) {\n"use memo";',
+      'function formState({ deps }) {\n"use memo";',
     );
     expect(result.code).toContain("_c(");
     expect(

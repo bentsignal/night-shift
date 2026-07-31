@@ -22,20 +22,34 @@ export interface StoreRequirement<Name extends string, State extends object> {
   };
 }
 
-export interface Store<
+export interface StoreDependency<
+  Key extends string,
   Name extends string,
   State extends object,
 > extends Context.Tag<StoreRequirement<Name, State>, ReadableStore<State>> {
-  (props: StoreProps<State>): ReactNode;
-  /** @internal Used only by the in-memory Effect React transform. */
-  readonly __effectReactImplementation: (
-    state: State,
-  ) => StoreImplementation<State>;
+  /** @internal The property used for this dependency in resolved component deps. */
+  readonly __effectReactDependencyKey: Key;
   readonly [StoreTypeId]: {
+    readonly key: Key;
     readonly name: Name;
     readonly requirement: StoreRequirement<Name, State>;
     readonly state: State;
   };
+}
+
+export interface Store<
+  Name extends string,
+  State extends object,
+> extends StoreDependency<Uncapitalize<Name>, Name, State> {
+  (props: StoreProps<State>): ReactNode;
+  /** @internal Used only by the in-memory Effect React transform. */
+  readonly __effectReactDependency: <const Key extends string>(
+    key: Key,
+  ) => StoreDependency<Key, Name, State>;
+  /** @internal Used only by the in-memory Effect React transform. */
+  readonly __effectReactImplementation: (
+    state: State,
+  ) => StoreImplementation<State>;
 }
 
 interface StoreImplementation<State extends object> {
@@ -94,6 +108,11 @@ export function createStore<const Name extends string>(name: StoreName<Name>) {
 
     Object.setPrototypeOf(Store, Object.getPrototypeOf(dependency));
     Object.assign(Store, dependency, {
+      __effectReactDependency: (key: string) =>
+        Object.assign(Object.create(dependency) as object, {
+          __effectReactDependencyKey: key,
+        }),
+      __effectReactDependencyKey: `${name.slice(0, 1).toLowerCase()}${name.slice(1)}`,
       __effectReactImplementation: (state: State) => state,
       displayName: `${name}Store`,
     });

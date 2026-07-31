@@ -32,8 +32,8 @@ describe("provider stores", () => {
 
     const Count = createComponent({
       deps: [Example],
-      state: ({ deps: [store] }) => {
-        const count = useStore(store, (state) => state.count);
+      state: ({ deps }) => {
+        const count = useStore(deps.selectiveRerenders, (state) => state.count);
         countRenders += 1;
         return { count };
       },
@@ -41,9 +41,9 @@ describe("provider stores", () => {
     });
     const Actions = createComponent({
       deps: [Example],
-      state: ({ deps: [store] }) => ({
-        setCount: useStore(store, (state) => state.setCount),
-        setText: useStore(store, (state) => state.setText),
+      state: ({ deps }) => ({
+        setCount: useStore(deps.selectiveRerenders, (state) => state.setCount),
+        setText: useStore(deps.selectiveRerenders, (state) => state.setText),
       }),
       ui: ({ state }) => (
         <>
@@ -77,14 +77,14 @@ describe("provider stores", () => {
     const Value = createComponent({
       deps: [Example],
       state: ({
-        deps: [store],
+        deps,
         props,
       }: {
         deps: ResolvedDependencies<[typeof Example]>;
         props: { label: string };
       }) => ({
         label: props.label,
-        value: useStore(store, (state) => state.value),
+        value: useStore(deps.nestedProviders, (state) => state.value),
       }),
       ui: ({ state }) => <span>{`${state.label}: ${state.value}`}</span>,
     });
@@ -106,8 +106,8 @@ describe("provider stores", () => {
     const Example = createStore("ServerSnapshot")<{ count: number }>();
     const Count = createComponent({
       deps: [Example],
-      state: ({ deps: [store] }) => ({
-        count: useStore(store, (state) => state.count),
+      state: ({ deps }) => ({
+        count: useStore(deps.serverSnapshot, (state) => state.count),
       }),
       ui: ({ state }) => <span>{state.count}</span>,
     });

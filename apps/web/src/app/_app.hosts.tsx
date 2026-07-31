@@ -19,8 +19,8 @@ import { Page } from "../features/control-plane/page";
 const HostsPage = createComponent({
   displayName: "HostsPage",
   deps: [ControlPlane],
-  state: ({ deps: [store] }) => ({
-    hosts: useStore(store, (state) => state.hosts),
+  state: ({ deps }) => ({
+    hosts: useStore(deps.controlPlane, (state) => state.hosts),
   }),
   ui: ({ state }) => (
     <Page

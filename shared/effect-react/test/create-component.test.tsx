@@ -31,14 +31,17 @@ describe("createComponent", () => {
     expect(screen.getByText("42: 42")).toBeInTheDocument();
   });
 
-  test("resolves declared stores as an ordered tuple", () => {
+  test("resolves declared stores under their dependency keys", () => {
     const CounterStore = createStore("ComponentTestCounter")<{
       count: number;
     }>();
     const Counter = createComponent({
       deps: [CounterStore],
-      state: ({ deps: [store] }) => ({
-        count: useStore(store, (snapshot) => snapshot.count),
+      state: ({ deps }) => ({
+        count: useStore(
+          deps.componentTestCounter,
+          (snapshot) => snapshot.count,
+        ),
       }),
       ui: ({ state }) => <span>{state.count}</span>,
     });

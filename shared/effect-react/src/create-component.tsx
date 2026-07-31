@@ -1,7 +1,11 @@
 import type { ReactElement } from "react";
 import { Cause, Effect, Effectable, Exit } from "effect";
 
-import type { Store, StoreRequirement, StoreTypeId } from "./provider-store";
+import type {
+  StoreDependency,
+  StoreRequirement,
+  StoreTypeId,
+} from "./provider-store";
 import type { ReadableStore } from "./store";
 import { provideServiceContext, useServiceContext } from "./service-context";
 
@@ -87,10 +91,14 @@ type ComponentRequirements<Value> =
     ? Requirements
     : never;
 
-type ProviderRequirements<Provider> =
-  Provider extends Store<infer Name, infer State>
-    ? StoreRequirement<Name, State>
-    : never;
+type ProviderRequirements<Provider> = Provider extends {
+  readonly [StoreTypeId]: {
+    readonly name: infer Name extends string;
+    readonly state: infer State extends object;
+  };
+}
+  ? StoreRequirement<Name, State>
+  : never;
 
 export type ComponentEffect<Value> = Effect.Effect<
   RenderResult,
@@ -100,20 +108,33 @@ export type ComponentEffect<Value> = Effect.Effect<
 
 type StoreDependencies = readonly {
   readonly [StoreTypeId]: {
+    readonly key: string;
     readonly name: string;
     readonly state: object;
   };
 }[];
 
 export type ResolvedDependencies<Dependencies extends StoreDependencies> = {
-  readonly [Index in keyof Dependencies]: Dependencies[Index] extends {
-    readonly [StoreTypeId]: {
-      readonly state: infer State extends object;
-    };
-  }
-    ? ReadableStore<State>
-    : never;
+  readonly [
+    Dependency in Dependencies[number] as DependencyKey<Dependency>
+  ]: ReadableStore<DependencyState<Dependency>>;
 };
+
+type DependencyKey<Dependency> = Dependency extends {
+  readonly [StoreTypeId]: {
+    readonly key: infer Key extends string;
+  };
+}
+  ? Key
+  : never;
+
+type DependencyState<Dependency> = Dependency extends {
+  readonly [StoreTypeId]: {
+    readonly state: infer State extends object;
+  };
+}
+  ? State
+  : never;
 
 type DependencyRequirement<Dependency> = Dependency extends {
   readonly [StoreTypeId]: {
@@ -210,7 +231,7 @@ export function createComponent(definition: unknown) {
   const CreatedComponent = (props: object) => {
     const services = useServiceContext();
     const dependencies = resolveDependencies(
-      (componentDefinition.deps ?? []) as readonly Store<string, object>[],
+      componentDefinition.deps ?? [],
       services,
     );
 
@@ -249,10 +270,10 @@ function makeComponent<Props, Requirements>(
 }
 
 type RuntimeComponentDefinition = {
-  readonly deps?: readonly Store<string, object>[];
+  readonly deps?: readonly StoreDependency<string, string, object>[];
   readonly displayName?: string;
   readonly state?: (input: {
-    readonly deps: readonly ReadableStore<object>[];
+    readonly deps: ResolvedRuntimeDependencies;
     readonly props: object;
   }) => unknown;
   readonly ui: (input: {
@@ -266,7 +287,7 @@ function EvaluatedState({
   definition,
   props,
 }: {
-  deps: readonly ReadableStore<object>[];
+  deps: ResolvedRuntimeDependencies;
   definition: RuntimeComponentDefinition;
   props: object;
 }) {
@@ -285,7 +306,7 @@ function EvaluatedUI({
 }
 
 function resolveDependencies(
-  dependencies: readonly Store<string, object>[],
+  dependencies: readonly StoreDependency<string, string, object>[],
   services: Parameters<typeof provideServiceContext>[1],
 ) {
   const resolved = Effect.all(dependencies).pipe((effect) =>
@@ -293,7 +314,18 @@ function resolveDependencies(
   );
   const exit = Effect.runSyncExit(resolved);
   if (Exit.isSuccess(exit)) {
-    return exit.value;
+    const entries = dependencies.map((dependency, index) => {
+      const store = exit.value[index];
+      if (!store) {
+        throw new Error("Resolved store count did not match dependencies.");
+      }
+      return [dependency.__effectReactDependencyKey, store] as const;
+    });
+    return Object.fromEntries(entries);
   }
   throw Cause.squash(exit.cause);
 }
+
+type ResolvedRuntimeDependencies = Readonly<
+  Record<string, ReadableStore<object>>
+>;
