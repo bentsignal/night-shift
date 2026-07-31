@@ -178,18 +178,48 @@ const testComponent = createComponent({
     const source = fs.readFileSync(multipleStoresFileName, "utf8");
 
     expect(
-      quickInfoOf(service, source, multipleStoresFileName, "UnprovidedPair"),
+      quickInfoOf(service, source, multipleStoresFileName, "IdentityBadge"),
     ).toBe(
-      'const UnprovidedPair: Component<StoreRequirement<"First", FirstState> | StoreRequirement<"Second", SecondState>>',
+      'const IdentityBadge: Component<StoreRequirement<"Viewer", ViewerState> | StoreRequirement<"Theme", ThemeState>>',
     );
     expect(
-      quickInfoOf(service, source, multipleStoresFileName, "FirstProvidedPair"),
+      quickInfoOf(
+        service,
+        source,
+        multipleStoresFileName,
+        "UnprovidedDashboard",
+      ),
     ).toBe(
-      'const FirstProvidedPair: Component<StoreRequirement<"Second", SecondState>>',
+      'const UnprovidedDashboard: Component<StoreRequirement<"Viewer", ViewerState> | StoreRequirement<"Theme", ThemeState> | StoreRequirement<"Workspace", WorkspaceState>>',
     );
     expect(
-      quickInfoOf(service, source, multipleStoresFileName, "BothProvidedPair"),
-    ).toBe("const BothProvidedPair: Component<never>");
+      quickInfoOf(
+        service,
+        source,
+        multipleStoresFileName,
+        "ViewerProvidedDashboard",
+      ),
+    ).toBe(
+      'const ViewerProvidedDashboard: Component<StoreRequirement<"Theme", ThemeState> | StoreRequirement<"Workspace", WorkspaceState>>',
+    );
+    expect(
+      quickInfoOf(
+        service,
+        source,
+        multipleStoresFileName,
+        "ViewerAndThemeProvidedDashboard",
+      ),
+    ).toBe(
+      'const ViewerAndThemeProvidedDashboard: Component<StoreRequirement<"Workspace", WorkspaceState>>',
+    );
+    expect(
+      quickInfoOf(
+        service,
+        source,
+        multipleStoresFileName,
+        "FullyProvidedDashboard",
+      ),
+    ).toBe("const FullyProvidedDashboard: Component<never>");
   }, 15_000);
 });
 

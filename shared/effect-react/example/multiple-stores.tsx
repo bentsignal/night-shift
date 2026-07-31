@@ -1,65 +1,84 @@
 import { createComponent, createStore, useStore } from "../src";
 
-export interface FirstState {
-  readonly value: number;
+export interface ViewerState {
+  readonly name: string;
 }
 
-export interface SecondState {
-  readonly label: string;
+export interface ThemeState {
+  readonly accent: string;
 }
 
-export const First = createStore("First")<FirstState>();
-export const Second = createStore("Second")<SecondState>();
-
-function useFirstImplementation() {
-  return { value: 1 };
+export interface WorkspaceState {
+  readonly project: string;
 }
 
-function useSecondImplementation() {
-  return { label: "second" };
+export const Viewer = createStore("Viewer")<ViewerState>();
+export const Theme = createStore("Theme")<ThemeState>();
+export const Workspace = createStore("Workspace")<WorkspaceState>();
+
+function useViewerImplementation() {
+  return { name: "Ada" };
 }
 
-const FirstValue = createComponent({
-  deps: [First],
+function useThemeImplementation() {
+  return { accent: "violet" };
+}
+
+function useWorkspaceImplementation() {
+  return { project: "Night Shift" };
+}
+
+// A single component can consume several stores through one named deps object.
+export const IdentityBadge = createComponent({
+  deps: [Viewer, Theme],
   state: ({ deps }) => ({
-    value: useStore(deps.first, (state) => state.value),
+    accent: useStore(deps.theme, (state) => state.accent),
+    name: useStore(deps.viewer, (state) => state.name),
   }),
-  ui: ({ state }) => <span>{state.value}</span>,
+  ui: ({ state }) => <span>{`${state.name} · ${state.accent}`}</span>,
 });
 
-const SecondValue = createComponent({
-  deps: [Second],
+export const WorkspaceLabel = createComponent({
+  deps: [Workspace],
   state: ({ deps }) => ({
-    label: useStore(deps.second, (state) => state.label),
+    project: useStore(deps.workspace, (state) => state.project),
   }),
-  ui: ({ state }) => <span>{state.label}</span>,
+  ui: ({ state }) => <strong>{state.project}</strong>,
 });
 
-export const UnprovidedPair = createComponent({
+// Viewer, Theme, and Workspace all bubble through this ordinary JSX boundary.
+export const UnprovidedDashboard = createComponent({
   ui: () => (
-    <>
-      <FirstValue />
-      <SecondValue />
-    </>
+    <section>
+      <IdentityBadge />
+      <WorkspaceLabel />
+    </section>
   ),
 });
 
-export const FirstProvidedPair = createComponent({
+// Supplying Viewer removes only Viewer; Theme and Workspace keep bubbling.
+export const ViewerProvidedDashboard = createComponent({
   ui: () => (
-    <First implements={useFirstImplementation}>
-      <FirstValue />
-      <SecondValue />
-    </First>
+    <Viewer implements={useViewerImplementation}>
+      <UnprovidedDashboard />
+    </Viewer>
   ),
 });
 
-export const BothProvidedPair = createComponent({
+// A provider can be introduced at a higher component boundary.
+export const ViewerAndThemeProvidedDashboard = createComponent({
   ui: () => (
-    <First implements={useFirstImplementation}>
-      <Second implements={useSecondImplementation}>
-        <FirstValue />
-        <SecondValue />
-      </Second>
-    </First>
+    <Theme implements={useThemeImplementation}>
+      <ViewerProvidedDashboard />
+    </Theme>
+  ),
+});
+
+// The final provider satisfies the last requirement at the outermost level.
+export const FullyProvidedDashboard = createComponent({
+  ui: () => (
+    <Workspace implements={useWorkspaceImplementation}>
+      <ViewerAndThemeProvidedDashboard />
+    </Workspace>
   ),
 });

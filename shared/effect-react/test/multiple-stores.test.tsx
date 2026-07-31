@@ -1,13 +1,13 @@
 import { render, screen } from "@testing-library/react";
 import { describe, expect, test } from "vitest";
 
-import { BothProvidedPair } from "../example/multiple-stores";
+import { FullyProvidedDashboard } from "../example/multiple-stores";
 
 describe("multiple store providers", () => {
-  test("provides both store implementations to their consumers", () => {
-    render(<BothProvidedPair />);
+  test("provides three store implementations across nested boundaries", () => {
+    render(<FullyProvidedDashboard />);
 
-    expect(screen.getByText("1")).toBeInTheDocument();
-    expect(screen.getByText("second")).toBeInTheDocument();
+    expect(screen.getByText("Ada · violet")).toBeInTheDocument();
+    expect(screen.getByText("Night Shift")).toBeInTheDocument();
   });
 });
