@@ -37,7 +37,7 @@ const RunPage = createComponent({
         state.runs.find((candidate) => candidate.id === props.runId),
       ),
     }),
-  UI: ({ state }) => {
+  ui: ({ state }) => {
     const run = state.run;
     if (!run) {
       if (state.authority !== "connected") {

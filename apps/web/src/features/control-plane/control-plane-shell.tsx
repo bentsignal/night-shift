@@ -79,7 +79,7 @@ const ApplicationFrame = createComponent({
     });
     return Effect.succeed({ pathname });
   },
-  UI: ({
+  ui: ({
     props,
     state,
   }: {

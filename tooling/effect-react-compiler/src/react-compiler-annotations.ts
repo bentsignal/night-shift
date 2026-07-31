@@ -34,7 +34,7 @@ export function annotateComponent(
   definition: ts.ObjectLiteralExpression,
 ) {
   annotateNamedCallback(context, definition, "state");
-  annotateNamedCallback(context, definition, "UI");
+  annotateNamedCallback(context, definition, "ui");
 }
 
 export function annotateNamedCallback(

@@ -25,7 +25,7 @@ describe("createComponent", () => {
           label: `${props.label}${resolved.suffix}`,
         }),
     );
-    const UI = vi.fn(
+    const ui = vi.fn(
       ({
         props,
         state: componentState,
@@ -37,7 +37,7 @@ describe("createComponent", () => {
     const Counter = createComponent({
       deps: Effect.succeed(deps),
       state,
-      UI,
+      ui,
     });
 
     render(<Counter label="Count" />);
@@ -47,7 +47,7 @@ describe("createComponent", () => {
       deps,
       props: { label: "Count" },
     });
-    expect(UI).toHaveBeenCalledWith({
+    expect(ui).toHaveBeenCalledWith({
       props: { label: "Count" },
       state: { count: 42, label: "Count!" },
     });
@@ -60,7 +60,7 @@ describe("createComponent", () => {
         Effect.succeed({
           count: useStoreSelector(store, (snapshot) => snapshot.count),
         }),
-      UI: ({ state }) => <span>{state.count}</span>,
+      ui: ({ state }) => <span>{state.count}</span>,
     });
 
     render(<Counter />);
@@ -72,7 +72,7 @@ describe("createComponent", () => {
     const Failed = createComponent({
       deps: Effect.fail("missing-store" as const),
       state: () => Effect.succeed({ ready: false }),
-      UI: ({ state }) => <span>{String(state.ready)}</span>,
+      ui: ({ state }) => <span>{String(state.ready)}</span>,
       onFailure: (error) => <span>{error}</span>,
     });
 
@@ -85,7 +85,7 @@ describe("createComponent", () => {
     const Defect = createComponent({
       deps: Effect.die("broken-state"),
       state: () => Effect.succeed({ ready: false }),
-      UI: ({ state }) => <span>{String(state.ready)}</span>,
+      ui: ({ state }) => <span>{String(state.ready)}</span>,
       onDefect: (defect) => <span>{String(defect)}</span>,
     });
 
@@ -100,7 +100,7 @@ describe("createComponent", () => {
     const Async = createComponent({
       deps,
       state: () => Effect.succeed({}),
-      UI: () => null,
+      ui: () => null,
     });
 
     expect(() => render(<Async />)).toThrow(AsyncComponentStateError);
@@ -109,7 +109,7 @@ describe("createComponent", () => {
   test("preserves typed failures through state evaluation", () => {
     const Failed = createComponent({
       state: () => Effect.fail("state-failure" as const),
-      UI: () => <span>unreachable</span>,
+      ui: () => <span>unreachable</span>,
       onFailure: (error) => <span>{error}</span>,
     });
 

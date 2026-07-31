@@ -18,26 +18,49 @@ const sharedCounterFileName = path.join(
   sharedProjectRoot,
   "example/counter.tsx",
 );
+const multipleStoresFileName = path.join(
+  sharedProjectRoot,
+  "example/multiple-stores.tsx",
+);
 
 describe("createEffectReactLanguageService", () => {
-  it("shows required and provider-discharged components in quick info", () => {
-    const service = createService({
+  it("updates quick info when a provider is added or removed", () => {
+    const project = createService({
       configFileName: labConfigFileName,
       projectRoot: labProjectRoot,
     });
     const source = fs.readFileSync(labCounterFileName, "utf8");
+    const withProvider = setCounterProvider(source, true);
+    const withoutProvider = setCounterProvider(source, false);
 
-    expect(() => service.getCompilerOptionsDiagnostics()).not.toThrow();
+    project.updateFile(labCounterFileName, withProvider);
+    expect(() => project.service.getCompilerOptionsDiagnostics()).not.toThrow();
     expect(
-      quickInfoOf(service, source, labCounterFileName, "CounterReadout"),
-    ).toContain('StoreRequirement<"LabCounter", CounterState>');
+      quickInfoOf(
+        project.service,
+        withProvider,
+        labCounterFileName,
+        "CounterInstrument",
+      ),
+    ).toBe(
+      "const CounterInstrument: EffectComponent<Record<string, never>, never, never>",
+    );
+
+    project.updateFile(labCounterFileName, withoutProvider);
     expect(
-      quickInfoOf(service, source, labCounterFileName, "CounterInstrument"),
-    ).toContain("never>");
+      quickInfoOf(
+        project.service,
+        withoutProvider,
+        labCounterFileName,
+        "CounterInstrument",
+      ),
+    ).toBe(
+      'const CounterInstrument: EffectComponent<Record<string, never>, never, StoreRequirement<"LabCounter", CounterState>>',
+    );
   }, 15_000);
 
   it("bubbles shared-example requirements through every JSX parent", () => {
-    const service = createService({
+    const { service } = createService({
       configFileName: sharedConfigFileName,
       projectRoot: sharedProjectRoot,
     });
@@ -54,6 +77,30 @@ describe("createEffectReactLanguageService", () => {
       ).toContain('StoreRequirement<"Counter", CounterState>');
     }
   }, 15_000);
+
+  it("subtracts only the store requirements provided at each boundary", () => {
+    const { service } = createService({
+      configFileName: sharedConfigFileName,
+      projectRoot: sharedProjectRoot,
+    });
+    const source = fs.readFileSync(multipleStoresFileName, "utf8");
+
+    expect(
+      quickInfoOf(service, source, multipleStoresFileName, "UnprovidedPair"),
+    ).toBe(
+      'const UnprovidedPair: EffectComponent<Record<string, never>, never, StoreRequirement<"First", FirstState> | StoreRequirement<"Second", SecondState>>',
+    );
+    expect(
+      quickInfoOf(service, source, multipleStoresFileName, "FirstProvidedPair"),
+    ).toBe(
+      'const FirstProvidedPair: EffectComponent<Record<string, never>, never, StoreRequirement<"Second", SecondState>>',
+    );
+    expect(
+      quickInfoOf(service, source, multipleStoresFileName, "BothProvidedPair"),
+    ).toBe(
+      "const BothProvidedPair: EffectComponent<Record<string, never>, never, never>",
+    );
+  }, 15_000);
 });
 
 function createService({
@@ -63,6 +110,8 @@ function createService({
   configFileName: string;
   projectRoot: string;
 }) {
+  const sources = new Map<string, string>();
+  const versions = new Map<string, number>();
   const config = ts.readConfigFile(configFileName, ts.sys.readFile);
   const parsed = ts.parseJsonConfigFileContent(
     config.config,
@@ -91,6 +140,11 @@ function createService({
       return ts.getDefaultLibFilePath(options);
     }
 
+    getProjectVersion() {
+      this.assertReceiver();
+      return "stable-project";
+    }
+
     getScriptFileNames() {
       this.assertReceiver();
       return parsed.fileNames;
@@ -98,13 +152,14 @@ function createService({
 
     getScriptSnapshot(fileName: string) {
       this.assertReceiver();
-      const source = ts.sys.readFile(fileName);
+      const source =
+        sources.get(path.resolve(fileName)) ?? ts.sys.readFile(fileName);
       return source ? ts.ScriptSnapshot.fromString(source) : undefined;
     }
 
-    getScriptVersion() {
+    getScriptVersion(fileName: string) {
       this.assertReceiver();
-      return "1";
+      return String(versions.get(path.resolve(fileName)) ?? 1);
     }
 
     private assertReceiver() {
@@ -130,11 +185,31 @@ function createService({
       };
     },
   });
-  return createEffectReactLanguageService({
-    languageService,
-    languageServiceHost: host,
-    typescript: ts,
-  });
+  return {
+    service: createEffectReactLanguageService({
+      languageService,
+      languageServiceHost: host,
+      typescript: ts,
+    }),
+    updateFile(fileName: string, source: string) {
+      const resolved = path.resolve(fileName);
+      sources.set(resolved, source);
+      versions.set(resolved, (versions.get(resolved) ?? 1) + 1);
+    },
+  };
+}
+
+function setCounterProvider(source: string, enabled: boolean) {
+  const comment = enabled ? "" : "// ";
+  return source
+    .replace(
+      /^(\s*)(?:\/\/ )?<counter\.Store implements=\{useCounterImplementation\}>$/mu,
+      `$1${comment}<counter.Store implements={useCounterImplementation}>`,
+    )
+    .replace(
+      /^(\s*)(?:\/\/ )?<\/counter\.Store>$/mu,
+      `$1${comment}</counter.Store>`,
+    );
 }
 
 function quickInfoOf(

@@ -22,17 +22,17 @@ describe("analyzeEffectReact", () => {
                 return {};
               }),
               state: () => Effect.succeed({}),
-              UI: () => <button />,
+              ui: () => <button />,
             });
 
             const Row = createComponent({
               state: () => Effect.succeed({}),
-              UI: () => <Button />,
+              ui: () => <Button />,
             });
 
             const Panel = createComponent({
               state: () => Effect.succeed({}),
-              UI: () => (
+              ui: () => (
                 <counter.Store implements={() => ({ count: 0 })}>
                   <Row />
                 </counter.Store>
@@ -74,12 +74,12 @@ describe("analyzeEffectReact", () => {
                 return {};
               }),
               state: () => Effect.succeed({}),
-              UI: () => <span />,
+              ui: () => <span />,
             });
 
             const Panel = createComponent({
               state: () => Effect.succeed({}),
-              UI: () => (
+              ui: () => (
                 <session.Store implements={() => ({ id: "one" })}>
                   <Leaf />
                 </session.Store>
@@ -121,7 +121,7 @@ describe("analyzeEffectReact", () => {
                 return {};
               }),
               state: () => Effect.succeed({}),
-              UI: () => <output />,
+              ui: () => <output />,
             });
             const DirectConsumer = createComponent({
               deps: Effect.gen(function* () {
@@ -129,7 +129,7 @@ describe("analyzeEffectReact", () => {
                 return {};
               }),
               state: () => Effect.succeed({}),
-              UI: () => (
+              ui: () => (
                 <counter.Store implements={() => ({ count: 0 })}>
                   <CounterValue />
                 </counter.Store>
@@ -137,7 +137,7 @@ describe("analyzeEffectReact", () => {
             });
             const Mixed = createComponent({
               state: () => Effect.succeed({}),
-              UI: () => (
+              ui: () => (
                 <>
                   <counter.Store implements={() => ({ count: 0 })}>
                     <CounterValue />
@@ -171,7 +171,7 @@ describe("analyzeEffectReact", () => {
                 return {};
               }),
               state: () => Effect.succeed({}),
-              UI: () => <main />,
+              ui: () => <main />,
             });
 
             export const App = () => <Protected />;
@@ -205,11 +205,11 @@ describe("analyzeEffectReact", () => {
                 return {};
               }),
               state: () => Effect.succeed({}),
-              UI: () => <B />,
+              ui: () => <B />,
             });
             const B = createComponent({
               state: () => Effect.succeed({}),
-              UI: () => <A />,
+              ui: () => <A />,
             });
           `,
         },
@@ -249,7 +249,7 @@ describe("analyzeEffectReact", () => {
                 return {};
               }),
               state: () => Effect.succeed({}),
-              UI: () => <button />,
+              ui: () => <button />,
             });
           `,
         },
@@ -262,7 +262,7 @@ describe("analyzeEffectReact", () => {
 
             export const Panel = createComponent({
               state: () => Effect.succeed({}),
-              UI: () => <Action />,
+              ui: () => <Action />,
             });
           `,
         },
@@ -302,11 +302,11 @@ describe("lowerEffectReactSources", () => {
 
           const Child = createComponent({
             state: () => Effect.succeed({}),
-            UI: () => null,
+            ui: () => null,
           });
           const Parent = createComponent({
             state: () => Effect.succeed({}),
-            UI: () => <Child />,
+            ui: () => <Child />,
           });
         `,
       },
@@ -338,11 +338,11 @@ describe("lowerEffectReactSources", () => {
               return {};
             }),
               state: () => Effect.succeed({}),
-            UI: () => null,
+            ui: () => null,
           });
           const Parent = createComponent({
             state: () => Effect.succeed({}),
-            UI: () => (
+            ui: () => (
               <counter.Store implements={() => ({ count: 0 })}>
                 <Child />
               </counter.Store>

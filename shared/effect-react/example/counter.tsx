@@ -38,7 +38,7 @@ export const CounterButton = createComponent({
     });
   },
 
-  UI: ({ state }) => (
+  ui: ({ state }) => (
     <button type="button" onClick={state.increment}>
       Count: {state.count}
     </button>
@@ -48,7 +48,7 @@ export const CounterButton = createComponent({
 export const CounterRow = createComponent({
   state: () => Effect.succeed({}),
 
-  UI: () => (
+  ui: () => (
     <div>
       <span>Nested counter</span>
       <CounterButton />
@@ -59,7 +59,7 @@ export const CounterRow = createComponent({
 export const CounterPanel = createComponent({
   state: () => Effect.succeed({}),
 
-  UI: () => (
+  ui: () => (
     // <counter.Store implements={useCounterImplementation}>
     <section>
       <h2>Counter panel</h2>
@@ -72,7 +72,7 @@ export const CounterPanel = createComponent({
 export const CounterExample = createComponent({
   state: () => Effect.succeed({}),
 
-  UI: () => (
+  ui: () => (
     <main>
       <CounterPanel />
     </main>

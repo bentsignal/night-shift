@@ -70,7 +70,7 @@ export const AppSidebar = createComponent({
 
     return Effect.succeed({ authority, capacity, pathname, runs });
   },
-  UI: ({ state }) => (
+  ui: ({ state }) => (
     <Sidebar collapsible="icon">
       <SidebarHeader className="border-sidebar-border border-b">
         <SidebarMenu>

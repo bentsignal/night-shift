@@ -40,7 +40,7 @@ describe("provider stores", () => {
         countRenders += 1;
         return Effect.succeed({ count });
       },
-      UI: ({ state }) => <span>{state.count}</span>,
+      ui: ({ state }) => <span>{state.count}</span>,
     });
     const Actions = createComponent({
       deps: Effect.gen(function* () {
@@ -52,7 +52,7 @@ describe("provider stores", () => {
           setCount: useStoreSelector(deps.store, (state) => state.setCount),
           setText: useStoreSelector(deps.store, (state) => state.setText),
         }),
-      UI: ({ state }) => (
+      ui: ({ state }) => (
         <>
           <button type="button" onClick={() => state.setText("changed")}>
             Change text
@@ -101,7 +101,7 @@ describe("provider stores", () => {
           label: props.label,
           value: useStoreSelector(deps.store, (state) => state.value),
         }),
-      UI: ({ state }) => <span>{`${state.label}: ${state.value}`}</span>,
+      ui: ({ state }) => <span>{`${state.label}: ${state.value}`}</span>,
     });
     const useOuter = () => ({ value: "outer" });
     const useInner = () => ({ value: "inner" });
@@ -130,7 +130,7 @@ describe("provider stores", () => {
         Effect.succeed({
           value: useStoreSelector(deps.store, (state) => state.value),
         }),
-      UI: ({ state }) => <span>{state.value}</span>,
+      ui: ({ state }) => <span>{state.value}</span>,
     });
     const useFirst = () => ({ value: "first" });
     const useSecond = () => ({ value: "second" });
@@ -160,7 +160,7 @@ describe("provider stores", () => {
         Effect.succeed({
           count: useStoreSelector(deps.store, (state) => state.count),
         }),
-      UI: ({ state }) => <span>{state.count}</span>,
+      ui: ({ state }) => <span>{state.count}</span>,
     });
 
     expect(() => render(<Count />)).toThrow("Service not found");
@@ -177,7 +177,7 @@ describe("provider stores", () => {
         Effect.succeed({
           count: useStoreSelector(deps.store, (state) => state.count),
         }),
-      UI: ({ state }) => <span>{state.count}</span>,
+      ui: ({ state }) => <span>{state.count}</span>,
     });
     const useImplementation = () => ({ count: 7 });
 
@@ -211,7 +211,7 @@ describe("provider stores", () => {
           increment: () => setCount((current) => current + 1),
         });
       },
-      UI: ({ state }) => (
+      ui: ({ state }) => (
         <button type="button" onClick={state.increment}>
           {state.count}
         </button>

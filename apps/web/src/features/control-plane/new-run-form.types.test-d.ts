@@ -15,7 +15,7 @@ type Expect<Value extends true> = Value;
 const _NewRunFormRequirements = createComponent({
   deps: newRunFormDeps,
   state: () => Effect.succeed({}),
-  UI: () => null,
+  ui: () => null,
 });
 
 type Requirements = Effect.Effect.Context<

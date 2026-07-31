@@ -51,7 +51,7 @@ const CompilerProof = createComponent({
       update: () => setRevision((current) => current + 1),
     });
   },
-  UI: ({ state }) => {
+  ui: ({ state }) => {
     const componentValue = { source: "component" };
 
     return (
@@ -70,7 +70,7 @@ const CompilerProof = createComponent({
 });
 
 describe("Effect React Compiler", () => {
-  test("memoizes authored state and UI callbacks without directives", () => {
+  test("memoizes authored state and ui callbacks without directives", () => {
     const onComponentValue = vi.fn();
     const onStateValue = vi.fn();
 

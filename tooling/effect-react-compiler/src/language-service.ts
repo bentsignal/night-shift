@@ -34,6 +34,9 @@ export function createEffectReactLanguageService({
             : target.getScriptSnapshot(fileName);
         };
       }
+      if (property === "getProjectVersion") {
+        return () => loweredProject.version();
+      }
 
       const value = Reflect.get(target, property, target) as unknown;
       return typeof value === "function" ? value.bind(target) : value;
@@ -102,11 +105,10 @@ function createLoweredProject({
     const fileNames = host
       .getScriptFileNames()
       .filter((fileName) => isEffectReactSource(fileName));
-    const nextCacheKey =
-      host.getProjectVersion?.() ??
-      fileNames
-        .map((fileName) => `${fileName}:${host.getScriptVersion(fileName)}`)
-        .join("|");
+    const scriptVersions = fileNames
+      .map((fileName) => `${fileName}:${host.getScriptVersion(fileName)}`)
+      .join("|");
+    const nextCacheKey = `${host.getProjectVersion?.() ?? ""}|${scriptVersions}`;
     if (nextCacheKey === cacheKey) {
       return;
     }
@@ -146,6 +148,10 @@ function createLoweredProject({
           ? typescript.ScriptKind.TSX
           : typescript.ScriptKind.TS,
       );
+    },
+    version() {
+      refresh();
+      return cacheKey;
     },
   };
 }

@@ -105,7 +105,7 @@ type ComponentLifecycle<
   DependenciesError,
   StateError,
 > = {
-  readonly UI: ComponentUI<Props, State>;
+  readonly ui: ComponentUI<Props, State>;
   readonly onDefect?: (defect: unknown) => RenderResult;
   readonly state: ComponentState<Props, Dependencies, State, StateError>;
 } & FailureRenderer<ComponentErrors<DependenciesError, StateError>>;
@@ -214,7 +214,7 @@ export function createComponent<
     );
   };
   CreatedComponent.displayName =
-    definition.displayName ?? definition.UI.name ?? "EffectComponent";
+    definition.displayName ?? definition.ui.name ?? "EffectComponent";
   return makeEffectComponent<
     Props,
     ComponentErrors<DependenciesError, StateError>,
@@ -269,7 +269,7 @@ function EvaluatedState<
   if (Exit.isFailure(state)) {
     return renderFailure(definition, state.cause);
   }
-  return definition.UI({ props, state: state.value });
+  return definition.ui({ props, state: state.value });
 }
 
 function runState<Success, Error>(effect: Effect.Effect<Success, Error>) {

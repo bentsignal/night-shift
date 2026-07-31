@@ -26,7 +26,7 @@ const HostsPage = createComponent({
     Effect.succeed({
       hosts: useStoreSelector(deps.store, (state) => state.hosts),
     }),
-  UI: ({ state }) => (
+  ui: ({ state }) => (
     <Page
       description="Execution machines enrolled with the control plane."
       title="Hosts"

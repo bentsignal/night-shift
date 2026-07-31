@@ -58,7 +58,7 @@ function testControlPlaneStore(
 }
 
 describe("NewRunForm", () => {
-  it("exposes the state/UI contract as the rendered form", () => {
+  it("exposes the state/ui contract as the rendered form", () => {
     render(
       <ControlPlaneProvider client={client()}>
         <NewRunForm />

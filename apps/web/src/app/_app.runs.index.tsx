@@ -19,7 +19,7 @@ const RunsPage = createComponent({
     Effect.succeed({
       runs: useStoreSelector(deps.store, (state) => state.runs),
     }),
-  UI: ({ state }) => (
+  ui: ({ state }) => (
     <Page
       actions={
         <Button asChild size="sm">

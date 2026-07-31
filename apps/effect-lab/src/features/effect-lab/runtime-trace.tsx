@@ -27,7 +27,7 @@ export const RuntimeTrace = createComponent({
       nodes,
       unresolved: root?.requirements.length ?? analysis.diagnostics.length,
     }),
-  UI: ({ state }) => (
+  ui: ({ state }) => (
     <aside aria-labelledby="trace-title" className="trace">
       <div className="trace-heading">
         <p className="eyebrow">runtime trace</p>

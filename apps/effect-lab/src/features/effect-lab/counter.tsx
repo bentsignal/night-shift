@@ -31,7 +31,7 @@ export const CounterReadout = createComponent({
       count: useStoreSelector(deps.store, (state) => state.count),
     }),
 
-  UI: ({ state }) => (
+  ui: ({ state }) => (
     <output aria-live="polite" className="counter-value">
       {formatCount(state.count)}
     </output>
@@ -53,7 +53,7 @@ export const CounterControls = createComponent({
     });
   },
 
-  UI: ({ state }) => (
+  ui: ({ state }) => (
     <div className="counter-controls">
       <button
         aria-label="Decrease count"
@@ -85,7 +85,7 @@ export const CounterControls = createComponent({
 export const CounterInstrument = createComponent({
   displayName: "CounterInstrument",
   state: () => Effect.succeed({}),
-  UI: () => (
+  ui: () => (
     <counter.Store implements={useCounterImplementation}>
       <section aria-labelledby="counter-title" className="instrument">
         <div className="instrument-heading">

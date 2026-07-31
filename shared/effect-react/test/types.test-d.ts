@@ -53,7 +53,7 @@ const requiredDeps = Effect.gen(function* () {
 const Required = createComponent({
   deps: requiredDeps,
   state: ({ deps }) => Effect.succeed({ label: `${deps.text}:${deps.number}` }),
-  UI: ({ props, state }) => {
+  ui: ({ props, state }) => {
     props satisfies Record<string, never>;
     state.label satisfies string;
     return null;
@@ -73,7 +73,7 @@ const Ready = createComponent({
     Effect.provideService(TextService, "ready"),
   ),
   state: ({ deps }) => Effect.succeed({ label: `${deps.text}:${deps.number}` }),
-  UI: ({ state }) => {
+  ui: ({ state }) => {
     state.label satisfies string;
     return null;
   },
@@ -86,7 +86,7 @@ type _ReadyServices = Expect<Equal<Effect.Effect.Context<ReadyEffect>, never>>;
 const Failed = createComponent({
   deps: Effect.fail("typed-failure" as const),
   state: () => Effect.succeed({ ready: false }),
-  UI: ({ state }) => {
+  ui: ({ state }) => {
     state.ready satisfies boolean;
     return null;
   },
@@ -100,7 +100,7 @@ Failed satisfies ComponentType;
 
 const StateFailed = createComponent({
   state: () => Effect.fail("state-failure" as const),
-  UI: () => null,
+  ui: () => null,
   onFailure: (error) => {
     error satisfies "state-failure";
     return null;
@@ -112,7 +112,7 @@ StateFailed satisfies ComponentType;
 createComponent({
   state: () => Effect.succeed({ ready: true }),
   // @ts-expect-error views render JSX or null, not arbitrary React nodes
-  UI: () => "business logic leaked into the view",
+  ui: () => "business logic leaked into the view",
 });
 
 interface TypedCounterState {
@@ -145,7 +145,7 @@ const _StoreConsumer = createComponent({
         useStoreSelector(deps.otherTypedStoreHandle, (state) => state.count) +
         deps.offset,
     }),
-  UI: ({ state }) => {
+  ui: ({ state }) => {
     state.count satisfies number;
     return null;
   },
@@ -167,7 +167,7 @@ const _NestedConsumer = createComponent({
     return { StoreConsumer };
   }),
   state: ({ deps }) => Effect.succeed({ StoreConsumer: deps.StoreConsumer }),
-  UI: ({ state }) => {
+  ui: ({ state }) => {
     state.StoreConsumer satisfies ComponentType;
     return null;
   },
@@ -185,7 +185,7 @@ type _NestedRequirement = Expect<
 
 const _ProviderBoundary = createComponent({
   state: () => Effect.succeed({}),
-  UI: () => null,
+  ui: () => null,
 });
 const _ProvidedConsumer = _ProviderBoundary.__effectReactProvidedRequirements(
   [typedStore.Store],
@@ -207,7 +207,7 @@ const _OuterConsumer = createComponent({
   }),
   state: ({ deps }) =>
     Effect.succeed({ ProvidedConsumer: deps.ProvidedConsumer }),
-  UI: ({ state }) => {
+  ui: ({ state }) => {
     state.ProvidedConsumer satisfies ComponentType;
     return null;
   },

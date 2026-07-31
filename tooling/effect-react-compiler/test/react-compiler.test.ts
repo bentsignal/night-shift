@@ -6,7 +6,7 @@ import { describe, expect, it } from "vitest";
 import { lowerEffectReactSources } from "../src";
 
 describe("React Compiler lowering", () => {
-  it("compiles component state, UI, and provider hooks", async () => {
+  it("compiles component state, ui, and provider hooks", async () => {
     const source = `
       import { useState } from "react";
       import { Effect } from "effect";
@@ -26,7 +26,7 @@ describe("React Compiler lowering", () => {
         state: ({ deps }) => Effect.succeed({
           count: useStoreSelector(deps.store, (state) => state.count),
         }),
-        UI: ({ state }) => <output>{state.count}</output>,
+        ui: ({ state }) => <output>{state.count}</output>,
       });
 
       function useCounterImplementation() {
@@ -36,7 +36,7 @@ describe("React Compiler lowering", () => {
 
       const CounterPanel = createComponent({
         state: () => Effect.succeed({}),
-        UI: () => (
+        ui: () => (
           <counter.Store implements={useCounterImplementation}>
             <CounterValue />
           </counter.Store>
@@ -80,7 +80,7 @@ describe("React Compiler lowering", () => {
       export const Form = createComponent({
         deps: Effect.succeed({ navigate: () => {} }),
         state: formState,
-        UI: ({ state }) => <output>{String(state.submitting)}</output>,
+        ui: ({ state }) => <output>{String(state.submitting)}</output>,
       });
     `;
     const result = await compile(source, "/project/form-state.tsx");

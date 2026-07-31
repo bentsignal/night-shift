@@ -20,7 +20,7 @@ export const NewRunForm = createComponent({
     Effect.provideService(NewRunNavigation, useNavigate),
   ),
   state: useNewRunFormState,
-  UI: ({ state }) => (
+  ui: ({ state }) => (
     <form action={(formData) => void state.submit(formData)}>
       <Card>
         <NewRunFormFields {...state} />

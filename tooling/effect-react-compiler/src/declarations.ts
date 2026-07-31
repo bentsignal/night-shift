@@ -78,9 +78,9 @@ export function readComponentDefinition({
   }
 
   const deps = findPropertyInitializer(definition, "deps");
-  const UI = findPropertyInitializer(definition, "UI");
-  const jsxChildReferences = UI
-    ? collectJsxReferences({ expression: UI, fileName, sourceFile })
+  const ui = findPropertyInitializer(definition, "ui");
+  const jsxChildReferences = ui
+    ? collectJsxReferences({ expression: ui, fileName, sourceFile })
     : [];
   const childReferences = [
     ...(deps
