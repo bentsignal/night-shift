@@ -4,6 +4,7 @@ import { useLayoutEffect, useMemo, useState } from "react";
 import { Context } from "effect";
 
 import type { ReadableStore } from "./store";
+import { registerHotStore } from "./hot-runtime";
 import { ServiceContextProvider, useServiceContext } from "./service-context";
 import { makeStore } from "./store";
 
@@ -64,7 +65,6 @@ interface StoreImplementation<State extends object> {
 }
 
 let nextStoreIdentity = 0;
-const hotStores = new Map<string, Store<string, object>>();
 
 /**
  * Declares one injectable store contract.
@@ -108,12 +108,7 @@ export function createStore<State extends object>() {
       }),
     __effectReactDependencyKey: "store",
     __effectReactImplementation: (state: State) => state,
-    __effectReactHot: (id: string) => {
-      const existing = hotStores.get(id);
-      if (existing) return existing as unknown as Store<string, State>;
-      hotStores.set(id, Store as unknown as Store<string, object>);
-      return Store;
-    },
+    __effectReactHot: (id: string) => registerHotStore(id, Store),
     __effectReactNamed: (name: string) => {
       Object.assign(Store, {
         __effectReactDependencyKey: `${name.slice(0, 1).toLowerCase()}${name.slice(1)}`,

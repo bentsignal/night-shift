@@ -1,7 +1,7 @@
 import { spawn } from "node:child_process";
 
 const packageManager = process.platform === "win32" ? "pnpm.cmd" : "pnpm";
-const portless = spawn(packageManager, ["exec", "portless"], {
+const portless = spawn(packageManager, ["exec", "portless", "run", "--force"], {
   cwd: process.cwd(),
   env: {
     ...process.env,

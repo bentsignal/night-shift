@@ -2,12 +2,14 @@ import type { ReactElement } from "react";
 import { useSyncExternalStore } from "react";
 import { Cause, Effect, Effectable, Exit } from "effect";
 
+import type { HotComponentSignatures, HotComponentState } from "./hot-runtime";
 import type {
   StoreDependency,
   StoreRequirement,
   StoreTypeId,
 } from "./provider-store";
 import type { ReadableStore } from "./store";
+import { makeHotComponentState, registerHotComponent } from "./hot-runtime";
 import { provideServiceContext, useServiceContext } from "./service-context";
 
 type RenderResult = ReactElement | null;
@@ -123,11 +125,6 @@ export type ComponentEffect<Value> = Effect.Effect<
   never,
   ComponentRequirements<Value>
 >;
-
-type HotComponentSignatures = {
-  readonly state: string;
-  readonly ui: string;
-};
 
 type StoreDependencies = readonly {
   readonly [StoreTypeId]: {
@@ -309,13 +306,18 @@ function eraseComponentType(component: unknown) {
 
 function makeComponent<Props, Requirements>(
   component: (props: Props) => RenderResult,
-  hotState: HotComponentState,
+  hotState: HotComponentState<RuntimeComponentDefinition>,
 ) {
   const created = component as CreatedComponent<Props, Requirements>;
   Object.assign(created, Effectable.CommitPrototype, {
     __effectReactAnalyzed: () => created,
     __effectReactHot: (id: string, signatures: HotComponentSignatures) =>
-      registerHotComponent(id, signatures, created, hotState),
+      registerHotComponent({
+        component: created,
+        id,
+        signatures,
+        state: hotState,
+      }),
     commit: () => Effect.context<Requirements>().pipe(Effect.as(created)),
     __effectReactNamed: (name: string) => {
       Object.assign(component, { displayName: name });
@@ -325,92 +327,6 @@ function makeComponent<Props, Requirements>(
     __effectReactRequirements: () => created,
   });
   return created;
-}
-
-type HotComponentSnapshot = {
-  readonly definition: RuntimeComponentDefinition;
-  readonly revision: number;
-  readonly signatures: HotComponentSignatures;
-  readonly stateGeneration: number;
-  readonly uiGeneration: number;
-};
-
-type HotComponentState = {
-  readonly getSnapshot: () => HotComponentSnapshot;
-  readonly initialize: (signatures: HotComponentSignatures) => void;
-  readonly publish: (
-    definition: RuntimeComponentDefinition,
-    signatures: HotComponentSignatures,
-  ) => void;
-  readonly subscribe: (listener: () => void) => () => void;
-};
-
-type HotComponentRecord = {
-  readonly component: CreatedComponent<object, never>;
-  readonly state: HotComponentState;
-};
-
-const hotComponents = new Map<string, HotComponentRecord>();
-
-function makeHotComponentState(definition: RuntimeComponentDefinition) {
-  let snapshot = {
-    definition,
-    revision: 0,
-    signatures: { state: "unregistered", ui: "unregistered" },
-    stateGeneration: 0,
-    uiGeneration: 0,
-  } satisfies HotComponentSnapshot;
-  const listeners = new Set<() => void>();
-
-  return {
-    getSnapshot: () => snapshot,
-    initialize: (signatures) => {
-      snapshot = { ...snapshot, signatures };
-    },
-    publish: (nextDefinition, signatures) => {
-      snapshot = {
-        definition: nextDefinition,
-        revision: snapshot.revision + 1,
-        signatures,
-        stateGeneration:
-          signatures.state === snapshot.signatures.state
-            ? snapshot.stateGeneration
-            : snapshot.stateGeneration + 1,
-        uiGeneration:
-          signatures.ui === snapshot.signatures.ui
-            ? snapshot.uiGeneration
-            : snapshot.uiGeneration + 1,
-      };
-      for (const listener of listeners) listener();
-    },
-    subscribe: (listener) => {
-      listeners.add(listener);
-      return () => listeners.delete(listener);
-    },
-  } satisfies HotComponentState;
-}
-
-function registerHotComponent<Props, Requirements>(
-  id: string,
-  signatures: HotComponentSignatures,
-  component: CreatedComponent<Props, Requirements>,
-  state: HotComponentState,
-) {
-  const existing = hotComponents.get(id);
-  if (existing) {
-    existing.state.publish(state.getSnapshot().definition, signatures);
-    return existing.component as unknown as CreatedComponent<
-      Props,
-      Requirements
-    >;
-  }
-
-  state.initialize(signatures);
-  hotComponents.set(id, {
-    component: component as unknown as CreatedComponent<object, never>,
-    state,
-  });
-  return component;
 }
 
 type RuntimeComponentDefinition = {
