@@ -17,6 +17,7 @@ type EmptyProps = Record<string, never>;
 
 export declare const ComponentTypeId: unique symbol;
 export declare const ComponentPropsTypeId: unique symbol;
+export declare const ComponentRequirementsTypeId: unique symbol;
 export declare const EffectReactAnalysisRequiredTypeId: unique symbol;
 
 export interface ComponentProps<Props> {
@@ -32,18 +33,34 @@ export interface EffectReactAnalysisRequired {
   readonly [EffectReactAnalysisRequiredTypeId]: "Effect React compiler analysis is not active";
 }
 
+/** Makes the absence of component requirements explicit in editor hovers. */
+export interface ComponentRequirements<Requirements = never> {
+  readonly [ComponentRequirementsTypeId]: Requirements;
+}
+
+type RequirementServices<Requirements> =
+  Requirements extends ComponentRequirements<infer Services>
+    ? Services
+    : Requirements;
+
+type DisplayRequirements<Requirements> = [Requirements] extends [never]
+  ? ComponentRequirements<never>
+  : Requirements;
+
 interface ComponentProtocol<Props, Requirements, Self> extends Effect.Effect<
   Self,
   never,
-  Requirements
+  RequirementServices<Requirements>
 > {
   readonly [ComponentTypeId]: {
     readonly props: (props: Props) => Props;
-    readonly requirements: (requirements: Requirements) => Requirements;
+    readonly requirements: (
+      requirements: RequirementServices<Requirements>,
+    ) => RequirementServices<Requirements>;
   };
   readonly __effectReactAnalyzed: () => CreatedComponent<
     Props,
-    Exclude<Requirements, EffectReactAnalysisRequired>
+    Exclude<RequirementServices<Requirements>, EffectReactAnalysisRequired>
   >;
   readonly __effectReactRequirements: <
     const Components extends readonly unknown[],
@@ -51,7 +68,7 @@ interface ComponentProtocol<Props, Requirements, Self> extends Effect.Effect<
     ...components: Components
   ) => CreatedComponent<
     Props,
-    Requirements | ComponentRequirements<Components[number]>
+    RequirementServices<Requirements> | RequirementsOf<Components[number]>
   >;
   readonly __effectReactNamed: (
     name: string,
@@ -68,25 +85,23 @@ interface ComponentProtocol<Props, Requirements, Self> extends Effect.Effect<
     ...components: Components
   ) => CreatedComponent<
     Props,
-    | Requirements
+    | RequirementServices<Requirements>
     | Exclude<
-        ComponentRequirements<Components[number]>,
+        RequirementsOf<Components[number]>,
         ProviderRequirements<Providers[number]>
       >
   >;
 }
 
-export interface Component<Requirements = never> extends ComponentProtocol<
-  EmptyProps,
-  Requirements,
-  Component<Requirements>
-> {
+export interface Component<
+  Requirements = ComponentRequirements<never>,
+> extends ComponentProtocol<EmptyProps, Requirements, Component<Requirements>> {
   (props: EmptyProps): RenderResult;
 }
 
 export interface ComponentWithProps<
   Props,
-  Requirements = never,
+  Requirements = ComponentRequirements<never>,
 > extends ComponentProtocol<
   Props,
   Requirements,
@@ -103,12 +118,12 @@ type IsEmptyProps<Props> = [Props] extends [EmptyProps]
 
 type CreatedComponent<Props, Requirements> =
   IsEmptyProps<Props> extends true
-    ? Component<Requirements>
-    : ComponentWithProps<Props, Requirements>;
+    ? Component<DisplayRequirements<Requirements>>
+    : ComponentWithProps<Props, DisplayRequirements<Requirements>>;
 
-type ComponentRequirements<Value> =
+type RequirementsOf<Value> =
   Value extends ComponentProtocol<infer _Props, infer Requirements, infer _Self>
-    ? Requirements
+    ? RequirementServices<Requirements>
     : never;
 
 type ProviderRequirements<Provider> = Provider extends {
@@ -123,7 +138,7 @@ type ProviderRequirements<Provider> = Provider extends {
 export type ComponentEffect<Value> = Effect.Effect<
   RenderResult,
   never,
-  ComponentRequirements<Value>
+  RequirementsOf<Value>
 >;
 
 type StoreDependencies = readonly {
@@ -247,12 +262,14 @@ export function createComponent<
   State,
 >(
   definition: StatefulComponentWithoutPropsDefinition<Dependencies, State>,
-): Component<
+): CreatedComponent<
+  EmptyProps,
   DependencyRequirements<Dependencies> | EffectReactAnalysisRequired
 >;
 export function createComponent<const Dependencies extends StoreDependencies>(
   definition: StatelessComponentDefinition<Dependencies>,
-): Component<
+): CreatedComponent<
+  EmptyProps,
   DependencyRequirements<Dependencies> | EffectReactAnalysisRequired
 >;
 export function createComponent<Props, State>(
@@ -260,10 +277,10 @@ export function createComponent<Props, State>(
 ): CreatedComponent<Props, EffectReactAnalysisRequired>;
 export function createComponent<State>(
   definition: StatefulComponentWithoutPropsOrDependencies<State>,
-): Component<EffectReactAnalysisRequired>;
+): CreatedComponent<EmptyProps, EffectReactAnalysisRequired>;
 export function createComponent(
   definition: StatelessComponentWithoutDependencies,
-): Component<EffectReactAnalysisRequired>;
+): CreatedComponent<EmptyProps, EffectReactAnalysisRequired>;
 export function createComponent(definition: unknown) {
   const hotState = makeHotComponentState(
     definition as RuntimeComponentDefinition,

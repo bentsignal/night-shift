@@ -2,16 +2,20 @@ import analysis from "virtual:effect-react-analysis";
 
 import { createComponent } from "@night-shift/effect-react";
 
-const root = analysis.boundaries.find(
-  (boundary) => boundary.ownerName === "EffectLabRoute",
+const root = analysis.components.find(
+  (component) => component.name === "EffectLab",
 );
 const componentById = new Map(
   analysis.components.map((component) => [component.id, component]),
 );
 const nodes = root
   ? [
-      { kind: "react", label: root.ownerName, note: "React root" },
-      ...walkComponents(root.componentId).map((component) => ({
+      {
+        kind: "react",
+        label: "toReactComponent(EffectLab)",
+        note: "React root",
+      },
+      ...walkComponents(root.id).map((component) => ({
         kind: component.providedRequirements.length > 0 ? "provider" : "effect",
         label: component.name,
         note: describeComponent(component),

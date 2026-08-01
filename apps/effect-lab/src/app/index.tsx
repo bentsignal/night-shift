@@ -1,7 +1,9 @@
 import { createFileRoute } from "@tanstack/react-router";
 
-import { EffectLabRoute } from "../features/effect-lab/effect-lab-route";
+import { toReactComponent } from "@night-shift/effect-react";
+
+import { EffectLab } from "../features/effect-lab/effect-lab";
 
 export const Route = createFileRoute("/")({
-  component: EffectLabRoute,
+  component: toReactComponent(EffectLab),
 });

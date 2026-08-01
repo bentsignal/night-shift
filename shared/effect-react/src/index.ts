@@ -3,12 +3,14 @@ export {
   createComponent,
   type ComponentEffect,
   type ComponentProps,
+  type ComponentRequirements,
   type ComponentState,
   type ComponentWithProps,
   defineProps,
   type EffectReactAnalysisRequired,
   type ResolvedDependencies,
 } from "./create-component";
+export { toReactComponent } from "./react-component";
 export {
   createStore,
   type Store,

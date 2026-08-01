@@ -1,23 +1,23 @@
 import { act, render, screen } from "@testing-library/react";
 import { describe, expect, test } from "vitest";
 
-import { EffectLabRoute } from "./effect-lab-route";
+import { toReactComponent } from "@night-shift/effect-react";
+
+import { EffectLab } from "./effect-lab";
+
+const EffectLabReact = toReactComponent(EffectLab);
 
 describe("Effect lab", () => {
-  test("crosses a normal React route boundary and resolves the midpoint store", () => {
-    const view = render(<EffectLabRoute />);
+  test("closes into a normal React component with every store resolved", () => {
+    render(<EffectLabReact />);
 
-    expect(view.container.firstElementChild).toHaveAttribute(
-      "data-boundary",
-      "react-route",
-    );
     expect(screen.getByText(/^\+[0-9]{2}$/u)).toBeInTheDocument();
     expect(screen.getByText("Unresolved requirements")).toBeInTheDocument();
     expect(screen.getByText("0")).toBeInTheDocument();
   });
 
   test("updates shared Effect store state through ordinary JSX children", () => {
-    render(<EffectLabRoute />);
+    render(<EffectLabReact />);
 
     act(() => {
       screen.getByRole("button", { name: "reset" }).click();

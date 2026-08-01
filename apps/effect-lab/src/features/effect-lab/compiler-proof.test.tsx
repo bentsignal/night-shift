@@ -89,7 +89,7 @@ const RuntimeHotProbe = runtimeComponentFactory({
 });
 
 describe("Effect React Compiler", () => {
-  test("memoizes authored state and ui callbacks without directives", () => {
+  test("memoizes values created by authored state and ui callbacks", () => {
     const onComponentValue = vi.fn();
     const onStateValue = vi.fn();
 

@@ -60,6 +60,10 @@ describe("React Compiler lowering", () => {
 
     expect(source).not.toContain('"use memo"');
     expect(result.lowered).toContain('"use memo"');
+    expect(result.lowered).toMatch(
+      /state: \(\{ deps \}\) => \{\s*"use memo";/u,
+    );
+    expect(result.lowered).toMatch(/ui: \(\{ state \}\) => \{\s*"use memo";/u);
     expect(result.lowered).toContain(
       'deps: [Counter.__effectReactDependency("counter")]',
     );
@@ -80,6 +84,14 @@ describe("React Compiler lowering", () => {
     expect(
       result.events.filter((event) => event.kind === "CompileSuccess"),
     ).toHaveLength(4);
+    expect(
+      result.events.some(
+        (event) =>
+          event.kind === "CompileSuccess" &&
+          event.fnName === "useCounterImplementation" &&
+          event.memoSlots > 0,
+      ),
+    ).toBe(true);
     expect(
       result.events.some(
         (event) =>

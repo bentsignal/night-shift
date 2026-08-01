@@ -62,7 +62,7 @@ describe("createEffectReactLanguageService", () => {
         labCounterFileName,
         "CounterInstrument",
       ),
-    ).toBe("const CounterInstrument: Component<never>");
+    ).toBe("const CounterInstrument: Component<ComponentRequirements<never>>");
 
     project.updateFile(labCounterFileName, withoutProvider);
     const unresolvedInstrument = quickInfoOf(
@@ -95,7 +95,7 @@ describe("createEffectReactLanguageService", () => {
         labFrameFileName,
         "WorkspaceFrame",
       ),
-    ).toBe("const WorkspaceFrame: Component<never>");
+    ).toBe("const WorkspaceFrame: Component<ComponentRequirements<never>>");
 
     project.updateFile(labCounterFileName, withoutProvider);
     expect(
@@ -115,7 +115,7 @@ describe("createEffectReactLanguageService", () => {
         labFrameFileName,
         "WorkspaceFrame",
       ),
-    ).toBe("const WorkspaceFrame: Component<never>");
+    ).toBe("const WorkspaceFrame: Component<ComponentRequirements<never>>");
   }, 15_000);
 
   it("discovers a lowercase stateless component added after project load", () => {
@@ -215,7 +215,9 @@ const testComponent = createComponent({
         multipleStoresFileName,
         "FullyProvidedDashboard",
       ),
-    ).toBe("const FullyProvidedDashboard: Component<never>");
+    ).toBe(
+      "const FullyProvidedDashboard: Component<ComponentRequirements<never>>",
+    );
   }, 15_000);
 });
 

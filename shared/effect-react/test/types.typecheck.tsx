@@ -1,14 +1,21 @@
-import type { ComponentType } from "react";
+import type { FunctionComponent } from "react";
 import { Effect } from "effect";
 
 import type {
   Component,
   ComponentEffect,
+  ComponentRequirements,
   ComponentWithProps,
   ReadableStore,
   StoreRequirement,
 } from "../src";
-import { createComponent, createStore, defineProps, useStore } from "../src";
+import {
+  createComponent,
+  createStore,
+  defineProps,
+  toReactComponent,
+  useStore,
+} from "../src";
 
 type Equal<Left, Right> =
   (<Value>() => Value extends Left ? 1 : 2) extends <
@@ -31,7 +38,7 @@ const Propful = createComponent({
   },
 });
 Propful satisfies ComponentWithProps<{ label: string }>;
-Propful satisfies ComponentType<{ label: string }>;
+Propful satisfies FunctionComponent<{ label: string }>;
 const _PropfulUsage = <Propful label="Ready" />;
 // @ts-expect-error propful components require their declared props
 const _MissingProp = <Propful />;
@@ -62,8 +69,11 @@ createComponent({
 });
 
 const Stateless = createComponent({ ui: () => null });
-Stateless satisfies Component;
+Stateless satisfies Component<ComponentRequirements<never>>;
 const _StatelessUsage = <Stateless />;
+const StatelessReactComponent = toReactComponent(Stateless);
+StatelessReactComponent satisfies FunctionComponent<Record<string, never>>;
+const _StatelessReactUsage = <StatelessReactComponent />;
 // @ts-expect-error stateless components do not accept props
 const _StatelessProp = <Stateless label="Ready" />;
 
@@ -162,6 +172,8 @@ PropfulConsumer satisfies ComponentWithProps<
   FirstRequirement | SecondRequirement
 >;
 const _PropfulConsumerUsage = <PropfulConsumer multiplier={2} />;
+// @ts-expect-error unresolved requirements cannot cross into ordinary React
+toReactComponent(PropfulConsumer);
 type _PropfulConsumerRequirements = Expect<
   Equal<
     Requirements<typeof PropfulConsumer>,
@@ -185,6 +197,33 @@ type _FirstProvidedRequirements = Expect<
 type _BothProvidedRequirements = Expect<
   Equal<Requirements<typeof _BothProvided>, never>
 >;
+
+const ReactBoundary = toReactComponent(_BothProvided);
+ReactBoundary satisfies FunctionComponent<Record<string, never>>;
+// @ts-expect-error unresolved requirements must be provided before conversion
+toReactComponent(Consumer);
+
+const UnresolvedRoot = createComponent({
+  ui: () => <Consumer />,
+});
+// @ts-expect-error a child requirement bubbles into the route boundary
+toReactComponent(UnresolvedRoot);
+
+const ResolvedRoot = createComponent({
+  ui: () => (
+    <First implements={() => ({ count: 0 })}>
+      <Second implements={() => ({ label: "Ready" })}>
+        <Consumer />
+      </Second>
+    </First>
+  ),
+});
+const ResolvedReactRoot = toReactComponent(ResolvedRoot);
+ResolvedReactRoot satisfies FunctionComponent<Record<string, never>>;
+
+const PropfulReactComponent = toReactComponent(Propful);
+PropfulReactComponent satisfies FunctionComponent<{ label: string }>;
+const _PropfulReactUsage = <PropfulReactComponent label="Ready" />;
 
 const effectAction = Effect.succeed("done");
 createComponent({
