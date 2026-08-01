@@ -43,10 +43,6 @@ type RequirementServices<Requirements> =
     ? Services
     : Requirements;
 
-type DisplayRequirements<Requirements> = [Requirements] extends [never]
-  ? ComponentRequirements<never>
-  : Requirements;
-
 interface ComponentProtocol<Props, Requirements, Self> extends Effect.Effect<
   Self,
   never,
@@ -94,14 +90,16 @@ interface ComponentProtocol<Props, Requirements, Self> extends Effect.Effect<
 }
 
 export interface Component<
-  Requirements = ComponentRequirements<never>,
+  Requirements extends ComponentRequirements<unknown> =
+    ComponentRequirements<never>,
 > extends ComponentProtocol<EmptyProps, Requirements, Component<Requirements>> {
   (props: EmptyProps): RenderResult;
 }
 
 export interface ComponentWithProps<
   Props,
-  Requirements = ComponentRequirements<never>,
+  Requirements extends ComponentRequirements<unknown> =
+    ComponentRequirements<never>,
 > extends ComponentProtocol<
   Props,
   Requirements,
@@ -118,8 +116,11 @@ type IsEmptyProps<Props> = [Props] extends [EmptyProps]
 
 type CreatedComponent<Props, Requirements> =
   IsEmptyProps<Props> extends true
-    ? Component<DisplayRequirements<Requirements>>
-    : ComponentWithProps<Props, DisplayRequirements<Requirements>>;
+    ? Component<ComponentRequirements<RequirementServices<Requirements>>>
+    : ComponentWithProps<
+        Props,
+        ComponentRequirements<RequirementServices<Requirements>>
+      >;
 
 type RequirementsOf<Value> =
   Value extends ComponentProtocol<infer _Props, infer Requirements, infer _Self>

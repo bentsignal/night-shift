@@ -10,7 +10,7 @@ export {
   type EffectReactAnalysisRequired,
   type ResolvedDependencies,
 } from "./create-component";
-export { toReactComponent } from "./react-component";
+export { toStandaloneComponent } from "./standalone-component";
 export {
   createStore,
   type Store,

@@ -12,7 +12,7 @@ const nodes = root
   ? [
       {
         kind: "react",
-        label: "toReactComponent(EffectLab)",
+        label: "toStandaloneComponent(EffectLab)",
         note: "React root",
       },
       ...walkComponents(root.id).map((component) => ({

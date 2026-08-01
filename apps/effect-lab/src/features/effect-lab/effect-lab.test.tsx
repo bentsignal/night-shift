@@ -1,11 +1,11 @@
 import { act, render, screen } from "@testing-library/react";
 import { describe, expect, test } from "vitest";
 
-import { toReactComponent } from "@night-shift/effect-react";
+import { toStandaloneComponent } from "@night-shift/effect-react";
 
 import { EffectLab } from "./effect-lab";
 
-const EffectLabReact = toReactComponent(EffectLab);
+const EffectLabReact = toStandaloneComponent(EffectLab);
 
 describe("Effect lab", () => {
   test("closes into a normal React component with every store resolved", () => {

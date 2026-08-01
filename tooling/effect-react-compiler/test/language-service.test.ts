@@ -72,7 +72,7 @@ describe("createEffectReactLanguageService", () => {
       "CounterInstrument",
     );
     expect(unresolvedInstrument).toContain(
-      'const CounterInstrument: Component<StoreRequirement<"Counter",',
+      'const CounterInstrument: Component<ComponentRequirements<StoreRequirement<"Counter",',
     );
     expect(unresolvedInstrument).not.toContain("EffectReactAnalysisRequired");
   }, 15_000);
@@ -105,7 +105,9 @@ describe("createEffectReactLanguageService", () => {
         labFrameFileName,
         "WorkspaceFrame",
       ),
-    ).toContain('const WorkspaceFrame: Component<StoreRequirement<"Counter",');
+    ).toContain(
+      'const WorkspaceFrame: Component<ComponentRequirements<StoreRequirement<"Counter",',
+    );
 
     project.updateFile(labCounterFileName, withProvider);
     expect(
@@ -144,7 +146,9 @@ const testComponent = createComponent({
         labCounterFileName,
         "testComponent",
       ),
-    ).toContain('const testComponent: Component<StoreRequirement<"Counter",');
+    ).toContain(
+      'const testComponent: Component<ComponentRequirements<StoreRequirement<"Counter",',
+    );
   }, 15_000);
 
   it("bubbles shared-example requirements through every JSX parent", () => {
@@ -176,7 +180,7 @@ const testComponent = createComponent({
     expect(
       quickInfoOf(service, source, multipleStoresFileName, "IdentityBadge"),
     ).toBe(
-      'const IdentityBadge: Component<StoreRequirement<"Viewer", ViewerState> | StoreRequirement<"Theme", ThemeState>>',
+      'const IdentityBadge: Component<ComponentRequirements<StoreRequirement<"Viewer", ViewerState> | StoreRequirement<"Theme", ThemeState>>>',
     );
     expect(
       quickInfoOf(
@@ -186,7 +190,7 @@ const testComponent = createComponent({
         "UnprovidedDashboard",
       ),
     ).toBe(
-      'const UnprovidedDashboard: Component<StoreRequirement<"Viewer", ViewerState> | StoreRequirement<"Theme", ThemeState> | StoreRequirement<"Workspace", WorkspaceState>>',
+      'const UnprovidedDashboard: Component<ComponentRequirements<StoreRequirement<"Viewer", ViewerState> | StoreRequirement<"Theme", ThemeState> | StoreRequirement<"Workspace", WorkspaceState>>>',
     );
     expect(
       quickInfoOf(
@@ -196,7 +200,7 @@ const testComponent = createComponent({
         "ViewerProvidedDashboard",
       ),
     ).toBe(
-      'const ViewerProvidedDashboard: Component<StoreRequirement<"Theme", ThemeState> | StoreRequirement<"Workspace", WorkspaceState>>',
+      'const ViewerProvidedDashboard: Component<ComponentRequirements<StoreRequirement<"Theme", ThemeState> | StoreRequirement<"Workspace", WorkspaceState>>>',
     );
     expect(
       quickInfoOf(
@@ -206,7 +210,7 @@ const testComponent = createComponent({
         "ViewerAndThemeProvidedDashboard",
       ),
     ).toBe(
-      'const ViewerAndThemeProvidedDashboard: Component<StoreRequirement<"Workspace", WorkspaceState>>',
+      'const ViewerAndThemeProvidedDashboard: Component<ComponentRequirements<StoreRequirement<"Workspace", WorkspaceState>>>',
     );
     expect(
       quickInfoOf(

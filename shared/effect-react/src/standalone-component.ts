@@ -9,7 +9,7 @@ import type {
 type EmptyProps = Record<string, never>;
 type NoRequirements = ComponentRequirements<never>;
 
-interface ToReactComponent {
+interface ToStandaloneComponent {
   (component: Component<NoRequirements>): FunctionComponent<EmptyProps>;
   <Props>(
     component: ComponentWithProps<Props, NoRequirements>,
@@ -17,11 +17,10 @@ interface ToReactComponent {
 }
 
 /**
- * Closes an Effect React component tree at a framework boundary.
+ * Converts a fully provided Effect React tree into a standalone component.
  *
  * Components with unresolved store requirements fail this function's input
- * type, so routes receive an ordinary React component only after every
- * requirement has been provided.
+ * type, so framework boundaries only receive dependency-free components.
  */
-export const toReactComponent = ((component: unknown) =>
-  component) as ToReactComponent;
+export const toStandaloneComponent = ((component: unknown) =>
+  component) as ToStandaloneComponent;
