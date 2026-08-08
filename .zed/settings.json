@@ -3,21 +3,10 @@
     "vtsls": {
       "settings": {
         "typescript": {
-          "tsdk": "./node_modules/typescript/lib",
-          "tsserver": {
-            "pluginPaths": ["./node_modules/.pnpm/node_modules"]
-          }
+          "tsdk": "./node_modules/typescript/lib"
         },
         "vtsls": {
-          "autoUseWorkspaceTsdk": true,
-          "tsserver": {
-            "globalPlugins": [
-              {
-                "enableForWorkspaceTypeScriptVersions": true,
-                "name": "@night-shift/effect-react-compiler"
-              }
-            ]
-          }
+          "autoUseWorkspaceTsdk": true
         }
       }
     }

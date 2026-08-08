@@ -1,33 +1,22 @@
 {
   "name": "night-shift",
-  "description": "A personal, cross-platform agentic coding control plane.",
+  "description": "A headless, cross-platform engine for durable agentic workflows.",
   "private": true,
   "engines": {
     "node": ">=22.19.0 <23",
     "pnpm": "^9.15.4"
   },
   "packageManager": "pnpm@9.15.4",
-  "pnpm": {
-    "patchedDependencies": {
-      "expo-modules-jsi@56.0.12": "patches/expo-modules-jsi@56.0.12.patch"
-    }
-  },
   "scripts": {
     "build": "turbo run build",
-    "dev": "turbo run dev --parallel",
-    "dev:desktop": "pnpm --filter @night-shift/desktop dev",
-    "dev:lab": "pnpm --filter @night-shift/effect-lab dev",
-    "dev:mobile": "pnpm --filter @night-shift/mobile dev",
-    "dev:web": "node scripts/dev.mjs",
-    "dev:web-only": "pnpm --filter @night-shift/web dev",
+    "dev:authority-prototype": "pnpm --filter @night-shift/convex dev",
     "dev:worker": "node scripts/dev-worker.mjs",
     "format": "turbo run format --continue",
     "format:fix": "turbo run format:fix --continue",
     "lint": "turbo run lint --continue",
+    "night-shift": "pnpm --filter @night-shift/cli start --",
     "test": "turbo run test --continue",
-    "typecheck": "turbo run typecheck --continue",
-    "ios": "pnpm --filter @night-shift/mobile ios",
-    "android": "pnpm --filter @night-shift/mobile android"
+    "typecheck": "turbo run typecheck --continue"
   },
   "devDependencies": {
     "@night-shift/prettier-config": "workspace:*",

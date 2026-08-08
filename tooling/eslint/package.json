@@ -5,7 +5,6 @@
   "exports": {
     "./base": "./base.ts",
     "./convex": "./convex.ts",
-    "./react": "./react.ts",
     "./syntax": "./syntax.ts"
   },
   "scripts": {
@@ -15,8 +14,6 @@
   },
   "dependencies": {
     "@eslint/js": "catalog:",
-    "eslint-plugin-react": "^7.37.5",
-    "eslint-plugin-react-hooks": "^7.0.1",
     "typescript": "catalog:",
     "typescript-eslint": "^8.46.2"
   },

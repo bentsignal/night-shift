@@ -11,6 +11,7 @@ import {
 import * as Schema from "effect/Schema";
 
 const runtime = Schema.Struct({
+  adapter: Schema.optional(Schema.String),
   provider: Schema.String,
   model: Schema.String,
   reasoningLevel: Schema.optional(Schema.String),

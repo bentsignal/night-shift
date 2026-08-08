@@ -17,6 +17,7 @@ const modelName = process.env.NIGHT_SHIFT_CODEX_SMOKE_MODEL ?? "gpt-5.6-sol";
 const program = Effect.gen(function* () {
   const model = yield* resolver.resolve(
     {
+      adapter: "effect-ai",
       provider: "openai-codex",
       model: modelName,
       reasoning: "minimal",

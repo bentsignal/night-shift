@@ -190,6 +190,7 @@ function runtimeInput(projectPath: string) {
 
 function runtimeSelection() {
   return {
+    adapter: "effect-ai",
     provider: "faux",
     model: "control",
     reasoning: "high" as const,

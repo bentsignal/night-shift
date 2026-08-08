@@ -15,19 +15,44 @@ Verbatim planning transcripts are stored under `docs/raw/`. They are source mate
 
 ## Implementation posture
 
+- Night Shift is headless. Do not add a web, desktop, or mobile product surface
+  unless a task explicitly reactivates one. The CLI is the primary human and
+  agent integration surface. Its public interaction model is conversational:
+  accept natural-language requests and return natural-language answers. Keep
+  authentication, enrollment, and daemon lifecycle operations minimal, and
+  keep typed machine contracts behind the conversational boundary.
 - Build a simple working vertical slice before generalizing.
 - Prefer explicit state machines and deterministic workflow steps over prompt reminders.
-- Keep Convex cloud-authoritative for orchestration while execution remains on enrolled hosts.
-- Keep Convex writes sparse and meaningful; do not persist token deltas or generic high-volume event dumps.
+- Keep durable orchestration cloud-authoritative while execution remains on
+  explicitly enrolled hosts that connect outbound. The substrate is an adapter
+  boundary until the authority spike is complete; do not assume Convex.
+- Use Effect TS for product-owned services, schemas, failures, retries, and
+  observability. Use Confect where a retained Convex boundary benefits from it;
+  do not let Confect force Convex to be the workflow engine.
+- Keep authoritative writes sparse and meaningful; do not persist token deltas
+  or generic high-volume event dumps.
 - Treat leases, fencing, idempotency, isolated attempts, pause/resume, and crash recovery as correctness requirements.
 - Always accept user work into a durable queue even when execution capacity is unavailable.
 - Schedule work fairly across hosts, projects, and parents; safe system responsiveness matters more than maximum concurrency.
+- Model human input as durable attention requests that pause and resume workflow
+  steps rather than as transient chat state.
+- Split resource control into two cooperating layers. A deterministic safety
+  kernel enforces hard capacity ceilings, admission, isolation, fencing, and
+  rollback. An AI resource governor actively interprets telemetry, prioritizes
+  work, tunes policy within those bounds, and can propose or implement tested,
+  reversible platform-specific monitors and host adaptations.
 - Only parent orchestrators may create child agents initially. Children must not recursively spawn agents.
 - Child coding attempts use isolated Git worktrees created and managed by deterministic workflow code.
-- Keep provider/model/authentication choices independent from orchestration. Credentials stay on execution hosts, not in Convex.
-- Use Effect AI behind the product-owned host runtime. Keep the bounded agent loop,
-  tools, provider selection, and host-local subscription authentication under
-  product control rather than adopting Pi's harness or session model.
+- Make recursive self-improvement an early dogfood requirement. Host adaptation
+  must use explicit enrollment, declared capabilities, least privilege, signed
+  or otherwise authenticated changes, validation, and rollback—never stealthy
+  propagation.
+- Keep provider/model/authentication choices independent from orchestration.
+  Provider credentials stay on execution hosts, not in the cloud authority.
+- Keep agent runtimes behind an adapter boundary. Support external harnesses
+  such as Codex CLI, Claude Code, and Pi while retaining a product-owned Effect
+  AI runtime with an explicit bounded loop, typed tools, provider selection, and
+  host-local subscription authentication.
 
 ## Source repositories
 

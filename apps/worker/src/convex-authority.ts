@@ -50,6 +50,12 @@ export class ConvexWorkerAuthority implements WorkerAuthority {
           input.capabilities.platform,
           input.capabilities.arch,
           ...input.capabilities.providers,
+          ...input.capabilities.providers.map(
+            (provider) => `provider:${provider}`,
+          ),
+          ...input.capabilities.runtimeAdapters.map(
+            (adapter) => `runtime:${adapter}`,
+          ),
         ],
         maxConcurrent: input.capabilities.maxConcurrent,
       },
@@ -75,6 +81,7 @@ export class ConvexWorkerAuthority implements WorkerAuthority {
       leaseExpiresAt: result.attempt.leaseExpiresAt,
       controlGeneration: result.proof.controlGeneration,
       selection: {
+        adapter: runtime?.adapter ?? "effect-ai",
         provider: runtime?.provider ?? "openai-codex",
         model: runtime?.model ?? "gpt-5.6-sol",
         reasoning: normalizeReasoning(runtime?.reasoningLevel),
@@ -201,6 +208,7 @@ interface ClaimResult {
     prompt: string;
     projectId?: string;
     runtime?: {
+      adapter?: string;
       provider: string;
       model: string;
       reasoningLevel?: string;

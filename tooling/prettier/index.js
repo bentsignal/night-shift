@@ -1,13 +1,8 @@
 /** @type {import("prettier").Config} */
 const config = {
-  plugins: [
-    "@ianvs/prettier-plugin-sort-imports",
-    "prettier-plugin-tailwindcss",
-  ],
+  plugins: ["@ianvs/prettier-plugin-sort-imports"],
   importOrder: [
     "<TYPES>",
-    "^(react(.*)$)",
-    "^(@tanstack/(.*)$)",
     "<THIRD_PARTY_MODULES>",
     "",
     "<TYPES>^@night-shift",

@@ -7,13 +7,15 @@ import {
 } from "@effect/platform";
 import { Effect, Layer, Redacted } from "effect";
 
-import type { OAuthCredential } from "./credential-store.ts";
+import type {
+  OAuthCredential,
+  ProviderCredentialReader,
+} from "./credential-store.ts";
 import type {
   ModelInvocationContext,
   ModelResolverService,
 } from "./runtime-services.ts";
 import type { ReasoningLevel, RuntimeSelection } from "./types.ts";
-import { HostCredentialStore } from "./credential-store.ts";
 import {
   ExpiredProviderCredentialError,
   InvalidProviderCredentialError,
@@ -26,7 +28,7 @@ const CODEX_ACCOUNT_CLAIM = "https://api.openai.com/auth";
 const EXPIRY_SAFETY_MARGIN_MS = 30_000;
 
 export interface ProductionModelResolverOptions {
-  credentials: HostCredentialStore;
+  credentials: ProviderCredentialReader;
   openAiApiKey?: string;
   anthropicApiKey?: string;
   now?: () => number;
@@ -77,7 +79,7 @@ export function productionModelResolver(
 }
 
 function codexSubscriptionModel(
-  credentials: HostCredentialStore,
+  credentials: ProviderCredentialReader,
   selection: RuntimeSelection,
   context: ModelInvocationContext | undefined,
   now: () => number,

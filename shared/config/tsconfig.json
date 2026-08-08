@@ -1,4 +1,0 @@
-{
-  "extends": "@night-shift/tsconfig/base.json",
-  "include": ["src", "eslint.config.ts"]
-}

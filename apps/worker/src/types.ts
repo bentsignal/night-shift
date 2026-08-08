@@ -4,6 +4,7 @@ export type ReasoningLevel =
   "off" | "minimal" | "low" | "medium" | "high" | "xhigh" | "max";
 
 export interface RuntimeSelection {
+  adapter: string;
   provider: string;
   model: string;
   reasoning: ReasoningLevel;
@@ -32,6 +33,7 @@ export interface HostCapabilities {
   arch: string;
   maxConcurrent: number;
   providers: string[];
+  runtimeAdapters: string[];
   adapterVersion: string;
 }
 

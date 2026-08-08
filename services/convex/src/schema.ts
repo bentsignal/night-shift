@@ -26,6 +26,7 @@ export default defineSchema({
     requiredCapabilities: v.array(v.string()),
     runtime: v.optional(
       v.object({
+        adapter: v.optional(v.string()),
         provider: v.string(),
         model: v.string(),
         reasoningLevel: v.optional(v.string()),

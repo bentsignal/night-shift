@@ -21,6 +21,7 @@ const submission = {
   projectId: "night-shift",
   requiredCapabilities: ["git", "typescript", "git"],
   runtime: {
+    adapter: "codex-cli",
     provider: "openai-codex",
     model: "gpt-5",
     reasoningLevel: "high",

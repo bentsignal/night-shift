@@ -1,9 +1,12 @@
-import { mkdtemp, readFile, rm } from "node:fs/promises";
+import { mkdtemp, readFile, rm, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { afterEach, describe, expect, it } from "vitest";
 
-import { HostCredentialStore } from "./credential-store.ts";
+import {
+  CodexCliCredentialFallback,
+  HostCredentialStore,
+} from "./credential-store.ts";
 
 const temporaryDirectories = new Array<string>();
 
@@ -53,4 +56,50 @@ describe("HostCredentialStore", () => {
     >;
     expect(persisted["openai-codex"]).toEqual(credential);
   });
+
+  it("prefers a newer read-only Codex CLI subscription credential", async () => {
+    const directory = await mkdtemp(join(tmpdir(), "night-shift-codex-auth-"));
+    temporaryDirectories.push(directory);
+    const primary = new HostCredentialStore(
+      join(directory, "night-shift.json"),
+    );
+    await primary.modify("openai-codex", async () => ({
+      type: "oauth",
+      access: jwtWithExpiration(1),
+      expires: 1_000,
+      accountId: "old-account",
+    }));
+    const codexPath = join(directory, "codex.json");
+    await writeFile(
+      codexPath,
+      JSON.stringify({
+        tokens: {
+          access_token: jwtWithExpiration(5),
+          refresh_token: "host-local-refresh",
+          account_id: "current-account",
+        },
+      }),
+    );
+
+    const credential = await new CodexCliCredentialFallback(
+      primary,
+      codexPath,
+    ).read("openai-codex");
+
+    expect(credential).toMatchObject({
+      type: "oauth",
+      expires: 5_000,
+      accountId: "current-account",
+    });
+  });
 });
+
+function jwtWithExpiration(expiration: number) {
+  const header = Buffer.from(JSON.stringify({ alg: "none" })).toString(
+    "base64url",
+  );
+  const payload = Buffer.from(JSON.stringify({ exp: expiration })).toString(
+    "base64url",
+  );
+  return `${header}.${payload}.signature`;
+}

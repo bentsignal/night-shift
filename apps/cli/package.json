@@ -15,6 +15,10 @@
     "test": "node --experimental-strip-types --test src/*.test.ts",
     "typecheck": "tsc --noEmit"
   },
+  "dependencies": {
+    "convex": "catalog:",
+    "effect": "3.22.0"
+  },
   "devDependencies": {
     "@night-shift/eslint-config": "workspace:*",
     "@night-shift/prettier-config": "workspace:*",

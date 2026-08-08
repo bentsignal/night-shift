@@ -29,6 +29,7 @@ const assignment = {
   leaseExpiresAt: Date.now() + 60_000,
   controlGeneration: 0,
   selection: {
+    adapter: "effect-ai",
     provider: "faux",
     model: "test",
     reasoning: "high",
@@ -218,6 +219,7 @@ function createDaemon(
       arch: "test",
       maxConcurrent: 1,
       providers: ["faux"],
+      runtimeAdapters: ["effect-ai"],
       adapterVersion: "test",
     },
     sessionId: registration.sessionId,

@@ -28,6 +28,7 @@ describe("productionModelResolver", () => {
 
     const result = await Effect.runPromiseExit(
       resolver.resolve({
+        adapter: "effect-ai",
         provider: "openai-codex",
         model: "gpt-5.6-sol",
         reasoning: "high",
@@ -53,6 +54,7 @@ describe("productionModelResolver", () => {
 
     const result = await Effect.runPromiseExit(
       resolver.resolve({
+        adapter: "effect-ai",
         provider: "openai-codex",
         model: "gpt-5.6-sol",
         reasoning: "high",
@@ -79,6 +81,7 @@ describe("productionModelResolver", () => {
 
     const result = await Effect.runPromiseExit(
       resolver.resolve({
+        adapter: "effect-ai",
         provider: "openai-codex",
         model: "gpt-5.6-sol",
         reasoning: "xhigh",
@@ -96,6 +99,7 @@ describe("productionModelResolver", () => {
 
     const result = await Effect.runPromiseExit(
       resolver.resolve({
+        adapter: "effect-ai",
         provider: "unknown-provider",
         model: "unknown-model",
         reasoning: "medium",
